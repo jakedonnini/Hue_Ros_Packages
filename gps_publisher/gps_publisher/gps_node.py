@@ -7,7 +7,7 @@ import time
 # Configure the serial connection to the GPS module
 ser = serial.Serial(
     # for linux
-    port='/dev/ttyACM1',  # Update this to your GPS module's serial port
+    port='/dev/ttyACM0',  # Update this to your GPS module's serial port
     # for windows 
     # port='COM4',  # Change this to your GPS module's serial port
     baudrate=9600  # GPS modules commonly use 9600 or 115200 baud
@@ -20,10 +20,11 @@ class GPSPublisher(Node):
         # Create publishers for latitude and longitude
         self.latitude_publisher = self.create_publisher(Float64, 'gps/latitude', 10)
         self.longitude_publisher = self.create_publisher(Float64, 'gps/longitude', 10)
+        self.heading_publisher = self.create_publisher(Float64, 'gps/heading', 10)
+
         while True:
             self.read_gps_data()
         # Start reading data from GPS
-        # self.timer = self.create_timer(0.1, self.read_gps_data)  # Timer to read data every 1/10th of a second
 
     def read_gps_data(self):
         if ser.in_waiting > 0:
@@ -52,6 +53,22 @@ class GPSPublisher(Node):
             if latitude is not None and longitude is not None:
                 self.publish_gps_data(latitude, longitude)
 
+        # Example: Parse a VTG sentence (for heading/direction in degrees)
+        if nmea_sentence.startswith('$GPVTG'):
+            parts = nmea_sentence.split(',')
+
+            if len(parts) < 9:
+                self.get_logger().warn("Incomplete VTG data")
+                return
+            
+            heading = parts[1]  # Heading in degrees (true track made good)
+            
+            try:
+                heading = float(heading)
+                self.publish_heading(heading)
+            except ValueError:
+                self.get_logger().warn("Invalid heading data")
+
     def convert_to_decimal(self, value, direction):
         """Convert NMEA latitude/longitude to decimal degrees."""
         if not value or not direction:
@@ -78,6 +95,14 @@ class GPSPublisher(Node):
         self.longitude_publisher.publish(lon_msg)
 
         self.get_logger().info(f'Published Latitude: {latitude}, Longitude: {longitude}')
+
+    def publish_heading(self, heading):
+        heading_msg = Float64()
+        heading_msg.data = heading
+
+        self.heading_publisher.publish(heading_msg)
+        self.get_logger().info(f'Published Heading: {heading} degrees')
+
 
 
 def main(args=None):
