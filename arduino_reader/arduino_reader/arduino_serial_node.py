@@ -3,6 +3,7 @@ from rclpy.node import Node
 from std_msgs.msg import Int32
 import serial
 import time
+import threading
 
 class ArduinoSerialNode(Node):
     def __init__(self):
@@ -16,56 +17,70 @@ class ArduinoSerialNode(Node):
         self.encoder_left_pub = self.create_publisher(Int32, 'encoder_left', 10)
         self.encoder_right_pub = self.create_publisher(Int32, 'encoder_right', 10)
 
-        # Subscribers for PWM values
-        #TODO change to speed
+        # Subscribers for speed values (PWM inputs)
         self.pwmr_sub = self.create_subscription(Int32, 'speed_R', self.pwmr_callback, 10)
         self.pwml_sub = self.create_subscription(Int32, 'speed_L', self.pwml_callback, 10)
 
-        # Variables to store the current PWM values
+        # Variables to store the current speed values (PWM)
         self.pwmr_value = 0
         self.pwml_value = 0
 
-        # Timer to read encoder values from Arduino periodically
-        # self.timer = self.create_timer(0.1, self.read_encoder_values)
-        while True:
-            self.read_encoder_values()
+        # Flag to control reading from serial
+        self.reading_serial = True
+
+        # Thread for reading encoder values from Arduino
+        self.read_thread = threading.Thread(target=self.read_encoder_values)
+        self.read_thread.start()
 
     def read_encoder_values(self):
-        """Reads encoder values from Arduino and publishes them as ROS 2 topics."""
-        if self.ser.in_waiting > 0:
-            try:
-                # Read data from Arduino in "123 456" format
-                data = self.ser.readline().decode('utf-8').strip()
-                left_enc, right_enc = map(int, data.split())
+        """Continuously reads encoder values from Arduino and publishes them as ROS 2 topics."""
+        while rclpy.ok():
+            if self.reading_serial and self.ser.in_waiting > 0:
+                try:
+                    # Read data from Arduino in "123 456" format
+                    data = self.ser.readline().decode('utf-8').strip()
+                    left_enc, right_enc = map(int, data.split())
 
-                # Publish encoder values
-                self.encoder_left_pub.publish(Int32(data=left_enc))
-                self.encoder_right_pub.publish(Int32(data=right_enc))
+                    # Publish encoder values
+                    self.encoder_left_pub.publish(Int32(data=left_enc))
+                    self.encoder_right_pub.publish(Int32(data=right_enc))
 
-                self.get_logger().info(f'Received encoders: Left={left_enc}, Right={right_enc}')
-            except ValueError:
-                self.get_logger().error(f'Invalid data received: {data}')
+                    self.get_logger().info(f'Received encoders: Left={left_enc}, Right={right_enc}')
+                except ValueError:
+                    self.get_logger().error(f'Invalid data received: {data}')
+            time.sleep(0.01)  # Small sleep to avoid overloading the CPU
 
     def pwmr_callback(self, msg):
-        """Handles incoming PWM right value and sends it to Arduino."""
+        """Handles incoming speed right value and sends it to Arduino."""
         self.pwmr_value = msg.data
-        self.get_logger().info(f'PWMR {self.pwmr_value}')
-        # self.send_pwm_to_arduino() # dont send it twice
+        self.get_logger().info(f'Received PWMR: {self.pwmr_value}')
+        self.send_pwm_to_arduino()
 
     def pwml_callback(self, msg):
-        """Handles incoming PWM left value and sends it to Arduino."""
+        """Handles incoming speed left value and sends it to Arduino."""
         self.pwml_value = msg.data
-        self.get_logger().info(f'PWMR {self.pwml_value}')
+        self.get_logger().info(f'Received PWML: {self.pwml_value}')
         self.send_pwm_to_arduino()
 
     def send_pwm_to_arduino(self):
-        """Sends the PWM values to Arduino in the format '123 234'."""
-        pwm_message = f'{self.pwml_value} {self.pwmr_value}\n'
-        self.ser.write(pwm_message.encode())
-        self.get_logger().info(f'Sent PWM values to Arduino: {pwm_message.strip()}')
+        """Sends the speed values to Arduino in the format '123 234'."""
+        # Temporarily pause reading from serial
+        self.reading_serial = False
+
+        try:
+            # Format and send the PWM values to Arduino
+            pwm_message = f'{self.pwml_value} {self.pwmr_value}\n'
+            self.ser.write(pwm_message.encode())
+            self.get_logger().info(f'Sent speed values to Arduino: {pwm_message.strip()}')
+        except serial.SerialException as e:
+            self.get_logger().error(f'Failed to send data to Arduino: {e}')
+        finally:
+            # Resume reading from serial after sending
+            self.reading_serial = True
 
     def destroy(self):
         """Clean up when the node is stopped."""
+        self.reading_serial = False  # Stop the read loop
         self.ser.close()
         super().destroy()
 

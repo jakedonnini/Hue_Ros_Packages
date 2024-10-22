@@ -36,8 +36,11 @@ class GPSSubscriberPublisher(Node):
         self.pwml_value = 0
 
         while True:
-            self.adjust_pwm_values()
-            time.sleep(5)
+            for i in range(10, 50):
+                self.pwmr_value = i
+                self.pwml_value = i
+                self.adjust_pwm_values()
+                time.sleep(0.5)
 
 
     def latitude_callback(self, msg):
@@ -63,8 +66,8 @@ class GPSSubscriberPublisher(Node):
 
     def adjust_pwm_values(self):
         """Adjust and publish PWMR and PWML values based on GPS data."""
-        self.pwmr_value = 1
-        self.pwml_value = 2
+        # self.pwmr_value = 1
+        # self.pwml_value = 2
 
         # Publish the PWM values
         self.pwmr_publisher.publish(Int32(data=self.pwmr_value))
