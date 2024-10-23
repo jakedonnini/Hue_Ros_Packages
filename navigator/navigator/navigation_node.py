@@ -1,3 +1,4 @@
+import threading
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64, Int32
@@ -65,128 +66,102 @@ class GPSSubscriberPublisher(Node):
         self.encoder_left = 0
         self.encoder_right = 0
 
-        # encoder posistioh varibles
-        self.deltaT = 0.1 # 100ms time intervals
-        self.encoderX = 0
-        self.encoderY = 0
-        self.encoderTheta = 0
+        # Threading for concurrent execution
+        self.running = True
+        self.lock = threading.Lock()
 
-        # current postion, encoder + gps
-        self.currentX = 0
-        self.currentY = 0
-        self.currentTheta = 0
+        # Start threads for publishing and processing
+        self.publisher_thread = threading.Thread(target=self.run_publish_loop)
+        self.processor_thread = threading.Thread(target=self.run_processing_loop)
 
-
-        # constants (change if drive train changes)
-        self.wheelR = 3.45
-        self.wheelL = 14.05
-
-        while True:
-            # wait for next coord
-            if self.waypointBuffer:
-                for i in range(10, 50):
-                    self.pwmr_value = i
-                    self.pwml_value = i
-                    self.adjust_pwm_values()
-                    time.sleep(0.5)
-
+        self.publisher_thread.start()
+        self.processor_thread.start()
 
     def latitude_callback(self, msg):
-        """Callback function to handle incoming latitude data."""
+        self.lock.acquire()
         self.latitude = msg.data
-        self.get_logger().info(f'Received Latitude: {self.latitude}')
-        self.print_gps_data()
-
+        self.lock.release()
 
     def longitude_callback(self, msg):
-        """Callback function to handle incoming longitude data."""
+        self.lock.acquire()
         self.longitude = msg.data
-        self.get_logger().info(f'Received Longitude: {self.longitude}')
-        self.print_gps_data()
+        self.lock.release()
 
     def encoder_left_callback(self, msg):
-        """Callback function to handle incoming encoder data."""
+        self.lock.acquire()
         self.encoder_left = msg.data
-        self.get_logger().info(self.encoder_left)
-        self.getEncoderPose()
+        self.lock.release()
 
     def encoder_right_callback(self, msg):
-        """Callback function to handle incoming encoder data."""
+        self.lock.acquire()
         self.encoder_right = msg.data
-        # only call function once
+        self.lock.release()
 
     def waypoint_callback(self, msg):
-        # This function will be called every time a new message is received
-        x = msg.x
-        y = msg.y
-        self.get_logger().info(f'waypoint: {x}, {y}')
-        self.waypointBuffer.append((x, y))
+        self.lock.acquire()
+        self.waypointBuffer.append((msg.x, msg.y))
+        self.lock.release()
 
+    def run_publish_loop(self):
+        """Thread to continuously publish PWM values."""
+        while self.running:
+            self.adjust_pwm_values()
+            time.sleep(0.1)
 
-    def print_gps_data(self):
-        """Print both latitude and longitude if both are received."""
-        if self.latitude is not None and self.longitude is not None:
-            self.get_logger().info(
-                f'Current GPS Position: Latitude = {self.latitude}, Longitude = {self.longitude}'
-            )
-
-    def getEncoderPose(self):
-        """call everytime serial data comes in"""
-        vL = (6.2832*self.wheelR*self.encoder_left)/(1440.0*self.deltaT) #change with the number of ticks per encoder turn
-        vR = (6.2832*self.wheelR*self.encoder_right)/(1440.0*self.deltaT)
-        V = 0.5*(vR+vL)
-        dV = vR - vL
-        self.encoderX += self.deltaT*V*math.cos(self.encoderTheta)
-        self.encoderY += self.deltaT*V*math.sin(self.encoderTheta)
-        self.encoderTheta += self.deltaT*dV/self.wheelL
+    def run_processing_loop(self):
+        """Thread to handle waypoint processing and error correction."""
+        while self.running:
+            if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
+                self.lock.acquire()
+                self.currentTWayPoint = self.waypointBuffer.pop(0)
+                self.lock.release()
+            time.sleep(0.1)
 
     def getPosError(self):
-        """Find the error to the next point"""
+        """Compute the distance and angular error to the next waypoint."""
+        if self.currentTWayPoint is None:
+            return 0, 0
 
         waypointX, waypointY = self.currentTWayPoint
 
-        # TODO Remove this for when gps gets mixed in
-        self.currentX = self.encoderX
-        self.currentY = self.encoderY
-        self.currentTheta = self.encoderTheta
+        # Current positions based on GPS and encoder data (for now just encoder)
+        self.currentX = self.encoder_left
+        self.currentY = self.encoder_right
+        self.currentTheta = 0  # placeholder, should be calculated based on heading
 
-        dist2Go = math.sqrt(math.pow(self.currentX-waypointX/2,2)+math.pow(self.currentY-waypointY/2,2))
-        if dist2Go < 5: # threshold saying we hit the point
+        dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
+        if dist2Go < 5:  # threshold saying we hit the point
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
-            self.currentTWayPoint = self.waypointBuffer.pop()
-            
+            self.currentTWayPoint = None
 
-        desiredQ = math.atan2(waypointY/2-self.currentY, waypointX/2-self.currentX)
+        desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
+        thetaError = desiredQ - self.currentTheta
 
-        thetaError = desiredQ-self.currentTheta
-
-        # correct turning
         if thetaError > math.pi:
-            thetaError -= 2*math.pi
+            thetaError -= 2 * math.pi
         elif thetaError < -math.pi:
-            thetaError += 2*math.pi
+            thetaError += 2 * math.pi
 
         return dist2Go, thetaError
-    
+
     def constrain(self, val, min_val, max_val):
         return max(min_val, min(val, max_val))
 
     def adjust_pwm_values(self):
         """Adjust and publish PWMR and PWML values based on GPS data."""
-
         dist, thetaError = self.getPosError()
 
-        KQ = 20*4 # turn speed
-        pwmDel = KQ*thetaError
+        KQ = 20 * 4  # turn speed
+        pwmDel = KQ * thetaError
         pwmAvg = 75
 
         if abs(thetaError) > 0.3:
             pwmAvg = 0
 
-        pwmDel = self.constrain(pwmDel,-200,200)
+        pwmDel = self.constrain(pwmDel, -200, 200)
 
-        self.pwmr_value = pwmAvg-pwmDel
-        self.pwml_value = pwmAvg+pwmDel
+        self.pwmr_value = pwmAvg - pwmDel
+        self.pwml_value = pwmAvg + pwmDel
 
         # Publish the PWM values
         self.pwmr_publisher.publish(Int32(data=self.pwmr_value))
@@ -195,6 +170,12 @@ class GPSSubscriberPublisher(Node):
         self.get_logger().info(
             f'Published PWMR: {self.pwmr_value}, PWML: {self.pwml_value}'
         )
+
+    def stop_threads(self):
+        """Stop the threads gracefully."""
+        self.running = False
+        self.publisher_thread.join()
+        self.processor_thread.join()
 
 
 def main(args=None):
@@ -205,6 +186,7 @@ def main(args=None):
     try:
         rclpy.spin(gps_subscriber_publisher)
     except KeyboardInterrupt:
+        gps_subscriber_publisher.stop_threads()
         gps_subscriber_publisher.destroy_node()
         rclpy.shutdown()
         print("GPS subscriber/publisher node stopped.")
@@ -212,3 +194,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
