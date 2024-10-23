@@ -18,8 +18,8 @@ class ArduinoSerialNode(Node):
         self.encoder_right_pub = self.create_publisher(Int32, 'encoder_right', 10)
 
         # Subscribers for speed values (PWM inputs)
-        self.pwmr_sub = self.create_subscription(Int32, 'speed_R', self.pwmr_callback, 10)
-        self.pwml_sub = self.create_subscription(Int32, 'speed_L', self.pwml_callback, 10)
+        self.pwmr_sub = self.create_subscription(Int32, 'PWM_R', self.pwmr_callback, 10)
+        self.pwml_sub = self.create_subscription(Int32, 'PWM_L', self.pwml_callback, 10)
 
         # Variables to store the current speed values (PWM)
         self.pwmr_value = 0
