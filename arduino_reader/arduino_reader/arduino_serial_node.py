@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from custom_msg.msg import twoInt64
+from custom_msg.msg import TwoInt
 import serial
 import time
 import threading
@@ -14,10 +14,10 @@ class ArduinoSerialNode(Node):
         time.sleep(2)  # Wait for serial connection to initialize
 
         # Publishers for left and right encoder values
-        self.encoder_pub = self.create_publisher(twoInt64, 'encoder', 10)
+        self.encoder_pub = self.create_publisher(TwoInt, 'encoder', 10)
 
         # Subscribers for speed values (PWM inputs)
-        self.pwmr_sub = self.create_subscription(twoInt64, 'PWM', self.pwm_callback, 10)
+        self.pwm_sub = self.create_subscription(TwoInt, 'PWM', self.pwm_callback, 10)
 
         # Variables to store the current speed values (PWM)
         self.pwmr_value = 0
@@ -39,12 +39,12 @@ class ArduinoSerialNode(Node):
                     data = self.ser.readline().decode('utf-8').strip()
                     left_enc, right_enc = map(int, data.split())
 
-                    enc_msg = twoInt64()
-                    enc_msg.r = self.left_enc
-                    enc_msg.l = self.right_enc
+                    enc_msg = TwoInt()
+                    enc_msg.r = left_enc
+                    enc_msg.l = right_enc
 
                     # Publish the PWM values
-                    self.pwm_publisher.publish(enc_msg)
+                    self.encoder_pub.publish(enc_msg)
 
                     self.get_logger().info(f'Received encoders: Left={left_enc}, Right={right_enc}')
                 except ValueError:

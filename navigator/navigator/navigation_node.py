@@ -2,7 +2,7 @@ import threading
 import rclpy
 from rclpy.node import Node
 from custom_msg.msg import Coordinates
-from custom_msg.msg import twoInt64
+from custom_msg.msg import TwoInt
 import time
 import math
 
@@ -20,7 +20,7 @@ class GPSSubscriberPublisher(Node):
         )
 
         self.encoder_subscription = self.create_subscription(
-            twoInt64, 
+            TwoInt, 
             'encoder', 
             self.encoder_callback, 
             10
@@ -37,7 +37,7 @@ class GPSSubscriberPublisher(Node):
         self.currentTWayPoint = None
 
         # Create publishers for the PWMR and PWML topics
-        self.pwm_publisher = self.create_publisher(twoInt64, 'PWM', 10)
+        self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
 
         # Variables to store the most recent latitude and longitude values
         self.latitude = None
@@ -128,7 +128,7 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20 * 4  # turn speed
+        KQ = 20  # turn speed
         pwmDel = KQ * thetaError
         pwmAvg = 75
 
@@ -140,9 +140,9 @@ class GPSSubscriberPublisher(Node):
         self.pwmr_value = pwmAvg - pwmDel
         self.pwml_value = pwmAvg + pwmDel
 
-        pwm_msg = twoInt64()
-        pwm_msg.r = self.pwmr_value
-        pwm_msg.l = self.pwml_value
+        pwm_msg = TwoInt()
+        pwm_msg.r = int(self.pwmr_value)
+        pwm_msg.l = int(self.pwml_value)
 
         # Publish the PWM values
         self.pwm_publisher.publish(pwm_msg)
