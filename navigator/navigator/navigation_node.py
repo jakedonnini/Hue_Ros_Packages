@@ -1,8 +1,8 @@
 import threading
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64, Int32
 from custom_msg.msg import Coordinates
+from custom_msg.msg import twoInt64
 import time
 import math
 
@@ -12,31 +12,17 @@ class GPSSubscriberPublisher(Node):
         super().__init__('navigation_node')
 
         # Create subscriptions to the latitude and longitude topics
-        self.latitude_subscription = self.create_subscription(
-            Float64, 
-            'gps/latitude', 
-            self.latitude_callback, 
+        self.gps_subscription = self.create_subscription(
+            Coordinates, 
+            'gps', 
+            self.gps_callback, 
             10
         )
 
-        self.longitude_subscription = self.create_subscription(
-            Float64, 
-            'gps/longitude', 
-            self.longitude_callback, 
-            10
-        )
-
-        self.encoder_left_subscription = self.create_subscription(
-            Int32, 
-            'encoder_left', 
-            self.encoder_left_callback, 
-            10
-        )
-
-        self.encoder_right_subscription = self.create_subscription(
-            Int32, 
-            'encoder_right', 
-            self.encoder_right_callback, 
+        self.encoder_subscription = self.create_subscription(
+            twoInt64, 
+            'encoder', 
+            self.encoder_callback, 
             10
         )
 
@@ -51,8 +37,7 @@ class GPSSubscriberPublisher(Node):
         self.currentTWayPoint = None
 
         # Create publishers for the PWMR and PWML topics
-        self.pwmr_publisher = self.create_publisher(Int32, 'PWM_R', 10)
-        self.pwml_publisher = self.create_publisher(Int32, 'PWM_L', 10)
+        self.pwm_publisher = self.create_publisher(twoInt64, 'PWM', 10)
 
         # Variables to store the most recent latitude and longitude values
         self.latitude = None
@@ -77,24 +62,16 @@ class GPSSubscriberPublisher(Node):
         self.publisher_thread.start()
         self.processor_thread.start()
 
-    def latitude_callback(self, msg):
+    def gps_callback(self, msg):
         self.lock.acquire()
-        self.latitude = msg.data
+        self.latitude = msg.x
+        self.longitude = msg.y
         self.lock.release()
 
-    def longitude_callback(self, msg):
+    def encoder_callback(self, msg):
         self.lock.acquire()
-        self.longitude = msg.data
-        self.lock.release()
-
-    def encoder_left_callback(self, msg):
-        self.lock.acquire()
-        self.encoder_left = msg.data
-        self.lock.release()
-
-    def encoder_right_callback(self, msg):
-        self.lock.acquire()
-        self.encoder_right = msg.data
+        self.encoder_left = msg.l
+        self.encoder_right = msg.r
         self.lock.release()
 
     def waypoint_callback(self, msg):
@@ -163,9 +140,12 @@ class GPSSubscriberPublisher(Node):
         self.pwmr_value = pwmAvg - pwmDel
         self.pwml_value = pwmAvg + pwmDel
 
+        pwm_msg = twoInt64()
+        pwm_msg.r = self.pwmr_value
+        pwm_msg.l = self.pwml_value
+
         # Publish the PWM values
-        self.pwmr_publisher.publish(Int32(data=self.pwmr_value))
-        self.pwml_publisher.publish(Int32(data=self.pwml_value))
+        self.pwm_publisher.publish(pwm_msg)
 
         self.get_logger().info(
             f'Published PWMR: {self.pwmr_value}, PWML: {self.pwml_value}'

@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64  # Use Float64 for latitude/longitude
+from custom_msg.msg import Coordinates
 import serial
 import time
 
@@ -18,8 +19,7 @@ class GPSPublisher(Node):
         super().__init__('gps_publisher')
 
         # Create publishers for latitude and longitude
-        self.latitude_publisher = self.create_publisher(Float64, 'gps/latitude', 10)
-        self.longitude_publisher = self.create_publisher(Float64, 'gps/longitude', 10)
+        self.coords_publisher = self.create_publisher(Coordinates, 'gps', 10)
         self.heading_publisher = self.create_publisher(Float64, 'gps/heading', 10)
 
         while True:
@@ -85,14 +85,12 @@ class GPSPublisher(Node):
             return None
 
     def publish_gps_data(self, latitude, longitude):
-        lat_msg = Float64()
-        lon_msg = Float64()
+        gps_msg = Coordinates()
 
-        lat_msg.data = latitude
-        lon_msg.data = longitude
+        gps_msg.x = latitude
+        gps_msg.y = longitude
 
-        self.latitude_publisher.publish(lat_msg)
-        self.longitude_publisher.publish(lon_msg)
+        self.coords_publisher.publish(gps_msg)
 
         self.get_logger().info(f'Published Latitude: {latitude}, Longitude: {longitude}')
 

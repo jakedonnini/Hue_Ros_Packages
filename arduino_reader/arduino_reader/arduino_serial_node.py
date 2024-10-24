@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32
+from custom_msg.msg import twoInt64
 import serial
 import time
 import threading
@@ -14,12 +14,10 @@ class ArduinoSerialNode(Node):
         time.sleep(2)  # Wait for serial connection to initialize
 
         # Publishers for left and right encoder values
-        self.encoder_left_pub = self.create_publisher(Int32, 'encoder_left', 10)
-        self.encoder_right_pub = self.create_publisher(Int32, 'encoder_right', 10)
+        self.encoder_pub = self.create_publisher(twoInt64, 'encoder', 10)
 
         # Subscribers for speed values (PWM inputs)
-        self.pwmr_sub = self.create_subscription(Int32, 'PWM_R', self.pwmr_callback, 10)
-        self.pwml_sub = self.create_subscription(Int32, 'PWM_L', self.pwml_callback, 10)
+        self.pwmr_sub = self.create_subscription(twoInt64, 'PWM', self.pwm_callback, 10)
 
         # Variables to store the current speed values (PWM)
         self.pwmr_value = 0
@@ -41,25 +39,23 @@ class ArduinoSerialNode(Node):
                     data = self.ser.readline().decode('utf-8').strip()
                     left_enc, right_enc = map(int, data.split())
 
-                    # Publish encoder values
-                    self.encoder_left_pub.publish(Int32(data=left_enc))
-                    self.encoder_right_pub.publish(Int32(data=right_enc))
+                    enc_msg = twoInt64()
+                    enc_msg.r = self.left_enc
+                    enc_msg.l = self.right_enc
+
+                    # Publish the PWM values
+                    self.pwm_publisher.publish(enc_msg)
 
                     self.get_logger().info(f'Received encoders: Left={left_enc}, Right={right_enc}')
                 except ValueError:
                     self.get_logger().error(f'Invalid data received: {data}')
             time.sleep(0.01)  # Small sleep to avoid overloading the CPU
 
-    def pwmr_callback(self, msg):
+    def pwm_callback(self, msg):
         """Handles incoming speed right value and sends it to Arduino."""
-        self.pwmr_value = msg.data
-        self.get_logger().info(f'Received PWMR: {self.pwmr_value}')
-        self.send_pwm_to_arduino()
-
-    def pwml_callback(self, msg):
-        """Handles incoming speed left value and sends it to Arduino."""
-        self.pwml_value = msg.data
-        self.get_logger().info(f'Received PWML: {self.pwml_value}')
+        self.pwmr_value = msg.r
+        self.pwml_value = msg.l
+        self.get_logger().info(f'Received PWM: {self.pwml_value} {self.pwmr_value}')
         self.send_pwm_to_arduino()
 
     def send_pwm_to_arduino(self):
