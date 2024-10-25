@@ -77,6 +77,7 @@ class GPSSubscriberPublisher(Node):
     def waypoint_callback(self, msg):
         self.lock.acquire()
         self.waypointBuffer.append((msg.x, msg.y))
+        print(self.waypointBuffer)
         self.lock.release()
 
     def run_publish_loop(self):
@@ -109,7 +110,10 @@ class GPSSubscriberPublisher(Node):
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 5:  # threshold saying we hit the point
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
-            self.currentTWayPoint = None
+            if len(self.waypointBuffer) > 0:
+                self.currentTWayPoint = self.waypointBuffer
+            else:
+                self.currentTWayPoint = None
 
         desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
         thetaError = desiredQ - self.currentTheta
