@@ -12,7 +12,7 @@ class CoordinatesPublisher(Node):
 
         # Large array of coordinates stored as tuples (x, y)
         self.coordinates = [
-            (10.0, 20.0), (15.5, 25.2), (30.4, 35.6), (45.0, 50.1), 
+            (0.0, 30.0), (30.0, 30.0), (30.0, 0.0), (0.0, 0.0), 
             # Add more coordinate tuples as needed
         ]
         

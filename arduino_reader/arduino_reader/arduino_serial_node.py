@@ -40,8 +40,8 @@ class ArduinoSerialNode(Node):
                     left_enc, right_enc = map(int, data.split())
 
                     enc_msg = TwoInt()
-                    enc_msg.r = left_enc
-                    enc_msg.l = right_enc
+                    enc_msg.l = left_enc
+                    enc_msg.r = right_enc
 
                     # Publish the PWM values
                     self.encoder_pub.publish(enc_msg)

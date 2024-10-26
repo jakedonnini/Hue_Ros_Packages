@@ -50,6 +50,23 @@ class GPSSubscriberPublisher(Node):
         # encoder varibles
         self.encoder_left = 0
         self.encoder_right = 0
+        self.encoder_data_updated = 0
+
+        self.encoderX = 0 
+        self.encoderY = 0
+        self.encoderTheta = 0
+
+        self.currentX = 0
+        self.currentY = 0
+
+        # constants (change if drive train changes)
+        self.wheelR = 3.45
+        self.wheelL = 14.05
+        self.deltaT = 0.05 # 100ms time intervals
+
+        # save old values to onlt send when it changes
+        self.pwmr_value_old = 0
+        self.pwml_value_old = 0
 
         # Threading for concurrent execution
         self.running = True
@@ -63,22 +80,20 @@ class GPSSubscriberPublisher(Node):
         self.processor_thread.start()
 
     def gps_callback(self, msg):
-        self.lock.acquire()
-        self.latitude = msg.x
-        self.longitude = msg.y
-        self.lock.release()
+        with self.lock:
+            self.latitude = msg.x
+            self.longitude = msg.y
 
     def encoder_callback(self, msg):
-        self.lock.acquire()
-        self.encoder_left = msg.l
-        self.encoder_right = msg.r
-        self.lock.release()
+        with self.lock:
+            self.encoder_left = msg.l
+            self.encoder_right = msg.r
+            self.encoder_data_updated = True  # Flag for new data
 
     def waypoint_callback(self, msg):
-        self.lock.acquire()
-        self.waypointBuffer.append((msg.x, msg.y))
-        print(self.waypointBuffer)
-        self.lock.release()
+        with self.lock:
+            self.waypointBuffer.append((msg.x, msg.y))
+            print(self.waypointBuffer)
 
     def run_publish_loop(self):
         """Thread to continuously publish PWM values."""
@@ -87,13 +102,34 @@ class GPSSubscriberPublisher(Node):
             time.sleep(0.1)
 
     def run_processing_loop(self):
-        """Thread to handle waypoint processing and error correction."""
+        """Process waypoints and update encoder position as new data is available."""
         while self.running:
+            # Process encoder data if updated
+            if self.encoder_data_updated:
+                with self.lock:
+                    self.getEncoderPose()
+                    self.encoder_data_updated = False  # Reset flag
+
+            # Check for waypoints to process
+            # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
             if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
-                self.lock.acquire()
-                self.currentTWayPoint = self.waypointBuffer.pop(0)
-                self.lock.release()
-            time.sleep(0.1)
+                print("HIT")
+                with self.lock:
+                    self.currentTWayPoint = self.waypointBuffer.pop(0)
+            time.sleep(0.05)
+
+    def getEncoderPose(self):
+        """call everytime serial data comes in"""
+        vL = (6.2832*self.wheelR*self.encoder_left)/(1440.0*self.deltaT) #change with the number of ticks per encoder turn
+        vR = (6.2832*self.wheelR*self.encoder_right)/(1440.0*self.deltaT)
+        V = 0.5*(vR+vL)
+        dV = vR - vL
+        self.encoderX += self.deltaT*V*math.cos(self.encoderTheta)
+        self.encoderY += self.deltaT*V*math.sin(self.encoderTheta)
+        self.encoderTheta += self.deltaT*dV/self.wheelL
+        # self.get_logger().info(
+        #     f'X: {self.encoderX} Y {self.encoderY} Theta {self.encoderTheta} Encoder {self.encoder_left} {self.encoder_right}'
+        # )
 
     def getPosError(self):
         """Compute the distance and angular error to the next waypoint."""
@@ -103,25 +139,26 @@ class GPSSubscriberPublisher(Node):
         waypointX, waypointY = self.currentTWayPoint
 
         # Current positions based on GPS and encoder data (for now just encoder)
-        self.currentX = self.encoder_left
-        self.currentY = self.encoder_right
-        self.currentTheta = 0  # placeholder, should be calculated based on heading
+        self.currentX = self.encoderX
+        self.currentY = self.encoderY
+        self.currentTheta = self.encoderTheta
 
-        dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
-        if dist2Go < 5:  # threshold saying we hit the point
+        dist2Go = math.sqrt(math.pow(self.currentX - waypointX/2, 2) + math.pow(self.currentY - waypointY/2, 2))
+        if dist2Go < 10:  # threshold saying we hit the point
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
-            if len(self.waypointBuffer) > 0:
-                self.currentTWayPoint = self.waypointBuffer
-            else:
-                self.currentTWayPoint = None
+            self.currentTWayPoint = None
 
-        desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
+        desiredQ = math.atan2(waypointY / 2-self.currentY, waypointX / 2-self.currentX)
         thetaError = desiredQ - self.currentTheta
 
         if thetaError > math.pi:
             thetaError -= 2 * math.pi
         elif thetaError < -math.pi:
             thetaError += 2 * math.pi
+
+        # self.get_logger().info(
+        #     f'Theat error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
+        # )
 
         return dist2Go, thetaError
 
@@ -132,14 +169,14 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20  # turn speed
+        KQ = 20*4  # turn speed
         pwmDel = KQ * thetaError
         pwmAvg = 75
 
-        if abs(thetaError) > 0.3:
+        if abs(thetaError) > 0.3 or self.currentTWayPoint is None:
             pwmAvg = 0
 
-        pwmDel = self.constrain(pwmDel, -200, 200)
+        pwmDel = self.constrain(pwmDel, -100, 100)
 
         self.pwmr_value = pwmAvg - pwmDel
         self.pwml_value = pwmAvg + pwmDel
@@ -148,11 +185,18 @@ class GPSSubscriberPublisher(Node):
         pwm_msg.r = int(self.pwmr_value)
         pwm_msg.l = int(self.pwml_value)
 
+        # if wheel still spinning send off again
+        sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) and (self.encoder_left != 0 or self.encoder_right != 0)
+
         # Publish the PWM values
-        self.pwm_publisher.publish(pwm_msg)
+        # only send if new values
+        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff:
+            self.pwm_publisher.publish(pwm_msg)
+            self.pwmr_value_old = self.pwmr_value
+            self.pwml_value_old = self.pwml_value
 
         self.get_logger().info(
-            f'Published PWMR: {self.pwmr_value}, PWML: {self.pwml_value}'
+            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
         )
 
     def stop_threads(self):
