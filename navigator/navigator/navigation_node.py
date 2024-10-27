@@ -5,11 +5,45 @@ from custom_msg.msg import Coordinates
 from custom_msg.msg import TwoInt
 import time
 import math
+import numpy as np
 
 
 class GPSSubscriberPublisher(Node):
     def __init__(self):
         super().__init__('navigation_node')
+
+        # Kalman Filter Matrices
+        self.dt = 0.1  # time step
+        self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
+        
+        # Define initial state covariance matrix
+        self.P = np.eye(3)
+        
+        # Define state transition matrix
+        self.F = np.array([
+            [1, 0, -self.dt * np.sin(self.x[2, 0])],
+            [0, 1,  self.dt * np.cos(self.x[2, 0])],
+            [0, 0, 1]
+        ])
+        
+        # Control matrix
+        self.B = np.array([
+            [self.dt * np.cos(self.x[2, 0]), 0],
+            [self.dt * np.sin(self.x[2, 0]), 0],
+            [0, self.dt]
+        ])
+        
+        # Process noise covariance
+        self.Q = np.diag([0.1, 0.1, 0.01])
+        
+        # Measurement noise covariance (GPS noise)
+        self.R = np.diag([5.0, 5.0])
+        
+        # Observation matrix
+        self.H = np.array([
+            [1, 0, 0],
+            [0, 1, 0]
+        ])
 
         # Create subscriptions to the latitude and longitude topics
         self.gps_subscription = self.create_subscription(
@@ -52,21 +86,25 @@ class GPSSubscriberPublisher(Node):
         self.encoder_right = 0
         self.encoder_data_updated = 0
 
-        self.encoderX = 0 
-        self.encoderY = 0
-        self.encoderTheta = 0
-
         self.currentX = 0
         self.currentY = 0
 
         # constants (change if drive train changes)
         self.wheelR = 3.45
         self.wheelL = 14.05
-        self.deltaT = 0.05 # 100ms time intervals
 
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
         self.pwml_value_old = 0
+
+        # GPS
+        # Initial GPS origin coordinates for conversion to local coordinates
+        self.origin_lat = None
+        self.origin_lon = None
+
+         # Conversion factor for GPS to meters (approximately 111,139 meters per degree latitude)
+        self.lat_to_m = 111139.0 * 100 # 100 for cm
+        self.lon_to_m = 111139.0 * 100 * np.cos(np.radians(self.origin_lat or 0))  # Will be updated once origin_lat is set
 
         # Threading for concurrent execution
         self.running = True
@@ -83,6 +121,30 @@ class GPSSubscriberPublisher(Node):
         with self.lock:
             self.latitude = msg.x
             self.longitude = msg.y
+
+            if self.origin_lat is None or self.origin_lon is None:
+                self.origin_lat = msg.x
+                self.origin_lon = msg.y
+                self.lon_to_m = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))  # Update conversion factor for longitude
+
+            # Calculate the offset from the origin
+            delta_lat = msg.x - self.origin_lat
+            delta_lon = msg.y - self.origin_lon
+    
+            # Convert GPS offset to centimeters
+            x_gps_cm = delta_lon * self.lon_to_cm  # Longitude in centimeters
+            y_gps_cm = delta_lat * self.lat_to_cm  # Latitude in centimeters
+            
+            # need to be in same format as the encoders
+            z = np.array([[x_gps_cm], [y_gps_cm]])
+            # Update Step
+            y = z - self.H @ self.x  # Measurement residual
+            S = self.H @ self.P @ self.H.T + self.R  # Residual covariance
+            K = self.P @ self.H.T @ np.linalg.inv(S)  # Kalman gain
+    
+            self.x = self.x + K @ y  # Updated state estimate
+            self.P = (np.eye(3) - K @ self.H) @ self.P  # Updated covariance estimate
+            self.get_logger().info(f"Kalman state updated with GPS (in cm): x={self.x[0,0]}, y={self.x[1,0]}")
 
     def encoder_callback(self, msg):
         with self.lock:
@@ -113,23 +175,22 @@ class GPSSubscriberPublisher(Node):
             # Check for waypoints to process
             # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
             if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
-                print("HIT")
                 with self.lock:
                     self.currentTWayPoint = self.waypointBuffer.pop(0)
             time.sleep(0.05)
 
     def getEncoderPose(self):
         """call everytime serial data comes in"""
-        vL = (6.2832*self.wheelR*self.encoder_left)/(1440.0*self.deltaT) #change with the number of ticks per encoder turn
-        vR = (6.2832*self.wheelR*self.encoder_right)/(1440.0*self.deltaT)
+        vL = (6.2832*self.wheelR*self.encoder_left)/(1440.0*self.dt) #change with the number of ticks per encoder turn
+        vR = (6.2832*self.wheelR*self.encoder_right)/(1440.0*self.dt)
         V = 0.5*(vR+vL)
-        dV = vR - vL
-        self.encoderX += self.deltaT*V*math.cos(self.encoderTheta)
-        self.encoderY += self.deltaT*V*math.sin(self.encoderTheta)
-        self.encoderTheta += self.deltaT*dV/self.wheelL
-        # self.get_logger().info(
-        #     f'X: {self.encoderX} Y: {self.encoderY} Theta {self.encoderTheta} Encoder {self.encoder_left} {self.encoder_right}'
-        # )
+        dV = (vR - vL) / self.wheelL
+
+        u = np.array([[V], [dV]])
+
+        # Predict Step
+        self.x = self.F @ self.x + self.B @ u
+        self.P = self.F @ self.P @ self.F.T + self.Q
 
     def getPosError(self):
         """Compute the distance and angular error to the next waypoint."""
@@ -139,9 +200,9 @@ class GPSSubscriberPublisher(Node):
         waypointX, waypointY = self.currentTWayPoint
 
         # Current positions based on GPS and encoder data (for now just encoder)
-        self.currentX = self.encoderX
-        self.currentY = self.encoderY
-        self.currentTheta = self.encoderTheta
+        self.currentX = self.x[0, 0]
+        self.currentY = self.x[1, 0]
+        self.currentTheta = self.x[2, 0]
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX/2, 2) + math.pow(self.currentY - waypointY/2, 2))
         if dist2Go < 1:  # threshold saying we hit the point
