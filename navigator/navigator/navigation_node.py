@@ -128,7 +128,7 @@ class GPSSubscriberPublisher(Node):
         self.encoderY += self.deltaT*V*math.sin(self.encoderTheta)
         self.encoderTheta += self.deltaT*dV/self.wheelL
         # self.get_logger().info(
-        #     f'X: {self.encoderX} Y {self.encoderY} Theta {self.encoderTheta} Encoder {self.encoder_left} {self.encoder_right}'
+        #     f'X: {self.encoderX} Y: {self.encoderY} Theta {self.encoderTheta} Encoder {self.encoder_left} {self.encoder_right}'
         # )
 
     def getPosError(self):
@@ -144,7 +144,7 @@ class GPSSubscriberPublisher(Node):
         self.currentTheta = self.encoderTheta
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX/2, 2) + math.pow(self.currentY - waypointY/2, 2))
-        if dist2Go < 10:  # threshold saying we hit the point
+        if dist2Go < 1:  # threshold saying we hit the point
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.currentTWayPoint = None
 
@@ -175,11 +175,12 @@ class GPSSubscriberPublisher(Node):
 
         if abs(thetaError) > 0.3 or self.currentTWayPoint is None:
             pwmAvg = 0
+            pwmDel = self.constrain(pwmDel, -75, 75)
 
         pwmDel = self.constrain(pwmDel, -100, 100)
 
-        self.pwmr_value = pwmAvg - pwmDel
-        self.pwml_value = pwmAvg + pwmDel
+        self.pwmr_value = pwmAvg + pwmDel
+        self.pwml_value = pwmAvg - pwmDel
 
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)

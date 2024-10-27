@@ -11,8 +11,9 @@ class CoordinatesPublisher(Node):
         self.coord_pub = self.create_publisher(Coordinates, 'coordinates', 10)
 
         # Large array of coordinates stored as tuples (x, y)
+        # the robot will go to half the size of these coordinates
         self.coordinates = [
-            (0.0, 30.0), (30.0, 30.0), (30.0, 0.0), (0.0, 0.0), 
+            (0.0, 60.0), (60.0, 60.0), (60.0, 0.0), (0.0, 0.0), 
             # Add more coordinate tuples as needed
         ]
         
