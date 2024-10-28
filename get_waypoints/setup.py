@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'waypoint_node = get_waypoints.waypoint_node:main'
+            'waypoint_node = get_waypoints.waypoint_node:main',
+            'waypoint_from_txt_node = get_waypoints.waypoint_from_txt_node:main'
         ],
     },
 )

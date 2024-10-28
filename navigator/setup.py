@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'navigation_node = navigator.navigation_node:main'
+            'navigation_node = navigator.navigation_node:main',
+            'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main'
         ],
     },
 )
