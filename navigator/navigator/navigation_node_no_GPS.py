@@ -83,6 +83,7 @@ class GPSSubscriberPublisher(Node):
         with self.lock:
             self.latitude = msg.x
             self.longitude = msg.y
+            self.get_logger().info(f"GPS!!!!!")
 
     def encoder_callback(self, msg):
         with self.lock:

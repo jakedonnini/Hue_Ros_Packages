@@ -39,8 +39,8 @@ class CoordinatesPublisher(Node):
         x, y = coord
 
         coord_msg = Coordinates()
-        coord_msg.x = x
-        coord_msg.y = y
+        coord_msg.x = x/1.5
+        coord_msg.y = y/1.5
 
         # Publish the x and y coordinates
         self.coord_pub.publish(coord_msg)

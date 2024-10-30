@@ -37,7 +37,7 @@ class GPSSubscriberPublisher(Node):
         self.Q = np.diag([0.1, 0.1, 0.01])
         
         # Measurement noise covariance (GPS noise)
-        self.R = np.diag([5.0, 5.0])
+        self.R = np.diag([0.11, 0.15])
         
         # Observation matrix
         self.H = np.array([
@@ -101,10 +101,11 @@ class GPSSubscriberPublisher(Node):
         # Initial GPS origin coordinates for conversion to local coordinates
         self.origin_lat = None
         self.origin_lon = None
+        self.new_gps_data = False
 
          # Conversion factor for GPS to meters (approximately 111,139 meters per degree latitude)
-        self.lat_to_m = 111139.0 * 100 # 100 for cm
-        self.lon_to_m = 111139.0 * 100 * np.cos(np.radians(self.origin_lat or 0))  # Will be updated once origin_lat is set
+        self.lat_to_cm = 111139.0 * 100 # 100 for cm
+        self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat or 0))  # Will be updated once origin_lat is set
 
         # Threading for concurrent execution
         self.running = True
@@ -121,30 +122,7 @@ class GPSSubscriberPublisher(Node):
         with self.lock:
             self.latitude = msg.x
             self.longitude = msg.y
-
-            if self.origin_lat is None or self.origin_lon is None:
-                self.origin_lat = msg.x
-                self.origin_lon = msg.y
-                self.lon_to_m = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))  # Update conversion factor for longitude
-
-            # Calculate the offset from the origin
-            delta_lat = msg.x - self.origin_lat
-            delta_lon = msg.y - self.origin_lon
-    
-            # Convert GPS offset to centimeters
-            x_gps_cm = delta_lon * self.lon_to_cm  # Longitude in centimeters
-            y_gps_cm = delta_lat * self.lat_to_cm  # Latitude in centimeters
-            
-            # need to be in same format as the encoders
-            z = np.array([[x_gps_cm], [y_gps_cm]])
-            # Update Step
-            y = z - self.H @ self.x  # Measurement residual
-            S = self.H @ self.P @ self.H.T + self.R  # Residual covariance
-            K = self.P @ self.H.T @ np.linalg.inv(S)  # Kalman gain
-    
-            self.x = self.x + K @ y  # Updated state estimate
-            self.P = (np.eye(3) - K @ self.H) @ self.P  # Updated covariance estimate
-            self.get_logger().info(f"Kalman state updated with GPS (in cm): x={self.x[0,0]}, y={self.x[1,0]}")
+            self.new_gps_data = True
 
     def encoder_callback(self, msg):
         with self.lock:
@@ -172,6 +150,11 @@ class GPSSubscriberPublisher(Node):
                     self.getEncoderPose()
                     self.encoder_data_updated = False  # Reset flag
 
+            if self.new_gps_data:
+                with self.lock:
+                    self.update_kalman_with_gps()
+                    self.new_gps_data = False
+
             # Check for waypoints to process
             # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
             if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
@@ -191,6 +174,27 @@ class GPSSubscriberPublisher(Node):
         # Predict Step
         self.x = self.F @ self.x + self.B @ u
         self.P = self.F @ self.P @ self.F.T + self.Q
+
+    def update_kalman_with_gps(self):
+        """Correct state estimate using GPS data."""
+        if self.origin_lat is None or self.origin_lon is None:
+            self.origin_lat = self.latitude
+            self.origin_lon = self.longitude
+            self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
+
+        # Convert GPS data to cm relative to origin
+        delta_lat = self.latitude - self.origin_lat
+        delta_lon = self.longitude - self.origin_lon
+        x_gps_cm = delta_lon * self.lon_to_cm
+        y_gps_cm = delta_lat * self.lat_to_cm
+
+        # Measurement update
+        z = np.array([[x_gps_cm], [y_gps_cm]])
+        y = z - self.H @ self.x
+        S = self.H @ self.P @ self.H.T + self.R
+        K = self.P @ self.H.T @ np.linalg.inv(S)
+        self.x = self.x + K @ y
+        self.P = (np.eye(3) - K @ self.H) @ self.P
 
     def getPosError(self):
         """Compute the distance and angular error to the next waypoint."""
@@ -234,7 +238,7 @@ class GPSSubscriberPublisher(Node):
         pwmDel = KQ * thetaError
         pwmAvg = 75
 
-        if abs(thetaError) > 0.3 or self.currentTWayPoint is None:
+        if abs(thetaError) > 0.15 or self.currentTWayPoint is None:
             pwmAvg = 0
             pwmDel = self.constrain(pwmDel, -75, 75)
 
@@ -257,9 +261,9 @@ class GPSSubscriberPublisher(Node):
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
 
-        self.get_logger().info(
-            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
-        )
+        # self.get_logger().info(
+        #     f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
+        # )
 
     def stop_threads(self):
         """Stop the threads gracefully."""
