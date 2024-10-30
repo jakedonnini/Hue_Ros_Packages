@@ -133,7 +133,7 @@ class GPSSubscriberPublisher(Node):
     def waypoint_callback(self, msg):
         with self.lock:
             self.waypointBuffer.append((msg.x, msg.y))
-            print(self.waypointBuffer)
+            # print(self.waypointBuffer)
 
     def run_publish_loop(self):
         """Thread to continuously publish PWM values."""
@@ -210,7 +210,7 @@ class GPSSubscriberPublisher(Node):
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX/2, 2) + math.pow(self.currentY - waypointY/2, 2))
         if dist2Go < 1:  # threshold saying we hit the point
-            self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
+            self.().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.currentTWayPoint = None
 
         desiredQ = math.atan2(waypointY / 2-self.currentY, waypointX / 2-self.currentX)
@@ -221,7 +221,7 @@ class GPSSubscriberPublisher(Node):
         elif thetaError < -math.pi:
             thetaError += 2 * math.pi
 
-        # self.get_logger().info(
+        # self.().info(
         #     f'Theat error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
         # )
 
@@ -261,9 +261,9 @@ class GPSSubscriberPublisher(Node):
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
 
-        # self.get_logger().info(
-        #     f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
-        # )
+        self.().info(
+            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
+        )
 
     def stop_threads(self):
         """Stop the threads gracefully."""
