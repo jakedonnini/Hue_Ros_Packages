@@ -261,7 +261,7 @@ class GPSSubscriberPublisher(Node):
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
 
-        self.().info(
+        self.get_logger().info(
             f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
         )
 
