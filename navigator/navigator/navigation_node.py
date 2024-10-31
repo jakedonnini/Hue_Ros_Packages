@@ -102,6 +102,8 @@ class GPSSubscriberPublisher(Node):
         self.origin_lat = None
         self.origin_lon = None
         self.new_gps_data = False
+        self.x_gps_cm = 0
+        self.y_gps_cm = 0
 
          # Conversion factor for GPS to meters (approximately 111,139 meters per degree latitude)
         self.lat_to_cm = 111139.0 * 100 # 100 for cm
@@ -185,11 +187,11 @@ class GPSSubscriberPublisher(Node):
         # Convert GPS data to cm relative to origin
         delta_lat = self.latitude - self.origin_lat
         delta_lon = self.longitude - self.origin_lon
-        x_gps_cm = delta_lon * self.lon_to_cm
-        y_gps_cm = delta_lat * self.lat_to_cm
+        self.x_gps_cm = delta_lon * self.lon_to_cm
+        self.y_gps_cm = delta_lat * self.lat_to_cm
 
         # Measurement update
-        z = np.array([[x_gps_cm], [y_gps_cm]])
+        z = np.array([[self.x_gps_cm], [self.y_gps_cm]])
         y = z - self.H @ self.x
         S = self.H @ self.P @ self.H.T + self.R
         K = self.P @ self.H.T @ np.linalg.inv(S)
@@ -261,8 +263,13 @@ class GPSSubscriberPublisher(Node):
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
 
+        # self.get_logger().info(
+        #     f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
+        # )
+
+        # for Kalman filiter testing
         self.get_logger().info(
-            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
+            f'GPS: {round(self.self.x_gps_cm, 2)}, {round(self.self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
         )
 
     def stop_threads(self):
@@ -270,6 +277,12 @@ class GPSSubscriberPublisher(Node):
         self.running = False
         self.publisher_thread.join()
         self.processor_thread.join()
+
+        # make sure the motors turn off on close
+        pwm_msg = TwoInt()
+        pwm_msg.r = 0
+        pwm_msg.l = 0
+        self.pwm_publisher.publish(pwm_msg)
 
 
 def main(args=None):
