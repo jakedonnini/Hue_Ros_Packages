@@ -238,13 +238,17 @@ class GPSSubscriberPublisher(Node):
 
         KQ = 20*4  # turn speed
         pwmDel = KQ * thetaError
-        pwmAvg = 75
+        pwmAvg = 80
 
         if abs(thetaError) > 0.15 or self.currentTWayPoint is None:
             pwmAvg = 0
-            pwmDel = self.constrain(pwmDel, -75, 75)
+            pwmDel = self.constrain(pwmDel, -200, 200)
 
-        pwmDel = self.constrain(pwmDel, -100, 100)
+        # this is to make sure that its not too slow to turn the robot. Take out for real drive train
+        if abs(pwmDel) < 40:
+            pwmDel = 40 * abs(pwmDel)/pwmDel
+
+        # pwmDel = self.constrain(pwmDel, -100, 100)
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
