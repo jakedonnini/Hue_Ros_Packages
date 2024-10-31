@@ -210,12 +210,12 @@ class GPSSubscriberPublisher(Node):
         self.currentY = self.x[1, 0]
         self.currentTheta = self.x[2, 0]
 
-        dist2Go = math.sqrt(math.pow(self.currentX - waypointX/2, 2) + math.pow(self.currentY - waypointY/2, 2))
+        dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 1:  # threshold saying we hit the point
             # self.().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.currentTWayPoint = None
 
-        desiredQ = math.atan2(waypointY / 2-self.currentY, waypointX / 2-self.currentX)
+        desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
         thetaError = desiredQ - self.currentTheta
 
         if thetaError > math.pi:
