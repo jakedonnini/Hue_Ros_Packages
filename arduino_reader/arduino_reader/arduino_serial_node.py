@@ -10,7 +10,7 @@ class ArduinoSerialNode(Node):
         super().__init__('arduino_serial_node')
 
         # Initialize serial connection to Arduino
-        self.ser = serial.Serial('/dev/ttyACM1', 115200, timeout=1)
+        self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
         time.sleep(2)  # Wait for serial connection to initialize
 
         # Publishers for left and right encoder values
