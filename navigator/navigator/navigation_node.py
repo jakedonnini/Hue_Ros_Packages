@@ -246,8 +246,8 @@ class GPSSubscriberPublisher(Node):
             pwmDel = self.constrain(pwmDel, -200, 200)
 
         # this is to make sure that its not too slow to turn the robot. Take out for real drive train
-        if abs(pwmDel) < 40:
-            pwmDel = 40 * abs(pwmDel)/pwmDel
+        # if abs(pwmDel) < 40:
+        #     pwmDel = 40 * abs(pwmDel)/pwmDel
 
         # pwmDel = self.constrain(pwmDel, -100, 100)
 
