@@ -71,6 +71,7 @@ class GPSSubscriberPublisher(Node):
         self.currentTWayPoint = None
         self.pantingToggle = 0
         self.toggleHasSent = False
+        self.isPainting = 0
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -133,6 +134,7 @@ class GPSSubscriberPublisher(Node):
         with self.lock:
             self.encoder_left = msg.l
             self.encoder_right = msg.r
+            self.isPainting = msg.toggle
             self.encoder_data_updated = True  # Flag for new data
 
     def waypoint_callback(self, msg):
@@ -262,11 +264,17 @@ class GPSSubscriberPublisher(Node):
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
         pwm_msg.l = int(self.pwml_value)
+        # only send the toggle comands once
         if self.toggleHasSent:
             self.pantingToggle = 0
         else:
             self.toggleHasSent = True
         pwm_msg.toggle = self.pantingToggle
+
+        # if no way points make sure the sprayer is off
+        if self.isPainting and not self.waypointBuffer:
+            pwm_msg.toggle = 1
+            self.pwm_publisher.publish(pwm_msg)
 
         # if wheel still spinning send off again
         sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) and (self.encoder_left != 0 or self.encoder_right != 0)
