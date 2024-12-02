@@ -27,7 +27,7 @@ class CoordinatesPublisher(Node):
             with open(filename, 'r') as file:
                 for line in file:
                     x, y, t = map(float, line.strip().split()) # split into x y and toggle
-                    coordinates.append((x, y, int(t))
+                    coordinates.append((x, y, int(t)))
             self.get_logger().info(f'Loaded {len(coordinates)} coordinates from file.')
         except Exception as e:
             self.get_logger().error(f'Failed to load coordinates from file: {e}')
