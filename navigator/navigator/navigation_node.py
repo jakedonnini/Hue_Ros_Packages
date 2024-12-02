@@ -274,7 +274,7 @@ class GPSSubscriberPublisher(Node):
 
         # for Kalman filiter testing
         self.get_logger().info(
-            f'GPS: {round(self.self.x_gps_cm, 2)}, {round(self.self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
+            f'GPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
         )
 
     def stop_threads(self):
