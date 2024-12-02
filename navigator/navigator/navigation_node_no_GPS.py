@@ -60,8 +60,9 @@ class GPSSubscriberPublisher(Node):
         self.currentY = 0
 
         # constants (change if drive train changes)
-        self.wheelR = 3.45
-        self.wheelL = 14.05
+        self.wheelR = 10.16
+        self.wheelL = 64.77
+        self.encoderTicks = 8192.0
         self.deltaT = 0.05 # 100ms time intervals
 
         # save old values to onlt send when it changes
@@ -119,8 +120,8 @@ class GPSSubscriberPublisher(Node):
 
     def getEncoderPose(self):
         """call everytime serial data comes in"""
-        vL = (6.2832*self.wheelR*self.encoder_left)/(1440.0*self.deltaT) #change with the number of ticks per encoder turn
-        vR = (6.2832*self.wheelR*self.encoder_right)/(1440.0*self.deltaT)
+        vL = (6.2832*self.wheelR*self.encoder_left)/(self.encoderTicks*self.deltaT) #change with the number of ticks per encoder turn
+        vR = (6.2832*self.wheelR*self.encoder_right)/(self.encoderTicks*self.deltaT)
         V = 0.5*(vR+vL)
         dV = vR - vL
         self.encoderX += self.deltaT*V*math.cos(self.encoderTheta)
