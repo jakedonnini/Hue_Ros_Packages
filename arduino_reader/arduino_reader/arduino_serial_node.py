@@ -48,7 +48,7 @@ class ArduinoSerialNode(Node):
                     # Publish the PWM values
                     self.encoder_pub.publish(enc_msg)
 
-                    self.get_logger().info(f'Received encoders: Left={left_enc}, Right={right_enc}')
+                    self.get_logger().info(f'Received encoders: Left={left_enc}, Right={right_enc}, Painting: {toggleState}')
                 except ValueError:
                     self.get_logger().error(f'Invalid data received: {data}')
             time.sleep(0.01)  # Small sleep to avoid overloading the CPU
