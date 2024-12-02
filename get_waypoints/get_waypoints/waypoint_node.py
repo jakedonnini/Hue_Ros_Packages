@@ -26,8 +26,8 @@ class CoordinatesPublisher(Node):
         try:
             with open(filename, 'r') as file:
                 for line in file:
-                    x, y = map(float, line.strip().split())
-                    coordinates.append((x, y))
+                    x, y, t = map(float, line.strip().split()) # split into x y and toggle
+                    coordinates.append((x, y, int(t))
             self.get_logger().info(f'Loaded {len(coordinates)} coordinates from file.')
         except Exception as e:
             self.get_logger().error(f'Failed to load coordinates from file: {e}')
@@ -36,16 +36,17 @@ class CoordinatesPublisher(Node):
     def publish_coordinates(self):
         # Get the current coordinate pair
         coord = self.coordinates[self.index]
-        x, y = coord
+        x, y, t = coord
 
         coord_msg = Coordinates()
-        coord_msg.x = x/1.5
+        coord_msg.x = x/1.5 # make smaller by 1.5
         coord_msg.y = y/1.5
+        coord_msg.toggle = t
 
         # Publish the x and y coordinates
         self.coord_pub.publish(coord_msg)
 
-        self.get_logger().info(f'Published coordinates: X={x}, Y={y}')
+        self.get_logger().info(f'Published coordinates: X={x}, Y={y}, toggle: {t}')
 
         # Move to the next coordinate in the array
         self.index = (self.index + 1) % len(self.coordinates)
