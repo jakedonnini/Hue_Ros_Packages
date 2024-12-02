@@ -22,6 +22,7 @@ class ArduinoSerialNode(Node):
         # Variables to store the current speed values (PWM)
         self.pwmr_value = 0
         self.pwml_value = 0
+        self.isSpraying = 0
 
         # Flag to control reading from serial
         self.reading_serial = True
@@ -42,7 +43,8 @@ class ArduinoSerialNode(Node):
                     enc_msg = TwoInt()
                     enc_msg.l = left_enc
                     enc_msg.r = right_enc
-
+                    enc_msg.toggle = None
+                    
                     # Publish the PWM values
                     self.encoder_pub.publish(enc_msg)
 
@@ -55,7 +57,9 @@ class ArduinoSerialNode(Node):
         """Handles incoming speed right value and sends it to Arduino."""
         self.pwmr_value = msg.r
         self.pwml_value = msg.l
-        self.get_logger().info(f'Received PWM: {self.pwml_value} {self.pwmr_value}')
+        self.isSpraying = msg.toggle
+        
+        self.get_logger().info(f'Received PWM: {self.pwml_value} {self.pwmr_value} {self.isSpraying}')
         self.send_pwm_to_arduino()
 
     def send_pwm_to_arduino(self):
@@ -65,7 +69,7 @@ class ArduinoSerialNode(Node):
 
         try:
             # Format and send the PWM values to Arduino
-            pwm_message = f'{self.pwml_value} {self.pwmr_value}\n'
+            pwm_message = f'{self.pwml_value} {self.pwmr_value} {self.isSpraying}\n'
             self.ser.write(pwm_message.encode())
             self.get_logger().info(f'Sent speed values to Arduino: {pwm_message.strip()}')
         except serial.SerialException as e:
