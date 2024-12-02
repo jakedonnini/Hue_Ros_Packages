@@ -163,7 +163,9 @@ class GPSSubscriberPublisher(Node):
             # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
             if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
                 with self.lock:
-                    self.currentTWayPoint, self.pantingToggle = self.waypointBuffer.pop(0)
+                    x, y, t = self.waypointBuffer.pop(0)
+                    self.currentTWayPoint = (x, y)
+                    self.pantingToggle = t
             time.sleep(0.05)
 
     def getEncoderPose(self):
