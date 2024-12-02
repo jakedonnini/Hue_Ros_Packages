@@ -43,7 +43,7 @@ class ArduinoSerialNode(Node):
                     enc_msg = TwoInt()
                     enc_msg.l = left_enc
                     enc_msg.r = right_enc
-                    enc_msg.toggle = None
+                    enc_msg.toggle = 0
                     
                     # Publish the PWM values
                     self.encoder_pub.publish(enc_msg)
