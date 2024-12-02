@@ -70,6 +70,7 @@ class GPSSubscriberPublisher(Node):
         self.waypointBuffer = []
         self.currentTWayPoint = None
         self.pantingToggle = 0
+        self.toggleHasSent = False
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -166,6 +167,7 @@ class GPSSubscriberPublisher(Node):
                     x, y, t = self.waypointBuffer.pop(0)
                     self.currentTWayPoint = (x, y)
                     self.pantingToggle = t
+                    self.toggleHasSent = False
             time.sleep(0.05)
 
     def getEncoderPose(self):
@@ -260,6 +262,10 @@ class GPSSubscriberPublisher(Node):
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
         pwm_msg.l = int(self.pwml_value)
+        if self.toggleHasSent:
+            self.pantingToggle = 0
+        else:
+            self.toggleHasSent = True
         pwm_msg.toggle = self.pantingToggle
 
         # if wheel still spinning send off again
