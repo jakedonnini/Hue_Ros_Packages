@@ -38,12 +38,12 @@ class ArduinoSerialNode(Node):
                 try:
                     # Read data from Arduino in "123 456" format
                     data = self.ser.readline().decode('utf-8').strip()
-                    left_enc, right_enc = map(int, data.split())
+                    left_enc, right_enc, toggleState = map(int, data.split())
 
                     enc_msg = TwoInt()
                     enc_msg.l = left_enc
                     enc_msg.r = right_enc
-                    enc_msg.toggle = 0
+                    enc_msg.toggle = toggleState
                     
                     # Publish the PWM values
                     self.encoder_pub.publish(enc_msg)
