@@ -35,6 +35,9 @@ class GPSSubscriberPublisher(Node):
 
         self.waypointBuffer = []
         self.currentTWayPoint = None
+        self.pantingToggle = 0
+        self.toggleHasSent = False
+        self.isPainting = 0
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -84,12 +87,13 @@ class GPSSubscriberPublisher(Node):
         with self.lock:
             self.latitude = msg.x
             self.longitude = msg.y
-            self.get_logger().info(f"GPS!!!!!")
+            # self.get_logger().info(f"GPS!!!!!")
 
     def encoder_callback(self, msg):
         with self.lock:
             self.encoder_left = msg.l
             self.encoder_right = msg.r
+            self.isPainting = msg.toggle
             self.encoder_data_updated = True  # Flag for new data
 
     def waypoint_callback(self, msg):
@@ -115,7 +119,10 @@ class GPSSubscriberPublisher(Node):
             # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
             if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
                 with self.lock:
-                    self.currentTWayPoint = self.waypointBuffer.pop(0)
+                    x, y, t = self.waypointBuffer.pop(0)
+                    self.currentTWayPoint = (x, y)
+                    self.pantingToggle = t
+                    self.toggleHasSent = False
             time.sleep(0.05)
 
     def getEncoderPose(self):
@@ -169,13 +176,13 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20*4  # turn speed
+        KQ = 20*2  # turn speed
         pwmDel = KQ * thetaError
-        pwmAvg = 75
+        pwmAvg = 60
 
         if abs(thetaError) > 0.3 or self.currentTWayPoint is None:
             pwmAvg = 0
-            pwmDel = self.constrain(pwmDel, -75, 75)
+            pwmDel = self.constrain(pwmDel, -50, 50)
 
         pwmDel = self.constrain(pwmDel, -100, 100)
 
@@ -185,6 +192,17 @@ class GPSSubscriberPublisher(Node):
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
         pwm_msg.l = int(self.pwml_value)
+         # only send the toggle comands once
+        if self.toggleHasSent:
+            self.pantingToggle = 0
+        else:
+            self.toggleHasSent = True
+        pwm_msg.toggle = self.pantingToggle
+
+        # if no way points make sure the sprayer is off
+        if self.isPainting and not self.waypointBuffer:
+            pwm_msg.toggle = 1
+            self.pwm_publisher.publish(pwm_msg)
 
         # if wheel still spinning send off again
         sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) and (self.encoder_left != 0 or self.encoder_right != 0)
