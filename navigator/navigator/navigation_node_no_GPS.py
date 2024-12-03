@@ -98,7 +98,7 @@ class GPSSubscriberPublisher(Node):
 
     def waypoint_callback(self, msg):
         with self.lock:
-            self.waypointBuffer.append((msg.x, msg.y))
+            self.waypointBuffer.append((msg.x, msg.y, msg.toggle))
 
     def run_publish_loop(self):
         """Thread to continuously publish PWM values."""
