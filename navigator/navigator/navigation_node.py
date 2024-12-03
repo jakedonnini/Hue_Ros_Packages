@@ -218,9 +218,13 @@ class GPSSubscriberPublisher(Node):
         self.currentY = self.x[1, 0]
         self.currentTheta = self.x[2, 0]
 
+        self.get_logger().debug(
+            f'\r[DEBUG] X:\n {self.x}'
+        )
+
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 1:  # threshold saying we hit the point
-            # self.().info(f'Hit ({waypointX}, {waypointY}) waypoint')
+            # self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.currentTWayPoint = None
 
         desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
@@ -231,9 +235,9 @@ class GPSSubscriberPublisher(Node):
         elif thetaError < -math.pi:
             thetaError += 2 * math.pi
 
-        # self.().info(
-        #     f'Theat error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
-        # )
+        self.get_logger().debug(
+            f'\r[DEBUG] Theat error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
+        )
 
         return dist2Go, thetaError
 
@@ -251,12 +255,6 @@ class GPSSubscriberPublisher(Node):
         if abs(thetaError) > 0.15 or self.currentTWayPoint is None:
             pwmAvg = 0
             pwmDel = self.constrain(pwmDel, -50, 50)
-
-        # this is to make sure that its not too slow to turn the robot. Take out for real drive train
-        # if abs(pwmDel) < 40:
-        #     pwmDel = 40 * abs(pwmDel)/pwmDel
-
-        # pwmDel = self.constrain(pwmDel, -100, 100)
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
@@ -292,7 +290,7 @@ class GPSSubscriberPublisher(Node):
 
         # for Kalman filiter testing
         self.get_logger().info(
-            f'GPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} PWM R: {self.pwmr_value} L: {self.pwml_value}'
+            f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} PWM R: {self.pwmr_value} L: {self.pwml_value}'
         )
 
     def stop_threads(self):
