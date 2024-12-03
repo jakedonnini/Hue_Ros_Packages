@@ -34,10 +34,10 @@ class GPSSubscriberPublisher(Node):
         ])
         
         # Process noise covariance
-        self.Q = np.diag([0.1, 0.1, 0.01])
+        self.Q = np.diag([0.1, 0.1, 0.05])
         
-        # Measurement noise covariance (GPS noise)
-        self.R = np.diag([0.11, 0.15])
+        # Measurement noise covariance (GPS noise) #0.11, 0.15
+        self.R = np.diag([100.0, 100.0])
         
         # Observation matrix
         self.H = np.array([
