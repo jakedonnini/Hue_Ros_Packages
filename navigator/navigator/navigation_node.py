@@ -92,6 +92,11 @@ class GPSSubscriberPublisher(Node):
         self.currentX = 0
         self.currentY = 0
 
+        # for checking, not used in actual calcs
+        self.encoderX = 0 
+        self.encoderY = 0
+        self.encoderTheta = 0
+
         # constants (change if drive train changes)
         self.wheelR = 10.16
         self.wheelL = 64.77
@@ -174,10 +179,16 @@ class GPSSubscriberPublisher(Node):
 
     def getEncoderPose(self):
         """call everytime serial data comes in"""
+        
         vL = (6.2832*self.wheelR*self.encoder_left)/(self.encoderTicks*self.dt) #change with the number of ticks per encoder turn
         vR = (6.2832*self.wheelR*self.encoder_right)/(self.encoderTicks*self.dt)
         V = 0.5*(vR+vL)
         dV = (vR - vL) / self.wheelL
+
+        # compute the encoder pos without the gps for refrance
+        self.encoderX += self.dt*V*math.cos(self.encoderTheta)
+        self.encoderY += self.dt*V*math.sin(self.encoderTheta)
+        self.encoderTheta += self.dt*dV
 
         u = np.array([[V], [dV]])
 
