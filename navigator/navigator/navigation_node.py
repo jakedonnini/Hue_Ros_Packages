@@ -246,11 +246,11 @@ class GPSSubscriberPublisher(Node):
 
         KQ = 20*2  # turn speed
         pwmDel = KQ * thetaError
-        pwmAvg = 70
+        pwmAvg = 60
 
         if abs(thetaError) > 0.15 or self.currentTWayPoint is None:
             pwmAvg = 0
-            pwmDel = self.constrain(pwmDel, -200, 200)
+            pwmDel = self.constrain(pwmDel, -50, 50)
 
         # this is to make sure that its not too slow to turn the robot. Take out for real drive train
         # if abs(pwmDel) < 40:
@@ -292,7 +292,8 @@ class GPSSubscriberPublisher(Node):
 
         # for Kalman filiter testing
         self.get_logger().info(
-            f'GPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
+            f'GPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)},
+            {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} PWM R: {self.pwmr_value} L: {self.pwml_value}'
         )
 
     def stop_threads(self):
