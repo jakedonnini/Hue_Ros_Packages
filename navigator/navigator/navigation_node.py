@@ -218,8 +218,8 @@ class GPSSubscriberPublisher(Node):
         self.currentY = self.x[1, 0]
         self.currentTheta = self.x[2, 0]
 
-        self.get_logger().debug(
-            f'\r[DEBUG] X:\n {self.x}'
+        self.get_logger().info(
+            f'\rX:\n {self.x}'
         )
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
@@ -235,8 +235,8 @@ class GPSSubscriberPublisher(Node):
         elif thetaError < -math.pi:
             thetaError += 2 * math.pi
 
-        self.get_logger().debug(
-            f'\r[DEBUG] Theat error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
+        self.get_logger().info(
+            f'\r[Theta error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
         )
 
         return dist2Go, thetaError
