@@ -292,11 +292,11 @@ class GPSSubscriberPublisher(Node):
         pwmDel = KQ * thetaError
         pwmAvg = 60
 
-        if abs(thetaError) > 0.30 or self.currentTWayPoint is not None:
+        if abs(thetaError) > 0.30 or self.currentTWayPoint is None:
             pwmAvg = 0
             pwmDel = self.constrain(pwmDel, -50, 50)
             # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint not None:
+            if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint is not None:
                 pwmDel += 10
 
         self.pwmr_value = pwmAvg + pwmDel
