@@ -361,9 +361,7 @@ class GPSSubscriberPublisher(Node):
                     encoder_y = self.encoderY
                     kalman_x = self.x[0, 0]
                     kalman_y = self.x[1, 0]
-                 self.get_logger().info(
-                'WRITING FILE'
-                )
+                self.get_logger().info('WRITING FILE')
                 timestamp = time.time()
                 file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y}\n")
                 file.flush()  # Ensure data is written to the file
