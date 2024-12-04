@@ -134,7 +134,7 @@ class GPSSubscriberPublisher(Node):
         self.processor_thread.start()
 
         # File for logging positions
-        self.log_file = "/home/hue/ros2_ws/position_log.txt"
+        # self.log_file = "/home/hue/ros2_ws/position_log.txt"
 
         # Threading for logging positions
         self.logging_thread = threading.Thread(target=self.log_positions)
@@ -354,8 +354,8 @@ class GPSSubscriberPublisher(Node):
     def log_positions(self):
         """Continuously log GPS, encoder, and Kalman filter positions to a file."""
         try:
-            self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
-            with open(self.log_file, 'w') as file:
+            # self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
+            with open("/home/hue/ros2_ws/position_log.txt", 'w') as file:
                 file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y\n")  # Header
                 while self.running:
                     with self.lock:
