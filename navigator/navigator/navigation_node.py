@@ -191,7 +191,7 @@ class GPSSubscriberPublisher(Node):
         self.encoderTheta += self.dt*dV
 
         self.get_logger().info(
-            f'\r[ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}'
+            f'[ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}'
         )
 
         u = np.array([[V], [dV]])
@@ -251,7 +251,7 @@ class GPSSubscriberPublisher(Node):
             thetaError += 2 * math.pi
 
         self.get_logger().info(
-            f'\r[Theta error: {round(thetaError, 2)} desiredQ {round(desiredQ, 2)} CQ {round(self.currentTheta, 2)}'
+            f'[Theta error: {round(thetaError, 2)} desiredQ {round(desiredQ, 2)} CQ {round(self.currentTheta, 2)}'
         )
 
         return dist2Go, thetaError
@@ -291,6 +291,10 @@ class GPSSubscriberPublisher(Node):
         if self.isPainting and not self.waypointBuffer:
             pwm_msg.toggle = 1
             self.pwm_publisher.publish(pwm_msg)
+
+        self.get_logger().info(
+            f'X:\n {self.x}'
+        )
 
         # if wheel still spinning send off again
         sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) and (self.encoder_left != 0 or self.encoder_right != 0)
