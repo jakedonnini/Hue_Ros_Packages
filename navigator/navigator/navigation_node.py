@@ -134,7 +134,7 @@ class GPSSubscriberPublisher(Node):
         self.processor_thread.start()
 
         # File for logging positions
-        self.log_file = "position_log.txt"
+        self.log_file = "/home/hue/ros2_ws/position_log.txt"
 
         # Threading for logging positions
         self.logging_thread = threading.Thread(target=self.log_positions)
