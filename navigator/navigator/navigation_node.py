@@ -136,10 +136,10 @@ class GPSSubscriberPublisher(Node):
         self.log_file = "position_log.txt"
 
         # Threading for logging positions
-        self.logging_thread = threading.Thread(target=self.log_positions)
+        # self.logging_thread = threading.Thread(target=self.log_positions)
 
         # Start the logging thread
-        self.logging_thread.start()
+        # self.logging_thread.start()
 
     def gps_callback(self, msg):
         with self.lock:
@@ -345,6 +345,7 @@ class GPSSubscriberPublisher(Node):
         # )
 
         # for Kalman filiter testing
+        self.log_positions()
         self.get_logger().info(
             f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} PWM R: {self.pwmr_value} L: {self.pwml_value}'
         )
@@ -373,7 +374,7 @@ class GPSSubscriberPublisher(Node):
         self.running = False
         self.publisher_thread.join()
         self.processor_thread.join()
-        self.logging_thread.join()  # Stop the logging thread
+        # self.logging_thread.join()  # Stop the logging thread
 
         # Ensure the motors turn off on close
         pwm_msg = TwoInt()
