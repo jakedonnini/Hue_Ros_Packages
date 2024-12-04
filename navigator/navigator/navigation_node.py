@@ -36,10 +36,10 @@ class GPSSubscriberPublisher(Node):
         ])
         
         # Process noise covariance
-        self.Q = np.diag([0.1, 0.1, 0.05])
+        self.Q = np.diag([0.2, 0.2, 0.1])
         
         # Measurement noise covariance (GPS noise) #0.11, 0.15
-        self.R = np.diag([100.0, 100.0])
+        self.R = np.diag([0.15, 0.15])
         
         # Observation matrix
         self.H = np.array([
@@ -71,6 +71,7 @@ class GPSSubscriberPublisher(Node):
 
         self.waypointBuffer = []
         self.currentTWayPoint = None
+        self.firstWayPointSent = False
         self.pantingToggle = 0
         self.toggleHasSent = False
         self.isPainting = 0
@@ -177,6 +178,13 @@ class GPSSubscriberPublisher(Node):
                     self.currentTWayPoint = (x, y)
                     self.pantingToggle = t
                     self.toggleHasSent = False
+
+                    if not self.firstWayPointSent:
+                        # when the first waypoint is sent reset the origin so we always start at 0 0
+                        self.origin_lat = self.latitude
+                        self.origin_lon = self.longitude
+                        self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
+                        self.firstWayPointSent = True
             time.sleep(0.05)
 
     def getEncoderPose(self):
@@ -219,6 +227,7 @@ class GPSSubscriberPublisher(Node):
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
         if self.origin_lat is None or self.origin_lon is None:
+            # set the orign once we start getting data
             self.origin_lat = self.latitude
             self.origin_lon = self.longitude
             self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
@@ -287,7 +296,7 @@ class GPSSubscriberPublisher(Node):
             pwmAvg = 0
             pwmDel = self.constrain(pwmDel, -50, 50)
             # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 5 and self.encoder_right <= 5:
+            if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint not None:
                 pwmDel += 10
 
         self.pwmr_value = pwmAvg + pwmDel
@@ -308,9 +317,9 @@ class GPSSubscriberPublisher(Node):
             pwm_msg.toggle = 1
             self.pwm_publisher.publish(pwm_msg)
 
-        self.get_logger().info(
-            f'X:\n {self.x}'
-        )
+        # self.get_logger().info(
+        #     f'X:\n {self.x}'
+        # )
 
         # if wheel still spinning send off again
         sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) and (self.encoder_left != 0 or self.encoder_right != 0)
