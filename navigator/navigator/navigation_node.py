@@ -194,6 +194,20 @@ class GPSSubscriberPublisher(Node):
             f'[ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}'
         )
 
+        # update F state transition matrix
+        self.F = np.array([
+            [1, 0, -self.dt * np.sin(self.x[2, 0])],
+            [0, 1,  self.dt * np.cos(self.x[2, 0])],
+            [0, 0, 1]
+        ])
+        
+        # update B Control matrix
+        self.B = np.array([
+            [self.dt * np.cos(self.x[2, 0]), 0],
+            [self.dt * np.sin(self.x[2, 0]), 0],
+            [0, self.dt]
+        ])
+
         u = np.array([[V], [dV]])
 
         # Predict Step
