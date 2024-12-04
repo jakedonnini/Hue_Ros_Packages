@@ -20,11 +20,13 @@ class GPSSubscriberPublisher(Node):
         self.P = np.eye(3)
         
         # Define state transition matrix
-        self.F = np.array([
-            [1, 0, -self.dt * np.sin(self.x[2, 0])],
-            [0, 1,  self.dt * np.cos(self.x[2, 0])],
-            [0, 0, 1]
-        ])
+        # this should be I unless external forces act on the bot
+        # self.F = np.array([
+        #     [1, 0, -self.dt * np.sin(self.x[2, 0])],
+        #     [0, 1,  self.dt * np.cos(self.x[2, 0])],
+        #     [0, 0, 1]
+        # ])
+        self.F = np.eye(3)
         
         # Control matrix
         self.B = np.array([
@@ -195,11 +197,11 @@ class GPSSubscriberPublisher(Node):
         )
 
         # update F state transition matrix
-        self.F = np.array([
-            [1, 0, -self.dt * np.sin(self.x[2, 0])],
-            [0, 1,  self.dt * np.cos(self.x[2, 0])],
-            [0, 0, 1]
-        ])
+        # self.F = np.array([
+        #     [1, 0, -V * self.dt * np.sin(self.x[2, 0])],
+        #     [0, 1,  V * self.dt * np.cos(self.x[2, 0])],
+        #     [0, 0, 1]
+        # ])
         
         # update B Control matrix
         self.B = np.array([
