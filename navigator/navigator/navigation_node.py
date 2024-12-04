@@ -352,22 +352,25 @@ class GPSSubscriberPublisher(Node):
 
     def log_positions(self):
         """Continuously log GPS, encoder, and Kalman filter positions to a file."""
-        self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
-        with open(self.log_file, 'w') as file:
-            file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y\n")  # Header
-            while self.running:
-                with self.lock:
-                    gps_x = self.x_gps_cm
-                    gps_y = self.y_gps_cm
-                    encoder_x = self.encoderX
-                    encoder_y = self.encoderY
-                    kalman_x = self.x[0, 0]
-                    kalman_y = self.x[1, 0]
-                self.get_logger().info(f'WRITING FILE {encoder_y}')
-                timestamp = time.time()
-                file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y}\n")
-                file.flush()  # Ensure data is written to the file
-                time.sleep(0.1)  # Adjust logging frequency as needed
+        try:
+            self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
+            with open(self.log_file, 'w') as file:
+                file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y\n")  # Header
+                while self.running:
+                    with self.lock:
+                        gps_x = self.x_gps_cm
+                        gps_y = self.y_gps_cm
+                        encoder_x = self.encoderX
+                        encoder_y = self.encoderY
+                        kalman_x = self.x[0, 0]
+                        kalman_y = self.x[1, 0]
+                    self.get_logger().info(f'WRITING FILE {encoder_y}')
+                    timestamp = time.time()
+                    file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y}\n")
+                    file.flush()  # Ensure data is written to the file
+                    time.sleep(0.1)  # Adjust logging frequency as needed
+        except Exception as e:
+            self.get_logger().error(f"Failed to write log: {e}")
 
     def stop_threads(self):
         """Stop the threads gracefully."""
