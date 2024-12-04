@@ -292,7 +292,7 @@ class GPSSubscriberPublisher(Node):
         pwmDel = KQ * thetaError
         pwmAvg = 60
 
-        if abs(thetaError) > 0.30 or self.currentTWayPoint is None:
+        if abs(thetaError) > 0.30 or self.currentTWayPoint is not None:
             pwmAvg = 0
             pwmDel = self.constrain(pwmDel, -50, 50)
             # if the robot starts to stop moving because it can't quite make it
