@@ -190,6 +190,10 @@ class GPSSubscriberPublisher(Node):
         self.encoderY += self.dt*V*math.sin(self.encoderTheta)
         self.encoderTheta += self.dt*dV
 
+        self.get_logger().info(
+            f'\r[ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}'
+        )
+
         u = np.array([[V], [dV]])
 
         # Predict Step
@@ -229,9 +233,9 @@ class GPSSubscriberPublisher(Node):
         self.currentY = self.x[1, 0]
         self.currentTheta = self.x[2, 0]
 
-        self.get_logger().info(
-            f'\rX:\n {self.x}'
-        )
+        # self.get_logger().info(
+        #     f'\rX:\n {self.x}'
+        # )
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 1:  # threshold saying we hit the point
@@ -247,7 +251,7 @@ class GPSSubscriberPublisher(Node):
             thetaError += 2 * math.pi
 
         self.get_logger().info(
-            f'\r[Theta error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
+            f'\r[Theta error: {round(thetaError, 2)} desiredQ {round(desiredQ, 2)} CQ {round(self.currentTheta, 2)}'
         )
 
         return dist2Go, thetaError
@@ -263,9 +267,12 @@ class GPSSubscriberPublisher(Node):
         pwmDel = KQ * thetaError
         pwmAvg = 60
 
-        if abs(thetaError) > 0.15 or self.currentTWayPoint is None:
+        if abs(thetaError) > 0.30 or self.currentTWayPoint is None:
             pwmAvg = 0
             pwmDel = self.constrain(pwmDel, -50, 50)
+            # if the robot starts to stop moving because it can't quite make it
+            if self.encoder_left <= 5 and self.encoder_right <= 5:
+                pwmDel += 10
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
