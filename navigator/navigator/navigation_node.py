@@ -136,10 +136,10 @@ class GPSSubscriberPublisher(Node):
         self.log_file = "position_log.txt"
 
         # Threading for logging positions
-        # self.logging_thread = threading.Thread(target=self.log_positions)
+        self.logging_thread = threading.Thread(target=self.log_positions)
 
         # Start the logging thread
-        # self.logging_thread.start()
+        self.logging_thread.start()
 
     def gps_callback(self, msg):
         with self.lock:
@@ -352,6 +352,7 @@ class GPSSubscriberPublisher(Node):
 
     def log_positions(self):
         """Continuously log GPS, encoder, and Kalman filter positions to a file."""
+        self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
         with open(self.log_file, 'w') as file:
             file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y\n")  # Header
             while self.running:
@@ -363,7 +364,6 @@ class GPSSubscriberPublisher(Node):
                     kalman_x = self.x[0, 0]
                     kalman_y = self.x[1, 0]
                 self.get_logger().info(f'WRITING FILE {encoder_y}')
-                self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
                 timestamp = time.time()
                 file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y}\n")
                 file.flush()  # Ensure data is written to the file
@@ -374,7 +374,7 @@ class GPSSubscriberPublisher(Node):
         self.running = False
         self.publisher_thread.join()
         self.processor_thread.join()
-        # self.logging_thread.join()  # Stop the logging thread
+        self.logging_thread.join()  # Stop the logging thread
 
         # Ensure the motors turn off on close
         pwm_msg = TwoInt()
