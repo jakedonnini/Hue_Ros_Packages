@@ -201,12 +201,12 @@ class GPSSubscriberPublisher(Node):
                 self.destickAccum += 1 * math.copysign(1, thetaError)
             else:
                 # at 300 offset: 39 is lowest with 25 avg encoder count 
-                self.destickAccum = 36 * math.copysign(1, thetaError)
+                self.destickAccum = 0
         else:
             if self.pwmAvgAccum < pwmAvg:
                 self.pwmAvgAccum += 10
                 
-
+        # TODO goes from 39 to 70 often
         pwmDel = self.constrain(pwmDel, -70, 70)
 
         self.pwmr_value = self.pwmAvgAccum + pwmDel
@@ -223,7 +223,7 @@ class GPSSubscriberPublisher(Node):
         pwm_msg.toggle = self.pantingToggle
 
         # if no way points make sure the sprayer is off
-        if self.isPainting and not self.waypointBuffer:
+        if self.isPainting and self.currentTWayPoint is not None:
             pwm_msg.toggle = 1
             self.pwm_publisher.publish(pwm_msg)
 
