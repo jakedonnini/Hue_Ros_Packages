@@ -158,12 +158,12 @@ class GPSSubscriberPublisher(Node):
         self.currentY = self.encoderY
         self.currentTheta = self.encoderTheta
 
-        dist2Go = math.sqrt(math.pow(self.currentX - waypointX/2, 2) + math.pow(self.currentY - waypointY/2, 2))
+        dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 1:  # threshold saying we hit the point
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.currentTWayPoint = None
 
-        desiredQ = math.atan2(waypointY / 2-self.currentY, waypointX / 2-self.currentX)
+        desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
         thetaError = desiredQ - self.currentTheta
 
         if thetaError > math.pi:
@@ -184,13 +184,15 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20*5  # turn speed
+        KQ = 20*2  # turn speed
         pwmDel = KQ * thetaError
         pwmAvg = 80
 
         # adjust threshold basd on distance EXPERIMENTAL was 0.2
         # should be within 5% of the total distance
-        if abs(thetaError) > dist * 0.05 or self.currentTWayPoint is None:
+        threshold = dist * 0.05
+        threshold = self.constrain(threshold, 0.1, math.pi/4)
+        if abs(thetaError) > threshold or self.currentTWayPoint is None:
             pwmAvg = 0
             # set the ramp Accumulator back to 0 every time we stop
             self.pwmAvgAccum = 0
