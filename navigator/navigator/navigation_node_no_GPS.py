@@ -197,7 +197,7 @@ class GPSSubscriberPublisher(Node):
                 self.destickAccum += 1 * math.copysign(1, thetaError)
             else:
                 # at 300 offset: 39 is lowest with 25 avg encoder count 
-                self.destickAccum = 36
+                self.destickAccum = 36 * math.copysign(1, thetaError)
         else:
             if self.pwmAvgAccum < pwmAvg:
                 self.pwmAvgAccum += 2
