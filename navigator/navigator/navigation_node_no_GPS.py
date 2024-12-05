@@ -36,7 +36,7 @@ class GPSSubscriberPublisher(Node):
         self.waypointBuffer = []
         self.currentTWayPoint = None
         self.pantingToggle = 0
-        self.toggleHasSent = False
+        self.shouldBePainting = 0
         self.isPainting = 0
 
         # Create publishers for the PWMR and PWML topics
@@ -124,8 +124,14 @@ class GPSSubscriberPublisher(Node):
                 with self.lock:
                     x, y, t = self.waypointBuffer.pop(0)
                     self.currentTWayPoint = (x, y)
+                    # keep track of spraying state
+                    if t:
+                        # toggle every time t is 1
+                        if self.shouldBePainting:
+                            self.shouldBePainting = 0
+                        else:
+                            self.shouldBePainting = 1
                     self.pantingToggle = t
-                    self.toggleHasSent = False
             time.sleep(0.05)
 
     def getEncoderPose(self):
@@ -179,7 +185,7 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20*3  # turn speed
+        KQ = 20*3.5  # turn speed
         pwmDel = KQ * thetaError
         pwmAvg = 80
 
@@ -215,12 +221,11 @@ class GPSSubscriberPublisher(Node):
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
         pwm_msg.l = int(self.pwml_value)
-         # only send the toggle comands once
-        if self.toggleHasSent:
-            self.pantingToggle = 0
+
+        if self.shouldBePainting != self.isPainting:
+            pwm_msg.toggle = 1
         else:
-            self.toggleHasSent = True
-        pwm_msg.toggle = self.pantingToggle
+            pwm_msg.toggle = 0
 
         # if no way points make sure the sprayer is off
         if self.isPainting and self.currentTWayPoint is not None:
