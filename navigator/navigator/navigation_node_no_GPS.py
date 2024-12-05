@@ -190,15 +190,16 @@ class GPSSubscriberPublisher(Node):
             pwmDel = self.constrain(pwmDel, -50, 50)
 
             # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint is not None:
+            if self.encoder_left <= 15 and self.encoder_right <= 15 and self.currentTWayPoint is not None:
                 # if we stop moveing keep increasing until gets unstuck
                 pwmDel += self.destickAccum
-                self.destickAccum += 1
+                # include the sign of the error to turn in the right direction
+                self.destickAccum += 1 * math.copysign(1, thetaError)
             else:
                 self.destickAccum = 0
         else:
             if self.pwmAvgAccum < pwmAvg:
-                self.pwmAvgAccum += 5
+                self.pwmAvgAccum += 1
                 
 
         pwmDel = self.constrain(pwmDel, -70, 70)
