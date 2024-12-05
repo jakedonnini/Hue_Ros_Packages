@@ -38,6 +38,7 @@ class GPSSubscriberPublisher(Node):
         self.pantingToggle = 0
         self.shouldBePainting = False
         self.isPainting = 0
+        self.sentToggle = False
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -128,6 +129,7 @@ class GPSSubscriberPublisher(Node):
                     if t == 1:
                         # toggle every time t is 1
                         self.shouldBePainting = not self.shouldBePainting
+                    self.sentToggle = False
                     self.pantingToggle = t
             time.sleep(0.05)
 
@@ -182,7 +184,7 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20*4  # turn speed
+        KQ = 20*5  # turn speed
         pwmDel = KQ * thetaError
         pwmAvg = 80
 
@@ -229,7 +231,7 @@ class GPSSubscriberPublisher(Node):
             pwm_msg.toggle = 0
 
         # if no way points make sure the sprayer is off
-        if self.isPainting and self.currentTWayPoint is not None:
+        if self.isPainting and self.currentTWayPoint is None:
             pwm_msg.toggle = 1
             self.pwm_publisher.publish(pwm_msg)
 
