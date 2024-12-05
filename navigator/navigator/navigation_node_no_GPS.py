@@ -231,7 +231,7 @@ class GPSSubscriberPublisher(Node):
             pwm_msg.toggle = 0
 
         # if no way points make sure the sprayer is off
-        if self.isPainting and self.currentTWayPoint is None:
+        if self.isPainting and self.currentTWayPoint is None and not self.shouldBePainting:
             pwm_msg.toggle = 1
             self.pwm_publisher.publish(pwm_msg)
 
