@@ -214,9 +214,9 @@ class GPSSubscriberPublisher(Node):
         else:
             if self.pwmAvgAccum < pwmAvg:
                 self.pwmAvgAccum += 10
+            pwmDel = self.constrain(pwmDel, -50, 50)
                 
-        # TODO goes from 39 to 70 often
-        pwmDel = self.constrain(pwmDel, -70, 70)
+        # pwmDel = self.constrain(pwmDel, -70, 70)
 
         self.pwmr_value = self.pwmAvgAccum + pwmDel
         self.pwml_value = self.pwmAvgAccum - pwmDel
