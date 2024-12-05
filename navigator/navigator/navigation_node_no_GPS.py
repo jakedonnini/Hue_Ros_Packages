@@ -185,7 +185,7 @@ class GPSSubscriberPublisher(Node):
             pwmDel = self.constrain(pwmDel, -50, 50)
 
             # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 5 and self.encoder_right <= 5:
+            if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint is not None:
                 pwmDel += 10
 
         pwmDel = self.constrain(pwmDel, -100, 100)
