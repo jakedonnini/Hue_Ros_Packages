@@ -183,23 +183,24 @@ class GPSSubscriberPublisher(Node):
         pwmDel = KQ * thetaError
         pwmAvg = 60
 
-        if abs(thetaError) > 0.10 or self.currentTWayPoint is None:
+        if abs(thetaError) > 0.2 or self.currentTWayPoint is None:
             pwmAvg = 0
             # set the ramp Accumulator back to 0 every time we stop
             self.pwmAvgAccum = 0
-            pwmDel = self.constrain(pwmDel, -50, 50)
+            pwmDel = self.constrain(pwmDel, -70, 70)
 
             # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 15 and self.encoder_right <= 15 and self.currentTWayPoint is not None:
+            if self.encoder_left <= 30 and self.encoder_right <= 30 and self.currentTWayPoint is not None:
                 # if we stop moveing keep increasing until gets unstuck
                 pwmDel += self.destickAccum
                 # include the sign of the error to turn in the right direction
                 self.destickAccum += 1 * math.copysign(1, thetaError)
             else:
-                self.destickAccum = 0
+                # at 300 offset: 39 is lowest with 25 avg encoder count 
+                self.destickAccum = 36
         else:
             if self.pwmAvgAccum < pwmAvg:
-                self.pwmAvgAccum += 1
+                self.pwmAvgAccum += 2
                 
 
         pwmDel = self.constrain(pwmDel, -70, 70)
