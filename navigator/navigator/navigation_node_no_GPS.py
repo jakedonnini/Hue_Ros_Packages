@@ -179,11 +179,11 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20*2  # turn speed
+        KQ = 20*3  # turn speed
         pwmDel = KQ * thetaError
         pwmAvg = 60
 
-        if abs(thetaError) > 0.15 or self.currentTWayPoint is None:
+        if abs(thetaError) > 0.10 or self.currentTWayPoint is None:
             pwmAvg = 0
             # set the ramp Accumulator back to 0 every time we stop
             self.pwmAvgAccum = 0
