@@ -71,6 +71,8 @@ class GPSSubscriberPublisher(Node):
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
         self.pwml_value_old = 0
+        # if we stop moveing keep increasing until gets unstuck
+        self.destickAccum = 0
 
         # Threading for concurrent execution
         self.running = True
@@ -186,7 +188,11 @@ class GPSSubscriberPublisher(Node):
 
             # if the robot starts to stop moving because it can't quite make it
             if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint is not None:
-                pwmDel += 10
+                # if we stop moveing keep increasing until gets unstuck
+                pwmDel += self.destickAccum
+                self.destickAccum += 5
+            else:
+                self.destickAccum = 0
 
         pwmDel = self.constrain(pwmDel, -100, 100)
 
