@@ -73,6 +73,7 @@ class GPSSubscriberPublisher(Node):
         self.pwml_value_old = 0
         # if we stop moveing keep increasing until gets unstuck
         self.destickAccum = 0
+        self.pwmAvgAccum = 0
 
         # Threading for concurrent execution
         self.running = True
@@ -182,22 +183,28 @@ class GPSSubscriberPublisher(Node):
         pwmDel = KQ * thetaError
         pwmAvg = 60
 
-        if abs(thetaError) > 0.3 or self.currentTWayPoint is None:
+        if abs(thetaError) > 0.15 or self.currentTWayPoint is None:
             pwmAvg = 0
+            # set the ramp Accumulator back to 0 every time we stop
+            self.pwmAvgAccum = 0
             pwmDel = self.constrain(pwmDel, -50, 50)
 
             # if the robot starts to stop moving because it can't quite make it
             if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint is not None:
                 # if we stop moveing keep increasing until gets unstuck
                 pwmDel += self.destickAccum
-                self.destickAccum += 5
+                self.destickAccum += 1
             else:
                 self.destickAccum = 0
+        else:
+            if self.pwmAvgAccum < pwmAvg:
+                self.pwmAvgAccum += 5
+                
 
-        pwmDel = self.constrain(pwmDel, -100, 100)
+        pwmDel = self.constrain(pwmDel, -70, 70)
 
-        self.pwmr_value = pwmAvg + pwmDel
-        self.pwml_value = pwmAvg - pwmDel
+        self.pwmr_value = self.pwmAvgAccum + pwmDel
+        self.pwml_value = self.pwmAvgAccum - pwmDel
 
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
