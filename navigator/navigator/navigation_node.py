@@ -71,9 +71,8 @@ class GPSSubscriberPublisher(Node):
 
         self.waypointBuffer = []
         self.currentTWayPoint = None
-        self.firstWayPointSent = False
         self.pantingToggle = 0
-        self.toggleHasSent = False
+        self.shouldBePainting = False
         self.isPainting = 0
 
         # Create publishers for the PWMR and PWML topics
@@ -108,8 +107,9 @@ class GPSSubscriberPublisher(Node):
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
         self.pwml_value_old = 0
-        
+        # if we stop moveing keep increasing until gets unstuck
         self.destickAccum = 0
+        self.pwmAvgAccum = 0
 
         # GPS
         # Initial GPS origin coordinates for conversion to local coordinates
@@ -178,8 +178,12 @@ class GPSSubscriberPublisher(Node):
                 with self.lock:
                     x, y, t = self.waypointBuffer.pop(0)
                     self.currentTWayPoint = (x, y)
+                    # keep track of spraying state
+                    if t == 1:
+                        # toggle every time t is 1
+                        self.shouldBePainting = not self.shouldBePainting
+                    self.sentToggle = False
                     self.pantingToggle = t
-                    self.toggleHasSent = False
 
                     if not self.firstWayPointSent:
                         # when the first waypoint is sent reset the origin so we always start at 0 0
@@ -290,20 +294,34 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20*2  # turn speed
+        KQ = 20*5  # turn speed
         pwmDel = KQ * thetaError
-        pwmAvg = 60
+        pwmAvg = 80
 
-        if abs(thetaError) > 0.30 or self.currentTWayPoint is None:
+        if abs(thetaError) > 0.2 or self.currentTWayPoint is None:
             pwmAvg = 0
-            pwmDel = self.constrain(pwmDel, -50, 50)
+            # set the ramp Accumulator back to 0 every time we stop
+            self.pwmAvgAccum = 0
+            pwmDel = self.constrain(pwmDel, -60, 60)
+
+            if abs(pwmDel) <= 39 and self.currentTWayPoint is not None:
+                # make this the lowest value the PWM can go. minimum speed
+                pwmDel = 39 * math.copysign(1, thetaError)
+
             # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint is not None:
+            if self.encoder_left <= 20 and self.encoder_right <= 20 and self.currentTWayPoint is not None:
                 # if we stop moveing keep increasing until gets unstuck
                 pwmDel += self.destickAccum
-                self.destickAccum += 5
+                # include the sign of the error to turn in the right direction
+                self.destickAccum += 1 * math.copysign(1, thetaError)
             else:
+                # at 300 offset: 39 is lowest with 25 avg encoder count 
                 self.destickAccum = 0
+        else:
+            if self.pwmAvgAccum < pwmAvg:
+                self.pwmAvgAccum += 10
+
+        pwmDel = self.constrain(pwmDel, -70, 70)
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
@@ -312,20 +330,15 @@ class GPSSubscriberPublisher(Node):
         pwm_msg.r = int(self.pwmr_value)
         pwm_msg.l = int(self.pwml_value)
         # only send the toggle comands once
-        if self.toggleHasSent:
-            self.pantingToggle = 0
+        if int(self.shouldBePainting) != self.isPainting:
+            pwm_msg.toggle = 1
         else:
-            self.toggleHasSent = True
-        pwm_msg.toggle = self.pantingToggle
+            pwm_msg.toggle = 0
 
         # if no way points make sure the sprayer is off
-        if self.isPainting and not self.waypointBuffer:
+        if self.isPainting and self.currentTWayPoint is None and not self.shouldBePainting:
             pwm_msg.toggle = 1
             self.pwm_publisher.publish(pwm_msg)
-
-        # self.get_logger().info(
-        #     f'X:\n {self.x}'
-        # )
 
         # if wheel still spinning send off again
         sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) and (self.encoder_left != 0 or self.encoder_right != 0)
