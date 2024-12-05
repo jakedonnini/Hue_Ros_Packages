@@ -6,7 +6,6 @@ from custom_msg.msg import TwoInt
 import time
 import math
 import numpy as np
-import os
 
 
 class GPSSubscriberPublisher(Node):
@@ -133,15 +132,6 @@ class GPSSubscriberPublisher(Node):
         self.publisher_thread.start()
         self.processor_thread.start()
 
-        # File for logging positions
-        # self.log_file = "/home/hue/ros2_ws/position_log.txt"
-
-        # Threading for logging positions
-        self.logging_thread = threading.Thread(target=self.log_positions)
-
-        # Start the logging thread
-        self.logging_thread.start()
-
     def gps_callback(self, msg):
         with self.lock:
             self.latitude = msg.x
@@ -210,9 +200,9 @@ class GPSSubscriberPublisher(Node):
         self.encoderY += self.dt*V*math.sin(self.encoderTheta)
         self.encoderTheta += self.dt*dV
 
-        self.get_logger().info(
-            f'[ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}'
-        )
+        # self.get_logger().info(
+        #     f'[ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}'
+        # )
 
         # update F state transition matrix
         # self.F = np.array([
@@ -285,9 +275,9 @@ class GPSSubscriberPublisher(Node):
         elif thetaError < -math.pi:
             thetaError += 2 * math.pi
 
-        self.get_logger().info(
-            f'[Theta error: {round(thetaError, 2)} desiredQ {round(desiredQ, 2)} CQ {round(self.currentTheta, 2)}'
-        )
+        # self.get_logger().info(
+        #     f'[Theta error: {round(thetaError, 2)} desiredQ {round(desiredQ, 2)} CQ {round(self.currentTheta, 2)}'
+        # )
 
         return dist2Go, thetaError
 
@@ -348,37 +338,14 @@ class GPSSubscriberPublisher(Node):
         # for Kalman filiter testing
         self.log_positions()
         self.get_logger().info(
-            f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} PWM R: {self.pwmr_value} L: {self.pwml_value}'
+            f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)},  [ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} Waypoint: {self.currentTWayPoint}, PWM R: {self.pwmr_value} L: {self.pwml_value}'
         )
-
-    def log_positions(self):
-        """Continuously log GPS, encoder, and Kalman filter positions to a file."""
-        try:
-            # self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
-            with open("/home/hue/ros2_ws/position_log.txt", 'w') as file:
-                file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y\n")  # Header
-                while self.running:
-                    with self.lock:
-                        gps_x = self.x_gps_cm
-                        gps_y = self.y_gps_cm
-                        encoder_x = self.encoderX
-                        encoder_y = self.encoderY
-                        kalman_x = self.x[0, 0]
-                        kalman_y = self.x[1, 0]
-                    self.get_logger().info(f'WRITING FILE {encoder_y}')
-                    timestamp = time.time()
-                    file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y}\n")
-                    file.flush()  # Ensure data is written to the file
-                    time.sleep(0.1)  # Adjust logging frequency as needed
-        except Exception as e:
-            self.get_logger().error(f"Failed to write log: {e}")
 
     def stop_threads(self):
         """Stop the threads gracefully."""
         self.running = False
         self.publisher_thread.join()
         self.processor_thread.join()
-        self.logging_thread.join()  # Stop the logging thread
 
         # Ensure the motors turn off on close
         pwm_msg = TwoInt()
