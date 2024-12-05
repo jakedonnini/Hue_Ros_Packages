@@ -11,7 +11,7 @@ class CoordinatesPublisher(Node):
         self.coord_pub = self.create_publisher(Coordinates, 'coordinates', 10)
 
         # Load coordinates from a file
-        self.coordinates = self.load_coordinates_from_file('/home/hue/ros2_ws/src/get_waypoints/get_waypoints/Penn_P.txt')
+        self.coordinates = self.load_coordinates_from_file('/home/hue/ros2_ws/src/get_waypoints/get_waypoints/Square.txt')
         
         # Index to keep track of which coordinate is being published
         self.index = 0
@@ -39,8 +39,8 @@ class CoordinatesPublisher(Node):
         x, y, t = coord
 
         coord_msg = Coordinates()
-        coord_msg.x = x*3 # make smaller by 1.5
-        coord_msg.y = y*3
+        coord_msg.x = x*1# make smaller by 1.5
+        coord_msg.y = y*1
         coord_msg.toggle = t
 
         # Publish the x and y coordinates
