@@ -189,7 +189,7 @@ class GPSSubscriberPublisher(Node):
             self.pwmAvgAccum = 0
             pwmDel = self.constrain(pwmDel, -60, 60)
 
-            if abs(pwmDel) <= 39:
+            if abs(pwmDel) <= 39 and self.currentTWayPoint is not None:
                 # make this the lowest value the PWM can go. minimum speed
                 pwmDel = 39 * math.copysign(1, thetaError)
 
