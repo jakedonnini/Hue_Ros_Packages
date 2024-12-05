@@ -181,7 +181,7 @@ class GPSSubscriberPublisher(Node):
 
         KQ = 20*3  # turn speed
         pwmDel = KQ * thetaError
-        pwmAvg = 60
+        pwmAvg = 80
 
         if abs(thetaError) > 0.2 or self.currentTWayPoint is None:
             pwmAvg = 0
@@ -200,7 +200,7 @@ class GPSSubscriberPublisher(Node):
                 self.destickAccum = 36 * math.copysign(1, thetaError)
         else:
             if self.pwmAvgAccum < pwmAvg:
-                self.pwmAvgAccum += 2
+                self.pwmAvgAccum += 20
                 
 
         pwmDel = self.constrain(pwmDel, -70, 70)
