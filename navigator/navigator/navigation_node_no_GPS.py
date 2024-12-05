@@ -188,7 +188,9 @@ class GPSSubscriberPublisher(Node):
         pwmDel = KQ * thetaError
         pwmAvg = 80
 
-        if abs(thetaError) > 0.2 or self.currentTWayPoint is None:
+        # adjust threshold basd on distance EXPERIMENTAL was 0.2
+        # should be within 5% of the total distance
+        if abs(thetaError) > dist * 0.05 or self.currentTWayPoint is None:
             pwmAvg = 0
             # set the ramp Accumulator back to 0 every time we stop
             self.pwmAvgAccum = 0
@@ -220,10 +222,6 @@ class GPSSubscriberPublisher(Node):
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
         pwm_msg.l = int(self.pwml_value)
-
-        self.get_logger().info(
-            f'Should be: {self.shouldBePainting} ({int(self.shouldBePainting)}), Is painting: {self.isPainting}'
-        )
 
         if int(self.shouldBePainting) != self.isPainting:
             pwm_msg.toggle = 1
