@@ -108,6 +108,8 @@ class GPSSubscriberPublisher(Node):
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
         self.pwml_value_old = 0
+        
+        self.destickAccum = 0
 
         # GPS
         # Initial GPS origin coordinates for conversion to local coordinates
@@ -297,7 +299,11 @@ class GPSSubscriberPublisher(Node):
             pwmDel = self.constrain(pwmDel, -50, 50)
             # if the robot starts to stop moving because it can't quite make it
             if self.encoder_left <= 5 and self.encoder_right <= 5 and self.currentTWayPoint is not None:
-                pwmDel += 10
+                # if we stop moveing keep increasing until gets unstuck
+                pwmDel += self.destickAccum
+                self.destickAccum += 5
+            else:
+                self.destickAccum = 0
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
