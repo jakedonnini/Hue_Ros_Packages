@@ -189,16 +189,19 @@ class GPSSubscriberPublisher(Node):
             self.pwmAvgAccum = 0
             pwmDel = self.constrain(pwmDel, -60, 60)
 
+            if abs(pwmDel) <= 39:
+                # make this the lowest value the PWM can go. minimum speed
+                pwmDel = 39 * math.copysign(1, thetaError)
+
             # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 30 and self.encoder_right <= 30 and self.currentTWayPoint is not None:
-                pwmDel = 39
-            #     # if we stop moveing keep increasing until gets unstuck
-            #     pwmDel += self.destickAccum
-            #     # include the sign of the error to turn in the right direction
-            #     self.destickAccum += 1 * math.copysign(1, thetaError)
-            # else:
-            #     # at 300 offset: 39 is lowest with 25 avg encoder count 
-            #     self.destickAccum = 36 * math.copysign(1, thetaError)
+            if self.encoder_left <= 20 and self.encoder_right <= 20 and self.currentTWayPoint is not None:
+                # if we stop moveing keep increasing until gets unstuck
+                pwmDel += self.destickAccum
+                # include the sign of the error to turn in the right direction
+                self.destickAccum += 1 * math.copysign(1, thetaError)
+            else:
+                # at 300 offset: 39 is lowest with 25 avg encoder count 
+                self.destickAccum = 36 * math.copysign(1, thetaError)
         else:
             if self.pwmAvgAccum < pwmAvg:
                 self.pwmAvgAccum += 10
