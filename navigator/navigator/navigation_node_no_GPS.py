@@ -192,7 +192,7 @@ class GPSSubscriberPublisher(Node):
         # should be within 5% of the total distance
         threshold = dist * 0.05
         threshold = self.constrain(threshold, 0.1, math.pi/4)
-        if abs(thetaError) > threshold or self.currentTWayPoint is None:
+        if abs(thetaError) > 0.25 or self.currentTWayPoint is None:
             pwmAvg = 0
             # set the ramp Accumulator back to 0 every time we stop
             self.pwmAvgAccum = 0
