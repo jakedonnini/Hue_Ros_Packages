@@ -196,7 +196,7 @@ class GPSSubscriberPublisher(Node):
             pwmAvg = 0
             # set the ramp Accumulator back to 0 every time we stop
             self.pwmAvgAccum = 0
-            pwmDel = self.constrain(pwmDel, -60, 60)
+            pwmDel = self.constrain(pwmDel, -60/2, 60/2)
 
             if abs(pwmDel) <= 39 and self.currentTWayPoint is not None:
                 # make this the lowest value the PWM can go. minimum speed
@@ -214,7 +214,7 @@ class GPSSubscriberPublisher(Node):
         else:
             if self.pwmAvgAccum < pwmAvg:
                 self.pwmAvgAccum += 10
-            pwmDel = self.constrain(pwmDel, -50, 50)
+            pwmDel = self.constrain(pwmDel, -50/2, 50/2)
                 
         # pwmDel = self.constrain(pwmDel, -70, 70)
 
