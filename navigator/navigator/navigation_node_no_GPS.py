@@ -11,14 +11,6 @@ class GPSSubscriberPublisher(Node):
     def __init__(self):
         super().__init__('navigation_node')
 
-        # Create subscriptions to the latitude and longitude topics
-        self.gps_subscription = self.create_subscription(
-            Coordinates, 
-            'gps', 
-            self.gps_callback, 
-            10
-        )
-
         self.encoder_subscription = self.create_subscription(
             TwoInt, 
             'encoder', 
@@ -83,15 +75,12 @@ class GPSSubscriberPublisher(Node):
         # Start threads for publishing and processing
         self.publisher_thread = threading.Thread(target=self.run_publish_loop)
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
+        self.logging_thread = threading.Thread(target=self.log_positions)
 
         self.publisher_thread.start()
         self.processor_thread.start()
-
-    def gps_callback(self, msg):
-        with self.lock:
-            self.latitude = msg.x
-            self.longitude = msg.y
-            # self.get_logger().info(f"GPS!!!!!")
+        self.logging_thread.start()
+        
 
     def encoder_callback(self, msg):
         with self.lock:
@@ -249,11 +238,29 @@ class GPSSubscriberPublisher(Node):
             f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
         )
 
+    def log_positions(self):
+        """Continuously log GPS, encoder, and Kalman filter positions to a file."""
+        try:
+            # self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
+            with open("/home/hue/ros2_ws/position_log_No_GPS.txt", 'w') as file:
+                file.write("Time,Encoder_X,Encoder_Y\n")  # Header
+                while self.running:
+                    with self.lock:
+                        encoder_x = self.encoderX
+                        encoder_y = self.encoderY
+                    timestamp = time.time()
+                    file.write(f"{timestamp},{encoder_x},{encoder_y}\n")
+                    file.flush()  # Ensure data is written to the file
+                    time.sleep(0.1)  # Adjust logging frequency as needed
+        except Exception as e:
+            self.get_logger().error(f"Failed to write log: {e}")
+    
     def stop_threads(self):
         """Stop the threads gracefully."""
         self.running = False
         self.publisher_thread.join()
         self.processor_thread.join()
+        self.logging_thread.join() 
 
 
 def main(args=None):
