@@ -64,6 +64,10 @@ class Teleop(Node):
         self.pwmr_value = 0
         self.pwml_value = 0
 
+        # Rotation and Translation
+        self.rotation_matrix = np.eye(2)  # Identity by default
+        self.translation_vector = np.zeros(2)
+
         # Threading
         self.running = True
         self.lock = threading.Lock()
@@ -137,6 +141,12 @@ class Teleop(Node):
         self.x_gps_cm = delta_lon * self.lon_to_cm
         self.y_gps_cm = delta_lat * self.lat_to_cm
 
+        # Rotation and translation alignment
+        # self.calculate_rotation_translation()
+
+        # Transform encoder readings to GPS basis
+        # encoder_in_gps_basis = self.transform_encoder_to_gps_basis()
+
         z = np.array([[self.x_gps_cm], [self.y_gps_cm]])
         y = z - self.H @ self.x
         S = self.H @ self.P @ self.H.T + self.R
@@ -144,6 +154,27 @@ class Teleop(Node):
         self.x = self.x + K @ y
         self.P = (np.eye(3) - K @ self.H) @ self.P
 
+    def calculate_rotation_translation(self):
+        """Calculate rotation matrix and translation vector."""
+        gps_point = np.array([self.x_gps_cm, self.y_gps_cm])
+        encoder_point = np.array([self.encoderX, self.encoderY])
+
+        # Calculate rotation matrix
+        delta_x = gps_point - encoder_point
+        theta = math.atan2(delta_x[1], delta_x[0])
+        self.rotation_matrix = np.array([
+            [math.cos(theta), -math.sin(theta)],
+            [math.sin(theta), math.cos(theta)]
+        ])
+
+        # Calculate translation vector
+        self.translation_vector = gps_point - self.rotation_matrix @ encoder_point
+
+    def transform_encoder_to_gps_basis(self):
+        """Transform encoder position to GPS basis."""
+        encoder_point = np.array([self.encoderX, self.encoderY])
+        return self.rotation_matrix @ encoder_point + self.translation_vector
+    
     def keyboard_listener(self):
         """Listen to arrow key inputs for teleoperation."""
         def on_press(key):
