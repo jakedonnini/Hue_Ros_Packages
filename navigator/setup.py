@@ -21,12 +21,17 @@ setup(
     entry_points={
         'console_scripts': [
             'navigation_node = navigator.navigation_node:main',
+<<<<<<< HEAD
             'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main',
 <<<<<<< HEAD
             'navigation_node_RTOS = navigator.navigation_node_RTOS:main'
 =======
             'TeleOp = navigator.TeleOp:main'
 >>>>>>> 956467a05f6ce8e20f5bf97a5c8f651f0846339e
+=======
+            'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main'
+>>>>>>> be1e21ae4572a60690d71665b0c106f42f46480f
         ],
     },
 )
+# 'TeleOp = navigator.TeleOp:main'
