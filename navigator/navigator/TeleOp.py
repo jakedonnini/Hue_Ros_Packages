@@ -6,7 +6,7 @@ from custom_msg.msg import TwoInt
 import time
 import math
 import numpy as np
-import keyboard
+from pynput import keyboard
 
 
 class Teleop(Node):
@@ -176,34 +176,37 @@ class Teleop(Node):
         return self.rotation_matrix @ encoder_point + self.translation_vector
     
     def keyboard_listener(self):
-     """Listen to arrow key inputs for teleoperation."""
-     while self.running:
-         if keyboard.is_pressed('up'):
-             with self.lock:
-                 self.pwmr_value = 100
-                 self.pwml_value = 100
-                 self.publish_pwm()
-         elif keyboard.is_pressed('down'):
-             with self.lock:
-                 self.pwmr_value = -100
-                 self.pwml_value = -100
-                 self.publish_pwm()
-         elif keyboard.is_pressed('left'):
-             with self.lock:
-                 self.pwmr_value = 50
-                 self.pwml_value = -50
-                 self.publish_pwm()
-         elif keyboard.is_pressed('right'):
-             with self.lock:
-                 self.pwmr_value = -50
-                 self.pwml_value = 50
-                 self.publish_pwm()
-         else:
-             with self.lock:
-                 self.pwmr_value = 0
-                 self.pwml_value = 0
-                 self.publish_pwm()
-         time.sleep(0.1)
+        """Listen to arrow key inputs for teleoperation."""
+        def on_press(key):
+            with self.lock:
+                try:
+                    if key == keyboard.Key.up:
+                        self.pwmr_value = 100
+                        self.pwml_value = 100
+                    elif key == keyboard.Key.down:
+                        self.pwmr_value = -100
+                        self.pwml_value = -100
+                    elif key == keyboard.Key.left:
+                        self.pwmr_value = 50
+                        self.pwml_value = -50
+                    elif key == keyboard.Key.right:
+                        self.pwmr_value = -50
+                        self.pwml_value = 50
+                    else:
+                        return
+                    self.publish_pwm()
+                except AttributeError:
+                    pass
+
+        def on_release(key):
+            if key in [keyboard.Key.up, keyboard.Key.down, keyboard.Key.left, keyboard.Key.right]:
+                with self.lock:
+                    self.pwmr_value = 0
+                    self.pwml_value = 0
+                    self.publish_pwm()
+
+        with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+            listener.join()
 
     def publish_pwm(self):
         """Publish PWM values."""
