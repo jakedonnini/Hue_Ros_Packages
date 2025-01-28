@@ -6,8 +6,24 @@ from custom_msg.msg import TwoInt
 import time
 import math
 import numpy as np
-from pynput import keyboard
 
+import os
+import sys
+if os.name == 'nt':
+    import msvcrt
+else:
+    import termios
+    import tty
+
+msg = """
+Control HUE
+---------------------------
+Moving around:
+        w
+   a    s    d
+        x
+Q = spray
+"""
 
 class Teleop(Node):
     def __init__(self):
@@ -81,6 +97,11 @@ class Teleop(Node):
         # Keyboard listener for teleoperation
         self.keyboard_thread = threading.Thread(target=self.keyboard_listener)
         self.keyboard_thread.start()
+
+        self.settings = None
+        if os.name != 'nt':
+            self.settings = termios.tcgetattr(sys.stdin)
+        print(msg)
 
     def gps_callback(self, msg):
         with self.lock:
@@ -174,42 +195,41 @@ class Teleop(Node):
         """Transform encoder position to GPS basis."""
         encoder_point = np.array([self.encoderX, self.encoderY])
         return self.rotation_matrix @ encoder_point + self.translation_vector
+
+    def get_key(self):
+        if os.name == 'nt':
+            return msvcrt.getch().decode('utf-8')
+        tty.setraw(sys.stdin.fileno())
+        rlist, _, _ = select.select([sys.stdin], [], [], 0.1)
+        if rlist:
+            key = sys.stdin.read(1)
+        else:
+            key = ''
     
-    def keyboard_listener(self):
-        """Listen to arrow key inputs for teleoperation."""
-        def on_press(key):
-            with self.lock:
-                try:
-                    if key == keyboard.Key.up:
-                        self.pwmr_value = 100
-                        self.pwml_value = 100
-                    elif key == keyboard.Key.down:
-                        self.pwmr_value = -100
-                        self.pwml_value = -100
-                    elif key == keyboard.Key.left:
-                        self.pwmr_value = 50
-                        self.pwml_value = -50
-                    elif key == keyboard.Key.right:
-                        self.pwmr_value = -50
-                        self.pwml_value = 50
-                    else:
-                        return
-                    self.publish_pwm()
-                except AttributeError:
-                    pass
-
-        def on_release(key):
-            if key in [keyboard.Key.up, keyboard.Key.down, keyboard.Key.left, keyboard.Key.right]:
-                with self.lock:
-                    self.pwmr_value = 0
-                    self.pwml_value = 0
-                    self.publish_pwm()
-
-        with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-            listener.join()
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.settings)
+        return key
 
     def publish_pwm(self):
         """Publish PWM values."""
+        # get key that is being pressed
+        key = self.get_key()
+        print(key)
+        if key == 'w':
+            self.pwmr_value = 100
+            self.pwml_value = 100
+        elif key == 'x':
+            self.pwmr_value = -100
+            self.pwml_value = -100
+        elif key == 'a':
+            self.pwmr_value = 50
+            self.pwml_value = -50
+        elif key == 'd':
+            self.pwmr_value = -50
+            self.pwml_value = 50
+        elif key == ' ' or key == 's':
+            self.pwmr_value = 0
+            self.pwml_value = 0
+
         pwm_msg = TwoInt()
         pwm_msg.r = self.pwmr_value
         pwm_msg.l = self.pwml_value
