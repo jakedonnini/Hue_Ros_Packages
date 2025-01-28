@@ -21,8 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'navigation_node = navigator.navigation_node:main',
-            'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main'
+            'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main',
+            'TeleOp = navigator.TeleOp:main'
         ],
     },
 )
-# 'TeleOp = navigator.TeleOp:main'
