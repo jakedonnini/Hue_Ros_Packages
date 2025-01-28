@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'navigation_node = navigator.navigation_node:main',
 <<<<<<< HEAD
+<<<<<<< HEAD
             'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main',
 <<<<<<< HEAD
             'navigation_node_RTOS = navigator.navigation_node_RTOS:main'
@@ -31,7 +32,10 @@ setup(
 =======
             'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main'
 >>>>>>> be1e21ae4572a60690d71665b0c106f42f46480f
+=======
+            'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main',
+            'TeleOp = navigator.TeleOp:main'
+>>>>>>> 267d91cea3de163020531e56dc3b75292f753cb4
         ],
     },
 )
-# 'TeleOp = navigator.TeleOp:main'
