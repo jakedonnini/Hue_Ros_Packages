@@ -95,8 +95,8 @@ class Teleop(Node):
         self.logging_thread.start()
 
         # Keyboard listener for teleoperation
-        self.keyboard_thread = threading.Thread(target=self.keyboard_listener)
-        self.keyboard_thread.start()
+        # self.keyboard_thread = threading.Thread(target=self.keyboard_listener)
+        # self.keyboard_thread.start()
 
         self.settings = None
         if os.name != 'nt':
@@ -260,7 +260,7 @@ class Teleop(Node):
         self.running = False
         self.processor_thread.join()
         self.logging_thread.join()
-        self.keyboard_thread.join()
+        # self.keyboard_thread.join()
         pwm_msg = TwoInt()
         pwm_msg.r = 0
         pwm_msg.l = 0
