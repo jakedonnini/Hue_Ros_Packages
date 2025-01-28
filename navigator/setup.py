@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'pynput'],
     zip_safe=True,
     maintainer='hue',
     maintainer_email='jdonnini@seas.upenn.edu',
@@ -21,21 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'navigation_node = navigator.navigation_node:main',
-<<<<<<< HEAD
-<<<<<<< HEAD
-            'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main',
-<<<<<<< HEAD
-            'navigation_node_RTOS = navigator.navigation_node_RTOS:main'
-=======
-            'TeleOp = navigator.TeleOp:main'
->>>>>>> 956467a05f6ce8e20f5bf97a5c8f651f0846339e
-=======
-            'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main'
->>>>>>> be1e21ae4572a60690d71665b0c106f42f46480f
-=======
             'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main',
             'TeleOp = navigator.TeleOp:main'
->>>>>>> 267d91cea3de163020531e56dc3b75292f753cb4
         ],
     },
 )
