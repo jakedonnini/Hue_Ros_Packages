@@ -42,6 +42,15 @@ class GPSSubscriberPublisher(Node):
         # Initial values for PWMR and PWML
         self.pwmr_value = 0
         self.pwml_value = 0
+        
+        # Initialize PID constants
+        self.Kp = 20   # Proportional constant
+        self.Ki = 0.5  # Integral constant
+        self.Kd = 0.1  # Derivative constant
+
+        # Initialize PID terms
+        self.integral = 0
+        self.previous_error = 0
 
         # encoder varibles
         self.encoder_left = 0
@@ -66,7 +75,6 @@ class GPSSubscriberPublisher(Node):
         self.pwml_value_old = 0
         # if we stop moveing keep increasing until gets unstuck
         self.destickAccum = 0
-        self.pwmAvgAccum = 0
 
         # Threading for concurrent execution
         self.running = True
@@ -173,42 +181,76 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20*2  # turn speed
-        pwmDel = KQ * thetaError
+        # KQ = 20*2  # turn speed
+        # pwmDel = KQ * thetaError
         pwmAvg = 80
 
-        # adjust threshold basd on distance EXPERIMENTAL was 0.2
-        # should be within 5% of the total distance
-        threshold = dist * 0.05
-        threshold = self.constrain(threshold, 0.1, math.pi/4)
-        if abs(thetaError) > 0.25 or self.currentTWayPoint is None:
-            pwmAvg = 0
-            # set the ramp Accumulator back to 0 every time we stop
-            self.pwmAvgAccum = 0
-            pwmDel = self.constrain(pwmDel, -60/2, 60/2)
+        # pervious broken aglo
+        # # adjust threshold basd on distance EXPERIMENTAL was 0.2
+        # # should be within 5% of the total distance
+        # threshold = dist * 0.05
+        # threshold = self.constrain(threshold, 0.1, math.pi/4)
+        # if abs(thetaError) > 0.25 or self.currentTWayPoint is None:
+        #     pwmAvg = 0
+        #     # set the ramp Accumulator back to 0 every time we stop
+        #     self.pwmAvgAccum = 0
+        #     pwmDel = self.constrain(pwmDel, -60/2, 60/2)
 
-            if abs(pwmDel) <= 39 and self.currentTWayPoint is not None:
-                # make this the lowest value the PWM can go. minimum speed
-                pwmDel = 39 * math.copysign(1, thetaError)
+        #     if abs(pwmDel) <= 39 and self.currentTWayPoint is not None:
+        #         # make this the lowest value the PWM can go. minimum speed
+        #         pwmDel = 39 * math.copysign(1, thetaError)
 
-            # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 20 and self.encoder_right <= 20 and self.currentTWayPoint is not None:
-                # if we stop moveing keep increasing until gets unstuck
-                pwmDel += self.destickAccum
-                # include the sign of the error to turn in the right direction
-                self.destickAccum += 1 * math.copysign(1, thetaError)
-            else:
-                # at 300 offset: 39 is lowest with 25 avg encoder count 
-                self.destickAccum = 0
-        else:
-            if self.pwmAvgAccum < pwmAvg:
-                self.pwmAvgAccum += 10
-            pwmDel = self.constrain(pwmDel, -50/2, 50/2)
+        #     # if the robot starts to stop moving because it can't quite make it
+        #     if self.encoder_left <= 20 and self.encoder_right <= 20 and self.currentTWayPoint is not None:
+        #         # if we stop moveing keep increasing until gets unstuck
+        #         pwmDel += self.destickAccum
+        #         # include the sign of the error to turn in the right direction
+        #         self.destickAccum += 1 * math.copysign(1, thetaError)
+        #     else:
+        #         # at 300 offset: 39 is lowest with 25 avg encoder count 
+        #         self.destickAccum = 0
+        # else:
+        #     if self.pwmAvgAccum < pwmAvg:
+        #         self.pwmAvgAccum += 10
+        #     pwmDel = self.constrain(pwmDel, -50/2, 50/2)
                 
         # pwmDel = self.constrain(pwmDel, -70, 70)
 
-        self.pwmr_value = self.pwmAvgAccum + pwmDel
-        self.pwml_value = self.pwmAvgAccum - pwmDel
+        # PID calculations
+        # Proportional term (P)
+        P_term = self.Kp * thetaError
+        
+        # Integral term (I)
+        self.integral += thetaError
+        I_term = self.Ki * self.integral
+        
+        # Derivative term (D)
+        D_term = self.Kd * (thetaError - self.previous_error)
+        
+        # PID output
+        pid_output = P_term + I_term + D_term
+        
+        # Update the previous error
+        self.previous_error = thetaError
+
+        # Adjust PWM values based on the PID output
+        pwmDel = pid_output
+
+        # If the angle is within this threshold then move forward
+        # otherwise stop an turn
+        threshold = 0.25
+        if abs(pid_output) > threshold:
+            pwmAvg = 0
+        elif self.currentTWayPoint is None:
+            pwmAvg = 0
+            pwmDel = 0
+
+        self.pwmr_value = pwmAvg + pwmDel
+        self.pwml_value = pwmAvg - pwmDel
+
+
+        self.pwmr_value = self.constrain(self.pwmr_value, 0, 255)
+        self.pwml_value = self.constrain(self.pwmr_value, 0, 255)
 
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
