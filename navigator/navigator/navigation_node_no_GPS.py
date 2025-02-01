@@ -44,8 +44,8 @@ class GPSSubscriberPublisher(Node):
         self.pwml_value = 0
         
         # Initialize PID constants
-        self.Kp = 30   # Proportional constant
-        self.Ki = 0.4  # Integral constant
+        self.Kp = 60   # Proportional constant
+        self.Ki = 0.0  # Integral constant
         self.Kd = 0.0  # Derivative constant
 
         # Initialize PID terms
@@ -190,7 +190,7 @@ class GPSSubscriberPublisher(Node):
 
         # KQ = 20*2  # turn speed
         # pwmDel = KQ * thetaError
-        pwmAvg = 60 # normally 80
+        pwmAvg = 0 # normally 60
 
         # PID calculations
         # Proportional term (P)
