@@ -280,7 +280,7 @@ class GPSSubscriberPublisher(Node):
         """Continuously log GPS, encoder, and Kalman filter positions to a file."""
         try:
             # self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
-            with open("/home/hue/ros2_ws/position_log_No_GPS.txt", 'w') as file:
+            with open("/home/hue/ros2_ws/src/position_log_No_GPS.txt", 'w') as file:
                 file.write("Time,Encoder_X,Encoder_Y\n")  # Header
                 while self.running:
                     with self.lock:
