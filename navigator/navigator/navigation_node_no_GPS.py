@@ -239,7 +239,7 @@ class GPSSubscriberPublisher(Node):
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
         threshold = 0.25
-        if abs(pid_output) > threshold:
+        if abs(thetaError) > threshold:
             pwmAvg = 0
         elif self.currentTWayPoint is None:
             pwmAvg = 0
@@ -251,6 +251,10 @@ class GPSSubscriberPublisher(Node):
 
         self.pwmr_value = self.constrain(self.pwmr_value, 0, 255)
         self.pwml_value = self.constrain(self.pwmr_value, 0, 255)
+
+        self.get_logger().info(
+            f'PID: Theat error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} desiredQ {round(desiredQ, 2)} CQ {round(self.currentTheta, 2)}'
+        )
 
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
@@ -277,7 +281,7 @@ class GPSSubscriberPublisher(Node):
             self.pwml_value_old = self.pwml_value
 
         self.get_logger().info(
-            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {self.currentX}, {self.currentY} Theta error: {thetaError} dist2go {dist}'
+            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {round(self.currentTWayPoint, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
         )
 
     def log_positions(self):
