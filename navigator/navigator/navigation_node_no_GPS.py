@@ -44,7 +44,7 @@ class GPSSubscriberPublisher(Node):
         self.pwml_value = 0
         
         # Initialize PID constants
-        self.Kp = 30   # Proportional constant
+        self.Kp = 40   # Proportional constant
         self.Ki = 0.0  # Integral constant
         self.Kd = 0.0  # Derivative constant
 
@@ -251,14 +251,14 @@ class GPSSubscriberPublisher(Node):
 
         # remove dead zone between 39 and -39
         if self.pwmr_value > 0:
-            self.pwmr_value += 38
+            self.pwmr_value += 39
         if self.pwmr_value < 0:
-            self.pwmr_value -= 38
+            self.pwmr_value -= 39
 
         if self.pwml_value > 0:
-            self.pwml_value += 38
+            self.pwml_value += 39
         if self.pwml_value < 0:
-            self.pwml_value -= 38
+            self.pwml_value -= 39
             
 
         self.get_logger().info(
