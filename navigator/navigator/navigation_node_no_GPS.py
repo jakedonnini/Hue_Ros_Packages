@@ -45,8 +45,8 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 30   # Proportional constant
-        self.Ki = 0.3  # Integral constant
-        self.Kd = 0.2  # Derivative constant
+        self.Ki = 0.4  # Integral constant
+        self.Kd = 0.0  # Derivative constant
 
         # Initialize PID terms
         self.integral = 0
@@ -158,7 +158,7 @@ class GPSSubscriberPublisher(Node):
         self.currentTheta = self.encoderTheta
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
-        if dist2Go < 1:  # threshold saying we hit the point
+        if dist2Go < 5:  # threshold saying we hit the point (was 1)
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.currentTWayPoint = None
 
@@ -227,6 +227,7 @@ class GPSSubscriberPublisher(Node):
         else: 
             # when in thresh shouldn't move alot, half the intergrator
             I_term = I_term / 2
+            pwmDel = 0 # only 0 point turn 
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
