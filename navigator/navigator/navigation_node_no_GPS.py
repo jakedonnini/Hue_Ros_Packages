@@ -45,8 +45,8 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 30   # Proportional constant
-        self.Ki = 0.6  # Integral constant
-        self.Kd = 0.1  # Derivative constant
+        self.Ki = 0.4  # Integral constant
+        self.Kd = 0.0  # Derivative constant
 
         # Initialize PID terms
         self.integral = 0
@@ -202,6 +202,7 @@ class GPSSubscriberPublisher(Node):
         I_term = self.Ki * self.integral
         # when switching direction zero out the intergrator
         if self.sign(P_term) != self.sign(I_term) and I_term != 0:
+            print("I change derection I=0")
             I_term = 0
         
         # Derivative term (D)
@@ -225,6 +226,7 @@ class GPSSubscriberPublisher(Node):
             pwmAvg = 0
             pwmDel = 0
         else: 
+            print("Half I!")
             # when in thresh shouldn't move alot, half the intergrator
             I_term = I_term / 2
             # pwmDel = 0 # only 0 point turn 
@@ -240,13 +242,15 @@ class GPSSubscriberPublisher(Node):
 
         # Anti-windup: Reduce integral accumulation if PWM is saturated
         if self.pwmr_value == max_pwm or self.pwmr_value == min_pwm:
+            print("Anti windup I R")
             self.integral -= 0.1 * (self.pwmr_value - (pwmAvg + pwmDel))
     
         if self.pwml_value == max_pwm or self.pwml_value == min_pwm:
+            print("Anti windup I L")
             self.integral -= 0.1 * (self.pwml_value - (pwmAvg - pwmDel))
 
         self.get_logger().info(
-            f'PID: Theat error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
+            f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
         )
 
         pwm_msg = TwoInt()
