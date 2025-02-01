@@ -50,6 +50,8 @@ class GPSSubscriberPublisher(Node):
 
         # Initialize PID terms
         self.integral = 0
+        self.integral_min = -100  # Prevent excessive negative accumulation
+        self.integral_max = 100   # Prevent excessive positive accumulation
         self.previous_error = 0
 
         # encoder varibles
@@ -222,6 +224,7 @@ class GPSSubscriberPublisher(Node):
         
         # Integral term (I)
         self.integral += thetaError
+        self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
         I_term = self.Ki * self.integral
         
         # Derivative term (D)
@@ -248,9 +251,18 @@ class GPSSubscriberPublisher(Node):
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
 
+        max_pwm = 128
+        min_pwm = -128
+        
+        self.pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
+        self.pwml_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
 
-        self.pwmr_value = self.constrain(self.pwmr_value, 0, 255)
-        self.pwml_value = self.constrain(self.pwmr_value, 0, 255)
+        # Anti-windup: Reduce integral accumulation if PWM is saturated
+        if self.pwmr_value == max_pwm or self.pwmr_value == min_pwm:
+            self.integral -= 0.1 * (self.pwmr_value - (pwmAvg + pwmDel))
+    
+        if self.pwml_value == max_pwm or self.pwml_value == min_pwm:
+            self.integral -= 0.1 * (self.pwml_value - (pwmAvg - pwmDel))
 
         self.get_logger().info(
             f'PID: Theat error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)}'
