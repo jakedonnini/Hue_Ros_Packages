@@ -1,0 +1,7 @@
+{
+  "package_name": "custom_msg",
+  "non_idl_tuples": [
+    "/home/hue/ros2_ws/src/custom_msg:msg/Coordinates.msg",
+    "/home/hue/ros2_ws/src/custom_msg:msg/TwoInt.msg"
+  ]
+}

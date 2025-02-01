@@ -1,0 +1,3 @@
+[console_scripts]
+waypoint_from_txt_node = get_waypoints.waypoint_from_txt_node:main
+waypoint_node = get_waypoints.waypoint_node:main

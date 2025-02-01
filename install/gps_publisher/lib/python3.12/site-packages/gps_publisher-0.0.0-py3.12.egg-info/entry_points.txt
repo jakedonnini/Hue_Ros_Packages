@@ -1,0 +1,2 @@
+[console_scripts]
+gps_node = gps_publisher.gps_node:main
