@@ -179,6 +179,11 @@ class GPSSubscriberPublisher(Node):
     def constrain(self, val, min_val, max_val):
         return max(min_val, min(val, max_val))
 
+    def sign(self, x):
+        if x != 0:
+            return x/abs(x)
+        return 1
+
     def adjust_pwm_values(self):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
@@ -195,6 +200,9 @@ class GPSSubscriberPublisher(Node):
         self.integral += thetaError
         self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
         I_term = self.Ki * self.integral
+        # when switching direction zero out the intergrator
+        if self.sign(P_term) != self.sign(I_term) and I_term != 0:
+            I_term = 0
         
         # Derivative term (D)
         D_term = self.Kd * (thetaError - self.previous_error)
@@ -216,6 +224,9 @@ class GPSSubscriberPublisher(Node):
         elif self.currentTWayPoint is None:
             pwmAvg = 0
             pwmDel = 0
+        else: 
+            # when in thresh shouldn't move alot, half the intergrator
+            I_term = I_term / 2
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
@@ -234,7 +245,7 @@ class GPSSubscriberPublisher(Node):
             self.integral -= 0.1 * (self.pwml_value - (pwmAvg - pwmDel))
 
         self.get_logger().info(
-            f'PID: Theat error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)}'
+            f'PID: Theat error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
         )
 
         pwm_msg = TwoInt()
