@@ -45,8 +45,8 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 30   # Proportional constant
-        self.Ki = 0.4  # Integral constant
-        self.Kd = 0.0  # Derivative constant
+        self.Ki = 0.6  # Integral constant
+        self.Kd = 0.1  # Derivative constant
 
         # Initialize PID terms
         self.integral = 0
@@ -227,7 +227,7 @@ class GPSSubscriberPublisher(Node):
         else: 
             # when in thresh shouldn't move alot, half the intergrator
             I_term = I_term / 2
-            pwmDel = 0 # only 0 point turn 
+            # pwmDel = 0 # only 0 point turn 
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
