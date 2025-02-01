@@ -280,6 +280,10 @@ class GPSSubscriberPublisher(Node):
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
 
+        if thetaError == None or dist == None:
+            thetaError = 0
+            dist = 0
+
         self.get_logger().info(
             f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {round(self.currentTWayPoint, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
         )
