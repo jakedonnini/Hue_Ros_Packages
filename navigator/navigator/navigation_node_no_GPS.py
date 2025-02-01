@@ -253,7 +253,7 @@ class GPSSubscriberPublisher(Node):
         self.pwml_value = self.constrain(self.pwmr_value, 0, 255)
 
         self.get_logger().info(
-            f'PID: Theat error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} desiredQ {round(desiredQ, 2)} CQ {round(self.currentTheta, 2)}'
+            f'PID: Theat error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)}'
         )
 
         pwm_msg = TwoInt()
