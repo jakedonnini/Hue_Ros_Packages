@@ -187,37 +187,6 @@ class GPSSubscriberPublisher(Node):
         # pwmDel = KQ * thetaError
         pwmAvg = 80
 
-        # pervious broken aglo
-        # # adjust threshold basd on distance EXPERIMENTAL was 0.2
-        # # should be within 5% of the total distance
-        # threshold = dist * 0.05
-        # threshold = self.constrain(threshold, 0.1, math.pi/4)
-        # if abs(thetaError) > 0.25 or self.currentTWayPoint is None:
-        #     pwmAvg = 0
-        #     # set the ramp Accumulator back to 0 every time we stop
-        #     self.pwmAvgAccum = 0
-        #     pwmDel = self.constrain(pwmDel, -60/2, 60/2)
-
-        #     if abs(pwmDel) <= 39 and self.currentTWayPoint is not None:
-        #         # make this the lowest value the PWM can go. minimum speed
-        #         pwmDel = 39 * math.copysign(1, thetaError)
-
-        #     # if the robot starts to stop moving because it can't quite make it
-        #     if self.encoder_left <= 20 and self.encoder_right <= 20 and self.currentTWayPoint is not None:
-        #         # if we stop moveing keep increasing until gets unstuck
-        #         pwmDel += self.destickAccum
-        #         # include the sign of the error to turn in the right direction
-        #         self.destickAccum += 1 * math.copysign(1, thetaError)
-        #     else:
-        #         # at 300 offset: 39 is lowest with 25 avg encoder count 
-        #         self.destickAccum = 0
-        # else:
-        #     if self.pwmAvgAccum < pwmAvg:
-        #         self.pwmAvgAccum += 10
-        #     pwmDel = self.constrain(pwmDel, -50/2, 50/2)
-                
-        # pwmDel = self.constrain(pwmDel, -70, 70)
-
         # PID calculations
         # Proportional term (P)
         P_term = self.Kp * thetaError
@@ -255,7 +224,7 @@ class GPSSubscriberPublisher(Node):
         min_pwm = -128
         
         self.pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
-        self.pwml_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
+        self.pwml_value = self.constrain(self.pwml_value, min_pwm, max_pwm)
 
         # Anti-windup: Reduce integral accumulation if PWM is saturated
         if self.pwmr_value == max_pwm or self.pwmr_value == min_pwm:
