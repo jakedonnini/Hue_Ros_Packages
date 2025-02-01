@@ -45,8 +45,8 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 30   # Proportional constant
-        self.Ki = 0.0  # Integral constant
-        self.Kd = 0.0  # Derivative constant
+        self.Ki = 0.3  # Integral constant
+        self.Kd = 0.2  # Derivative constant
 
         # Initialize PID terms
         self.integral = 0
