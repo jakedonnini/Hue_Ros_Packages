@@ -69,7 +69,7 @@ class GPSSubscriberPublisher(Node):
         # constants (change if drive train changes)
         self.wheelR = 10.16
         self.wheelL = 64.77
-        self.encoderTicks = 8192.0
+        self.encoderTicks = 8192.0 / 2
         self.deltaT = 0.1 # 100ms time intervals
 
         # save old values to onlt send when it changes
