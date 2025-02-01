@@ -44,7 +44,7 @@ class GPSSubscriberPublisher(Node):
         self.pwml_value = 0
         
         # Initialize PID constants
-        self.Kp = 60   # Proportional constant
+        self.Kp = 30   # Proportional constant
         self.Ki = 0.0  # Integral constant
         self.Kd = 0.0  # Derivative constant
 
@@ -248,6 +248,18 @@ class GPSSubscriberPublisher(Node):
         if self.pwml_value == max_pwm or self.pwml_value == min_pwm:
             print("Anti windup I L")
             self.integral -= 0.1 * (self.pwml_value - (pwmAvg - pwmDel))
+
+        # remove dead zone between 39 and -39
+        if self.pwmr_value > 0:
+            self.pwmr_value += 38
+        if self.pwmr_value < 0:
+            self.pwmr_value -= 38
+
+        if self.pwml_value > 0:
+            self.pwml_value += 38
+        if self.pwml_value < 0:
+            self.pwml_value -= 38
+            
 
         self.get_logger().info(
             f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
