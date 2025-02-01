@@ -70,7 +70,7 @@ class GPSSubscriberPublisher(Node):
         self.wheelR = 10.16
         self.wheelL = 64.77
         self.encoderTicks = 8192.0
-        self.deltaT = 0.05 # 100ms time intervals
+        self.deltaT = 0.1 # 100ms time intervals
 
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
@@ -282,13 +282,14 @@ class GPSSubscriberPublisher(Node):
         try:
             # self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
             with open("/home/hue/ros2_ws/src/position_log_No_GPS.txt", 'w') as file:
-                file.write("Time,Encoder_X,Encoder_Y\n")  # Header
+                file.write("Time,Encoder_X,Encoder_Y,Theta\n")  # Header
                 while self.running:
                     with self.lock:
                         encoder_x = self.encoderX
                         encoder_y = self.encoderY
+                        theta = self.encoderTheta
                     timestamp = time.time()
-                    file.write(f"{timestamp},{encoder_x},{encoder_y}\n")
+                    file.write(f"{timestamp},{encoder_x},{encoder_y},{theta}\n")
                     file.flush()  # Ensure data is written to the file
                     time.sleep(0.1)  # Adjust logging frequency as needed
         except Exception as e:
