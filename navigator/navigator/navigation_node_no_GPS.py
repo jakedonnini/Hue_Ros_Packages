@@ -190,7 +190,7 @@ class GPSSubscriberPublisher(Node):
 
         # KQ = 20*2  # turn speed
         # pwmDel = KQ * thetaError
-        pwmAvg = 60 # normally 60
+        pwmAvg = 20 # normally 60
 
         # PID calculations
         # Proportional term (P)
