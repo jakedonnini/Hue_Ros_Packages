@@ -143,8 +143,8 @@ class Teleop(Node):
 
     def log_positions(self):
         try:
-            with open("/home/hue/ros2_ws/position_log_teleop.txt", 'w') as file:
-                file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y\n")
+            with open("/home/hue/ros2_ws/src/position_log_teleop.txt", 'w') as file:
+                file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y,Theta\n")
                 while self.running:
                     with self.lock:
                         gps_x = self.x_gps_cm
@@ -153,8 +153,9 @@ class Teleop(Node):
                         encoder_y = self.encoderY
                         kalman_x = self.x[0, 0]
                         kalman_y = self.x[1, 0]
+                        theta = self.encoderTheta
                     timestamp = time.time()
-                    file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y}\n")
+                    file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y},{theta}\n")
                     file.flush()
                     time.sleep(0.1)
         except Exception as e:
