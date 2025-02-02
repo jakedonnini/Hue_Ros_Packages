@@ -200,10 +200,6 @@ class GPSSubscriberPublisher(Node):
         self.integral += thetaError
         self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
         I_term = self.Ki * self.integral
-        # when switching direction zero out the intergrator
-        if self.sign(P_term) != self.sign(I_term) and I_term != 0:
-            print("I change derection I=0")
-            I_term = 0
         
         # Derivative term (D)
         D_term = self.Kd * (thetaError - self.previous_error)
@@ -226,10 +222,8 @@ class GPSSubscriberPublisher(Node):
             pwmAvg = 0
             pwmDel = 0
         else: 
-            print("Half I!")
             # when in thresh shouldn't move alot, half the intergrator
             I_term = I_term / 2
-            # pwmDel = 0 # only 0 point turn 
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
@@ -242,11 +236,9 @@ class GPSSubscriberPublisher(Node):
 
         # Anti-windup: Reduce integral accumulation if PWM is saturated
         if self.pwmr_value == max_pwm or self.pwmr_value == min_pwm:
-            print("Anti windup I R")
             self.integral -= 0.1 * (self.pwmr_value - (pwmAvg + pwmDel))
     
         if self.pwml_value == max_pwm or self.pwml_value == min_pwm:
-            print("Anti windup I L")
             self.integral -= 0.1 * (self.pwml_value - (pwmAvg - pwmDel))
 
         # remove dead zone between 39 and -39
