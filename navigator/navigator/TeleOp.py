@@ -63,7 +63,7 @@ class Teleop(Node):
         # Constants
         self.wheelR = 10.16
         self.wheelL = 64.77
-        self.encoderTicks = 8192.0
+        self.encoderTicks = 8192.0/2
 
         # GPS Variables
         self.latitude = None
