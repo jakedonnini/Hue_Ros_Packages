@@ -141,9 +141,11 @@ class GPSSubscriberPublisher(Node):
         # Start threads for publishing and processing
         self.publisher_thread = threading.Thread(target=self.run_publish_loop)
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
+        self.logging_thread = threading.Thread(target=self.log_positions) # for logging the postions
 
         self.publisher_thread.start()
         self.processor_thread.start()
+        self.logging_thread.start()
 
     def gps_callback(self, msg):
         with self.lock:
@@ -404,13 +406,35 @@ class GPSSubscriberPublisher(Node):
             f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)},  [ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} Waypoint: {self.currentTWayPoint}, PWM R: {self.pwmr_value} L: {self.pwml_value}'
         )
 
+    def log_positions(self):
+        """Log GPS, encoder, and Kalman filter positions to a file."""
+        try:
+            with open("/home/hue/ros2_ws/position_log_teleop.txt", 'w') as file:
+                file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y,Theta\n")
+                while self.running:
+                    with self.lock:
+                        gps_x = self.x_gps_cm
+                        gps_y = self.y_gps_cm
+                        encoder_x = self.encoderX
+                        encoder_y = self.encoderY
+                        kalman_x = self.x[0, 0]
+                        kalman_y = self.x[1, 0]
+                        theta = self.currentTheta
+                    timestamp = time.time()
+                    file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y},{theta}\n")
+                    file.flush()
+                    time.sleep(0.1)
+        except Exception as e:
+            self.get_logger().error(f"Failed to write log: {e}")
+
     def stop_threads(self):
         """Stop the threads gracefully."""
         self.running = False
         self.publisher_thread.join()
         self.processor_thread.join()
+        self.logging_thread.join()
 
-        # Ensure the motors turn off on close
+        # Ensure the motors turn off on close (doesn't work)
         pwm_msg = TwoInt()
         pwm_msg.r = 0
         pwm_msg.l = 0
