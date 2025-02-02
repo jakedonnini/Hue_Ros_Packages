@@ -123,6 +123,11 @@ class Teleop(Node):
         self.encoderY += self.dt * V * math.sin(self.encoderTheta)
         self.encoderTheta += self.dt * dV
 
+        if self.encoderTheta > math.pi:
+            self.encoderTheta -= 2 * math.pi
+        elif self.encoderTheta < -math.pi:
+            self.encoderTheta += 2 * math.pi
+
     def update_kalman_with_gps(self):
         if self.origin_lat is None or self.origin_lon is None:
             self.origin_lat = self.latitude
