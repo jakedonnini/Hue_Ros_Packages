@@ -85,7 +85,7 @@ class Teleop(Node):
     def twist_callback(self, msg):
         """Process keyboard teleop commands."""
         linear_speed = msg.linear.x
-        angular_speed = msg.angular.z
+        angular_speed = msg.angular.z / 2 # devide it by 2 by defualt
 
         # Convert linear/angular velocity to PWM values
         max_pwm = 100
