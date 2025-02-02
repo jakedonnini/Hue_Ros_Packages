@@ -86,6 +86,17 @@ class GPSSubscriberPublisher(Node):
         self.pwmr_value = 0
         self.pwml_value = 0
 
+        # Initialize PID constants (may need more tuning)
+        self.Kp = 35.0   # Proportional constant (oscillates at 40)
+        self.Ki = 0.2  # Integral constant
+        self.Kd = 0.1  # Derivative constant
+
+        # Initialize PID terms
+        self.integral = 0
+        self.integral_min = -100  # Prevent excessive negative accumulation
+        self.integral_max = 100   # Prevent excessive positive accumulation
+        self.previous_error = 0
+
         # encoder varibles
         self.encoder_left = 0
         self.encoder_right = 0
@@ -102,7 +113,7 @@ class GPSSubscriberPublisher(Node):
         # constants (change if drive train changes)
         self.wheelR = 10.16
         self.wheelL = 64.77
-        self.encoderTicks = 8192.0
+        self.encoderTicks = 8192.0/2 # only counts half the ticks of encoder
 
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
@@ -269,7 +280,7 @@ class GPSSubscriberPublisher(Node):
         # )
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
-        if dist2Go < 1:  # threshold saying we hit the point
+        if dist2Go < 5:  # threshold saying we hit the point
             # self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.currentTWayPoint = None
 
@@ -294,37 +305,71 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        KQ = 20*5  # turn speed
-        pwmDel = KQ * thetaError
-        pwmAvg = 80
+        pwmAvg = 20 # normally 60 with dead zone
 
-        if abs(thetaError) > 0.2 or self.currentTWayPoint is None:
+        # PID calculations
+        # Proportional term (P)
+        P_term = self.Kp * thetaError
+        
+        # Integral term (I)
+        self.integral += thetaError
+        self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
+        I_term = self.Ki * self.integral
+        
+        # Derivative term (D)
+        D_term = self.Kd * (thetaError - self.previous_error)
+        
+        # PID output
+        pid_output = P_term + I_term + D_term
+        
+        # Update the previous error
+        self.previous_error = thetaError
+
+        # Adjust PWM values based on the PID output
+        pwmDel = pid_output
+
+        # If the angle is within this threshold then move forward
+        # otherwise stop an turn
+        threshold = 0.25
+        if abs(thetaError) > threshold:
             pwmAvg = 0
-            # set the ramp Accumulator back to 0 every time we stop
-            self.pwmAvgAccum = 0
-            pwmDel = self.constrain(pwmDel, -60, 60)
-
-            if abs(pwmDel) <= 39 and self.currentTWayPoint is not None:
-                # make this the lowest value the PWM can go. minimum speed
-                pwmDel = 39 * math.copysign(1, thetaError)
-
-            # if the robot starts to stop moving because it can't quite make it
-            if self.encoder_left <= 20 and self.encoder_right <= 20 and self.currentTWayPoint is not None:
-                # if we stop moveing keep increasing until gets unstuck
-                pwmDel += self.destickAccum
-                # include the sign of the error to turn in the right direction
-                self.destickAccum += 1 * math.copysign(1, thetaError)
-            else:
-                # at 300 offset: 39 is lowest with 25 avg encoder count 
-                self.destickAccum = 0
-        else:
-            if self.pwmAvgAccum < pwmAvg:
-                self.pwmAvgAccum += 10
-
-        pwmDel = self.constrain(pwmDel, -70, 70)
+        elif self.currentTWayPoint is None:
+            pwmAvg = 0
+            pwmDel = 0
+        else: 
+            # when in thresh shouldn't move alot, half the intergrator
+            I_term = I_term / 2
 
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
+
+        max_pwm = 128
+        min_pwm = -128
+        
+        self.pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
+        self.pwml_value = self.constrain(self.pwml_value, min_pwm, max_pwm)
+
+        # Anti-windup: Reduce integral accumulation if PWM is saturated
+        if self.pwmr_value == max_pwm or self.pwmr_value == min_pwm:
+            self.integral -= 0.1 * (self.pwmr_value - (pwmAvg + pwmDel))
+    
+        if self.pwml_value == max_pwm or self.pwml_value == min_pwm:
+            self.integral -= 0.1 * (self.pwml_value - (pwmAvg - pwmDel))
+
+        # remove dead zone between 39 and -39 for L and R
+        if self.pwmr_value > 0:
+            self.pwmr_value += 39
+        if self.pwmr_value < 0:
+            self.pwmr_value -= 39
+
+        if self.pwml_value > 0:
+            self.pwml_value += 39
+        if self.pwml_value < 0:
+            self.pwml_value -= 39
+
+        self.get_logger().info(
+            f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
+        )
 
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)
