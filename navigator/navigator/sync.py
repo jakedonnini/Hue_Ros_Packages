@@ -193,7 +193,9 @@ class Sync(Node):
         with open(save_path, 'w') as file:
             file.write(f"Rotation Matrix:\n{R}\n")
             file.write(f"Final Encoder Angle: {self.encoder_theta}\n")
-
+            
+        self.get_logger().info(f"Rotation Matrix:\n{R}\n")
+        self.get_logger().info(f"Final Encoder Angle: {self.encoder_theta}\n")
         self.get_logger().info(f"Transformation matrix saved to {save_path}")
 
     def shutdown_node(self):
