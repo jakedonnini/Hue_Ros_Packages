@@ -98,10 +98,10 @@ class Sync(Node):
         self.encoder_y += self.dt * V * np.sin(self.encoder_theta)
         self.encoder_theta += self.dt * dV
 
-        if self.encoderTheta > math.pi:
-            self.encoderTheta -= 2 * math.pi
-        elif self.encoderTheta < -math.pi:
-            self.encoderTheta += 2 * math.pi
+        if self.encoder_theta > math.pi:
+            self.encoder_theta -= 2 * math.pi
+        elif self.encoder_theta < -math.pi:
+            self.encoder_theta += 2 * math.pi
 
         # Store encoder position
         self.encoder_positions.append([self.encoder_x, self.encoder_y])
