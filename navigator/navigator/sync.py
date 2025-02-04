@@ -308,6 +308,11 @@ class Sync(Node):
             self.get_logger().error("Not enough data points to compute transformation.")
             return
 
+        # Ensure both arrays have the same number of points
+        min_size = min(encoder_array.shape[0], gps_array.shape[0])
+        encoder_array = encoder_array[:min_size]  # Trim excess encoder points
+        gps_array = gps_array[:min_size]  # Trim excess GPS points
+
         # Compute optimal rotation using Procrustes analysis
         encoder_mean = np.mean(encoder_array, axis=0)
         gps_mean = np.mean(gps_array, axis=0)
@@ -346,7 +351,7 @@ class Sync(Node):
 
         # Start navigation node
         self.get_logger().info("Starting navigation node...")
-        subprocess.Popen(["ros2", "run", "navigation_package", "navigation_node"])
+        subprocess.Popen(["ros2", "run", "navigator", "navigation_node"])
 
 def main(args=None):
     rclpy.init(args=args)
