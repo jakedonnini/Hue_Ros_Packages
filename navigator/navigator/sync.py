@@ -46,6 +46,9 @@ class Sync(Node):
         self.Ki = 0.2  # Integral constant
         self.Kd = 0.1  # Derivative constant
 
+        self.pwmr_value = 0
+        self.pwml_value = 0
+
         # Initialize PID terms
         self.integral = 0
         self.integral_min = -10  # Prevent excessive negative accumulation
@@ -58,8 +61,11 @@ class Sync(Node):
         # Threading
         self.running = True
         self.lock = threading.Lock()
+        self.publisher_thread = threading.Thread(target=self.run_publish_loop)
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
         self.logging_thread = threading.Thread(target=self.log_positions)
+
+        self.publisher_thread.start()
         self.processor_thread.start()
         self.logging_thread.start()
 
@@ -190,23 +196,27 @@ class Sync(Node):
             # when in thresh shouldn't move alot, half the intergrator
             I_term = I_term / 2
 
-        pwmr_value = pwmAvg + pwmDel
-        pwml_value = pwmAvg - pwmDel
+        self.pwmr_value = pwmAvg + pwmDel
+        self.pwml_value = pwmAvg - pwmDel
 
         max_pwm = 30
         min_pwm = -30
         
-        pwmr_value = self.constrain(pwmr_value, min_pwm, max_pwm)
-        pwml_value = self.constrain(pwml_value, min_pwm, max_pwm)
-
-        self.set_pwm(int(pwml_value), int(pwmr_value))
+        self.pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
+        self.pwml_value = self.constrain(self.pwml_value, min_pwm, max_pwm)
 
         self.get_logger().info(
-            f'PWM: {int(pwmr_value)}, {int(pwml_value)}, Waypoint: {x}, {y}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist2Go, 2)}'
+            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {x}, {y}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist2Go, 2)}'
         )
 
         # false to say we are still going
         return False
+
+    def run_publish_loop(self):
+        """Thread to continuously publish PWM values."""
+        while self.running:
+            self.set_pwm(int(self.pwml_value), int(self.pwmr_value))
+            time.sleep(0.1)
     
     def set_pwm(self, left_pwm, right_pwm):
         """Send PWM commands to move the robot."""
@@ -282,6 +292,7 @@ class Sync(Node):
         self.running = False
         self.processor_thread.join()
         self.logging_thread.join()
+        self.publisher_thread.join()
 
         # Stop ROS2 node
         self.destroy_node()
