@@ -120,9 +120,8 @@ class Sync(Node):
                 elif self.currentTWayPoint is None and len(self.waypointBuffer) == 0:
                     # Compute transformation
                     self.compute_transformation()
+                    self.running = False  # Stop the loop safely
             
-                    # Stop node and start navigation
-                    self.shutdown_node()
             time.sleep(0.05)
 
     def get_encoder_pose(self):
@@ -340,6 +339,7 @@ class Sync(Node):
 
     def shutdown_node(self):
         """Stops this node and starts the navigation node."""
+        #Doesn't really work
         self.running = False  # Signal threads to stop
     
         # Check if each thread is alive before joining it
