@@ -71,9 +71,9 @@ class Sync(Node):
         # Threading
         self.running = True
         self.lock = threading.Lock()
-        self.publisher_thread = threading.Thread(target=self.run_publish_loop)
-        self.processor_thread = threading.Thread(target=self.run_processing_loop)
-        self.logging_thread = threading.Thread(target=self.log_positions)
+        self.publisher_thread = threading.Thread(target=self.run_publish_loop, daemon=True)
+        self.processor_thread = threading.Thread(target=self.run_processing_loop, daemon=True)
+        self.logging_thread = threading.Thread(target=self.log_positions, daemon=True)
 
         self.publisher_thread.start()
         self.processor_thread.start()
@@ -340,18 +340,28 @@ class Sync(Node):
 
     def shutdown_node(self):
         """Stops this node and starts the navigation node."""
-        self.running = False
-        self.processor_thread.join()
-        self.logging_thread.join()
-        self.publisher_thread.join()
-
+        self.running = False  # Signal threads to stop
+    
+        # Check if each thread is alive before joining it
+        if hasattr(self, 'processor_thread') and self.processor_thread.is_alive():
+            self.processor_thread.join()
+    
+        if hasattr(self, 'logging_thread') and self.logging_thread.is_alive():
+            self.logging_thread.join()
+    
+        # Ensure the thread exists before attempting to join (prevents AttributeError)
+        if hasattr(self, 'publisher_thread') and isinstance(self.publisher_thread, threading.Thread):
+            if self.publisher_thread.is_alive():
+                self.publisher_thread.join()
+    
         # Stop ROS2 node
         self.destroy_node()
         rclpy.shutdown()
-
+    
         # Start navigation node
         self.get_logger().info("Starting navigation node...")
         subprocess.Popen(["ros2", "run", "navigator", "navigation_node"])
+
 
 def main(args=None):
     rclpy.init(args=args)
