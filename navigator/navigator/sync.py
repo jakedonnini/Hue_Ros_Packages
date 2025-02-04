@@ -9,7 +9,7 @@ import subprocess
 
 class Sync(Node):
     def __init__(self):
-        super().__init__('sync_node')
+        super().__init__('sync')
 
         # Subscribers
         self.gps_subscription = self.create_subscription(Coordinates, 'gps', self.gps_callback, 10)
