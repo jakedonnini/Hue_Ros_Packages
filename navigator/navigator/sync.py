@@ -41,6 +41,9 @@ class Sync(Node):
         self.gps_positions = []
         self.encoder_positions = []
 
+        self.waypointBuffer = []
+        self.currentTWayPoint = None
+
         # Initialize PID constants
         self.Kp = 20.0   # Proportional constant (oscillates at 40)
         self.Ki = 0.2  # Integral constant
@@ -83,15 +86,38 @@ class Sync(Node):
             self.encoder_data_updated = True
 
     def run_processing_loop(self):
+        """Process waypoints and update encoder position as new data is available."""
         while self.running:
+            # Process encoder data if updated
             if self.encoder_data_updated:
                 with self.lock:
                     self.get_encoder_pose()
-                    self.encoder_data_updated = False
+                    self.encoder_data_updated = False  # Reset flag
+
             if self.new_gps_data:
                 with self.lock:
                     self.update_gps_position()
                     self.new_gps_data = False
+
+            # Check for waypoints to process
+            # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
+            if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
+                with self.lock:
+                    x, y, t = self.waypointBuffer.pop(0)
+                    self.currentTWayPoint = (x, y)
+                    # keep track of spraying state
+                    if t == 1:
+                        # toggle every time t is 1
+                        self.shouldBePainting = not self.shouldBePainting
+                    self.sentToggle = False
+                    self.pantingToggle = t
+
+                    if not self.firstWayPointSent:
+                        # when the first waypoint is sent reset the origin so we always start at 0 0
+                        self.origin_lat = self.latitude
+                        self.origin_lon = self.longitude
+                        self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
+                        self.firstWayPointSent = True
             time.sleep(0.05)
 
     def get_encoder_pose(self):
@@ -125,45 +151,41 @@ class Sync(Node):
         # Store GPS position
         self.gps_positions.append([self.x_gps_cm, self.y_gps_cm])
 
-    def execute_movement_sequence(self):
-        """Moves the robot forward, then turns left, then stops."""
-        self.get_logger().info("Starting movement sequence.")
+    def getPosError(self):
+        """Compute the distance and angular error to the next waypoint."""
+        if self.currentTWayPoint is None:
+            return 0, 0
 
-        # Move forward
-        self.get_logger().info(f"Move Forward")
-        # drive in a stright line and return true when done
-        self.doneFirstMove = self.move(100, 0)
-        if self.doneFirstMove:
-            # Turn left and drive straight, true when done
-            self.doneSecondMove = self.move(100, 100)
-            if self.doneSecondMove:
-                self.get_logger().info("Movement sequence complete.")
-                self.set_pwm(0, 0)
-    
-                # Compute transformation
-                self.compute_transformation()
-        
-                # Stop node and start navigation
-                self.shutdown_node()
+        waypointX, waypointY = self.currentTWayPoint
 
-    def constrain(self, val, min_val, max_val):
-        return max(min_val, min(val, max_val))
-    
-    def move(self, x, y):
         # Current positions based on GPS and encoder data (for now just encoder)
         self.currentX = self.encoder_x
         self.currentY = self.encoder_y
         self.currentTheta = self.encoder_theta
 
-        dist2Go = math.sqrt(math.pow(self.currentX - x, 2) + math.pow(self.currentY - y, 2))
-        if dist2Go < 5:  # threshold saying we hit the point (was 1)
-            self.get_logger().info(f'Hit ({x}, {x}) waypoint')
-            return True
+        dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
+        if dist2Go < 5:  # threshold saying we hit the point
+            # self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
+            self.currentTWayPoint = None
 
-        desiredQ = math.atan2(y - self.currentY, x - self.currentX)
+        desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
         thetaError = desiredQ - self.currentTheta
 
-        pwmAvg = 20 # normally 60
+        if thetaError > math.pi:
+            thetaError -= 2 * math.pi
+        elif thetaError < -math.pi:
+            thetaError += 2 * math.pi
+
+        return dist2Go, thetaError
+
+    def constrain(self, val, min_val, max_val):
+        return max(min_val, min(val, max_val))
+
+    def adjust_pwm_values(self):
+        """Adjust and publish PWMR and PWML values based on GPS data."""
+        dist, thetaError = self.getPosError()
+
+        pwmAvg = 20 # normally 60 with dead zone
 
         # PID calculations
         # Proportional term (P)
@@ -190,8 +212,10 @@ class Sync(Node):
         # otherwise stop an turn
         threshold = 0.25
         if abs(thetaError) > threshold:
-            self.get_logger().info(f"Turning")
             pwmAvg = 0
+        elif self.currentTWayPoint is None:
+            pwmAvg = 0
+            pwmDel = 0
         else: 
             # when in thresh shouldn't move alot, half the intergrator
             I_term = I_term / 2
@@ -199,41 +223,58 @@ class Sync(Node):
         self.pwmr_value = pwmAvg + pwmDel
         self.pwml_value = pwmAvg - pwmDel
 
-        max_pwm = 30
-        min_pwm = -30
+        max_pwm = 50
+        min_pwm = -50
         
         self.pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
         self.pwml_value = self.constrain(self.pwml_value, min_pwm, max_pwm)
 
+        # Anti-windup: Reduce integral accumulation if PWM is saturated
+        if self.pwmr_value == max_pwm or self.pwmr_value == min_pwm:
+            self.integral -= 0.1 * (self.pwmr_value - (pwmAvg + pwmDel))
+    
+        if self.pwml_value == max_pwm or self.pwml_value == min_pwm:
+            self.integral -= 0.1 * (self.pwml_value - (pwmAvg - pwmDel))
+
+        # remove dead zone between 39 and -39 for L and R
+        if self.pwmr_value > 0:
+            self.pwmr_value += 39
+        if self.pwmr_value < 0:
+            self.pwmr_value -= 39
+
+        if self.pwml_value > 0:
+            self.pwml_value += 39
+        if self.pwml_value < 0:
+            self.pwml_value -= 39
+
         self.get_logger().info(
-            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {x}, {y}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist2Go, 2)}'
+            f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
         )
 
-        # false to say we are still going
-        return False
+        pwm_msg = TwoInt()
+        pwm_msg.r = int(self.pwmr_value)
+        pwm_msg.l = int(self.pwml_value)
+        
+        # if wheel still spinning send off again
+        sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) and (self.encoder_left != 0 or self.encoder_right != 0)
+
+        # Publish the PWM values
+        # only send if new values
+        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff:
+            self.pwm_publisher.publish(pwm_msg)
+            self.pwmr_value_old = self.pwmr_value
+            self.pwml_value_old = self.pwml_value
+
+        # for Kalman filiter testing
+        self.get_logger().info(
+            f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)},  [ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} Waypoint: {self.currentTWayPoint}, PWM R: {self.pwmr_value} L: {self.pwml_value}'
+        )
 
     def run_publish_loop(self):
         """Thread to continuously publish PWM values."""
         while self.running:
-            self.set_pwm(int(self.pwml_value), int(self.pwmr_value))
+            self.adjust_pwm_values()
             time.sleep(0.1)
-    
-    def set_pwm(self, left_pwm, right_pwm):
-        """Send PWM commands to move the robot."""
-        # remove dead zone between 39 and -39 for L and R
-        if right_pwm > 0:
-            right_pwm += 39
-        if right_pwm < 0:
-            right_pwm -= 39
-
-        if left_pwm > 0:
-            left_pwm += 39
-        if left_pwm < 0:
-            left_pwm -= 39
-      
-        pwm_msg = TwoInt()
-        pwm_msg.l, pwm_msg.r = left_pwm, right_pwm
-        self.pwm_publisher.publish(pwm_msg)
 
     def log_positions(self):
         try:
