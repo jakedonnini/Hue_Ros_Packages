@@ -144,9 +144,9 @@ class Sync(Node):
     
     def move(self, x, y):
         # Current positions based on GPS and encoder data (for now just encoder)
-        self.currentX = self.encoderX
-        self.currentY = self.encoderY
-        self.currentTheta = self.encoderTheta
+        self.currentX = self.encoder_x
+        self.currentY = self.encoder_y
+        self.currentTheta = self.encoder_theta
 
         dist2Go = math.sqrt(math.pow(self.currentX - x, 2) + math.pow(self.currentY - y, 2))
         if dist2Go < 5:  # threshold saying we hit the point (was 1)
@@ -228,9 +228,9 @@ class Sync(Node):
                     with self.lock:
                         gps_x = self.x_gps_cm
                         gps_y = self.y_gps_cm
-                        encoder_x = self.encoderX
-                        encoder_y = self.encoderY
-                        theta = self.encoderTheta
+                        encoder_x = self.encoder_x
+                        encoder_y = self.encoder_y
+                        theta = self.encoder_theta
                     timestamp = time.time()
                     file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{theta}\n")
                     file.flush()
