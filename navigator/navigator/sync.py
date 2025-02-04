@@ -154,7 +154,7 @@ class Sync(Node):
             self.get_logger().info(f'Hit ({x}, {x}) waypoint')
             return True
 
-        desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
+        desiredQ = math.atan2(y - self.currentY, x - self.currentX)
         thetaError = desiredQ - self.currentTheta
 
         pwmAvg = 20 # normally 60
