@@ -196,8 +196,8 @@ class Sync(Node):
         max_pwm = 30
         min_pwm = -30
         
-        pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
-        pwml_value = self.constrain(self.pwml_value, min_pwm, max_pwm)
+        pwmr_value = self.constrain(pwmr_value, min_pwm, max_pwm)
+        pwml_value = self.constrain(pwml_value, min_pwm, max_pwm)
 
         self.set_pwm(pwml_value, pwmr_value)
 
