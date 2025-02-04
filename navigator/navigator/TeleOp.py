@@ -123,6 +123,19 @@ class Teleop(Node):
         self.encoderY += self.dt * V * math.sin(self.encoderTheta)
         self.encoderTheta += self.dt * dV
 
+        # update B Control matrix
+        self.B = np.array([
+            [self.dt * np.cos(self.x[2, 0]), 0],
+            [self.dt * np.sin(self.x[2, 0]), 0],
+            [0, self.dt]
+        ])
+
+        u = np.array([[V], [dV]])
+
+        # Predict Step
+        self.x = self.F @ self.x + self.B @ u
+        self.P = self.F @ self.P @ self.F.T + self.Q
+
         if self.encoderTheta > math.pi:
             self.encoderTheta -= 2 * math.pi
         elif self.encoderTheta < -math.pi:
