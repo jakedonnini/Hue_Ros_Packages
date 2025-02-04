@@ -24,6 +24,10 @@ class Sync(Node):
         self.encoder_left, self.encoder_right = 0, 0
         self.encoder_data_updated = False
 
+        self.currentX = 0
+        self.currentY = 0
+        self.currentTheta = 0
+
         # GPS Variables
         self.latitude, self.longitude = None, None
         self.origin_lat, self.origin_lon = None, None
