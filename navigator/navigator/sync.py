@@ -101,7 +101,7 @@ class Sync(Node):
 
             # Check for waypoints to process
             # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
-            if self.latitude is not None and self.longitude is not None and: # have to get first GPS reading before go
+            if self.latitude is not None and self.longitude is not None: # have to get first GPS reading before go
                 if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
                     with self.lock:
                         x, y, t = self.waypointBuffer.pop(0)
