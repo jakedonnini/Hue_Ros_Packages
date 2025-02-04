@@ -117,6 +117,12 @@ class Sync(Node):
                             self.origin_lon = self.longitude
                             self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
                             self.firstWayPointSent = True
+                elif self.currentTWayPoint is None and len(self.waypointBuffer) == 0:
+                    # Compute transformation
+                    self.compute_transformation()
+            
+                    # Stop node and start navigation
+                    self.shutdown_node()
             time.sleep(0.05)
 
     def get_encoder_pose(self):
