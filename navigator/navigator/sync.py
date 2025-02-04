@@ -199,7 +199,7 @@ class Sync(Node):
         pwmr_value = self.constrain(pwmr_value, min_pwm, max_pwm)
         pwml_value = self.constrain(pwml_value, min_pwm, max_pwm)
 
-        self.set_pwm(pwml_value, pwmr_value)
+        self.set_pwm(int(pwml_value), int(pwmr_value))
 
         # false to say we are still going
         return False
