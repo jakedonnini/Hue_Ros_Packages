@@ -120,6 +120,10 @@ class Sync(Node):
                 elif self.currentTWayPoint is None and len(self.waypointBuffer) == 0:
                     # Compute transformation
                     self.compute_transformation()
+                    pwm_msg = TwoInt()
+                    pwm_msg.r = 0
+                    pwm_msg.l = 0
+                    self.pwm_publisher.publish(pwm_msg)
                     self.running = False  # Stop the loop safely
             
             time.sleep(0.05)
