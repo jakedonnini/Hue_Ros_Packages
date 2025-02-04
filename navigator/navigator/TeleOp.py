@@ -205,7 +205,7 @@ class Teleop(Node):
     
         except Exception as e:
             print(f"Error reading transformation matrix file: {e}")
-            return None, None
+            return  np.eye(3) , 0
 
     def log_positions(self):
         try:
