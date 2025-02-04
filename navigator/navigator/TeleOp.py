@@ -21,6 +21,10 @@ class Teleop(Node):
         self.R = np.diag([0.15, 0.15])  # Measurement noise covariance (GPS noise)
         self.H = np.array([[1, 0, 0], [0, 1, 0]])  # Observation matrix
 
+        # read from the rotation matrix
+        save_path = "/home/hue/ros2_ws/src/navigator/navigator/transformation_matrix.txt"
+        self.Rot_Matrix, self.startingAngle = self.read_transformation_matrix(save_path)
+
         # Subscribers for GPS, Encoder, and Teleop Twist Keyboard
         self.gps_subscription = self.create_subscription(
             Coordinates, 'gps', self.gps_callback, 10)
@@ -38,7 +42,10 @@ class Teleop(Node):
         self.encoder_data_updated = False
         self.encoderX = 0
         self.encoderY = 0
-        self.encoderTheta = 0
+        # start at the starting angle we left off at from the sync process
+        # we need to do this or else the rot matrix will be meaningless as the encoders reset
+        self.encoderTheta = self.startingAngle
+        self.x[2, 0] = self.startingAngle
 
         # Constants
         self.wheelR = 10.16
@@ -123,6 +130,14 @@ class Teleop(Node):
         self.encoderY += self.dt * V * math.sin(self.encoderTheta)
         self.encoderTheta += self.dt * dV
 
+        # Apply rotation matrix to align encoder position with GPS
+        rotated_pos = self.Rot_Matrix @ np.array([[self.encoderX], [self.encoderY]])
+        self.encoderX, self.encoderY = rotated_pos.flatten()
+
+        # Create extended 3x3 rotation matrix (includes theta)
+        Rot_Extended = np.eye(3)
+        Rot_Extended[:2, :2] = self.Rot_Matrix  # Embed the 2x2 rotation into the 3x3 matrix
+
         # update B Control matrix
         self.B = np.array([
             [self.dt * np.cos(self.x[2, 0]), 0],
@@ -132,8 +147,13 @@ class Teleop(Node):
 
         u = np.array([[V], [dV]])
 
+        stateUpdate = self.B @ u
+
+        # mult the u vector and B matrix by the rotation to get into the GPS frame
+        correctedStateUpdate = Rot_Extended @ stateUpdate
+
         # Predict Step
-        self.x = self.F @ self.x + self.B @ u
+        self.x = self.F @ self.x + correctedStateUpdate
         self.P = self.F @ self.P @ self.F.T + self.Q
 
         if self.encoderTheta > math.pi:
@@ -158,6 +178,34 @@ class Teleop(Node):
         K = self.P @ self.H.T @ np.linalg.inv(S)
         self.x = self.x + K @ y
         self.P = (np.eye(3) - K @ self.H) @ self.P
+
+    def read_transformation_matrix(self, file_path):
+    """
+    Reads the transformation matrix and theta from a file and returns them as variables.
+    
+    :param file_path: Path to the transformation matrix file
+    :return: Tuple (R, theta) where:
+             - R is a 2x2 numpy array (rotation matrix)
+             - theta is a float (final encoder angle)
+    """
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        # Extract rotation matrix (assuming 2x2 format)
+        matrix_lines = [line.strip() for line in lines if "[" in line or "]" in line]
+        R = np.array([[float(num) for num in matrix_lines[0].strip('[]').split()],
+                      [float(num) for num in matrix_lines[1].strip('[]').split()]])
+
+        # Extract theta (last line contains the final encoder angle)
+        theta_line = [line for line in lines if "Final Encoder Angle" in line][0]
+        theta = float(theta_line.split(":")[1].strip())
+
+        return R, theta
+
+    except Exception as e:
+        print(f"Error reading transformation matrix file: {e}")
+        return None, None
 
     def log_positions(self):
         try:
