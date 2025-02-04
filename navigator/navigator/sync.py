@@ -262,7 +262,7 @@ class Sync(Node):
 
         # for Kalman filiter testing
         self.get_logger().info(
-            f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)},  [ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} Waypoint: {self.currentTWayPoint}, PWM R: {self.pwmr_value} L: {self.pwml_value}'
+            f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)},  [ENCODER] X: {round(self.encoder_x, 2)} Y: {round(self.encoder_y, 2)} Q: {round(self.encoder_theta, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} Waypoint: {self.currentTWayPoint}, PWM R: {self.pwmr_value} L: {self.pwml_value}'
         )
 
     def run_publish_loop(self):
