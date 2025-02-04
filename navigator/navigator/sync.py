@@ -40,6 +40,20 @@ class Sync(Node):
         self.gps_positions = []
         self.encoder_positions = []
 
+        # Initialize PID constants
+        self.Kp = 20.0   # Proportional constant (oscillates at 40)
+        self.Ki = 0.2  # Integral constant
+        self.Kd = 0.1  # Derivative constant
+
+        # Initialize PID terms
+        self.integral = 0
+        self.integral_min = -10  # Prevent excessive negative accumulation
+        self.integral_max = 10   # Prevent excessive positive accumulation
+        self.previous_error = 0
+
+        self.doneFirstMove = False
+        self.doneSecondMove = False
+
         # Threading
         self.running = True
         self.lock = threading.Lock()
@@ -110,25 +124,85 @@ class Sync(Node):
 
         # Move forward
         self.get_logger().info(f"Move Forward")
-        self.set_pwm(20, 20)
-        time.sleep(3)  # Drive straight for 3 seconds
+        # drive in a stright line and return true when done
+        self.doneFirstMove = self.move(100, 0)
+        if self.doneFirstMove:
+            # Turn left and drive straight, true when done
+            self.doneSecondMove = self.move(100, 100)
+            if self.doneSecondMove:
+                self.get_logger().info("Movement sequence complete.")
+                self.set_pwm(0, 0)
+    
+                # Compute transformation
+                self.compute_transformation()
+        
+                # Stop node and start navigation
+                self.shutdown_node()
 
-        # Turn left
-        self.get_logger().info(f"Turning")
-        self.set_pwm(-10, 10)
-        time.sleep(2)  # Turn left for 2 seconds
+    def constrain(self, val, min_val, max_val):
+        return max(min_val, min(val, max_val))
+    
+    def move(self, x, y):
+        # Current positions based on GPS and encoder data (for now just encoder)
+        self.currentX = self.encoderX
+        self.currentY = self.encoderY
+        self.currentTheta = self.encoderTheta
 
-        # Stop
-        self.get_logger().info(f"Moving Forward")
-        self.set_pwm(20, 20)
-        self.get_logger().info("Movement sequence complete.")
+        dist2Go = math.sqrt(math.pow(self.currentX - x, 2) + math.pow(self.currentY - y, 2))
+        if dist2Go < 5:  # threshold saying we hit the point (was 1)
+            self.get_logger().info(f'Hit ({x}, {x}) waypoint')
+            return True
 
-        # Compute transformation
-        self.compute_transformation()
+        desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
+        thetaError = desiredQ - self.currentTheta
 
-        # Stop node and start navigation
-        self.shutdown_node()
+        pwmAvg = 20 # normally 60
 
+        # PID calculations
+        # Proportional term (P)
+        P_term = self.Kp * thetaError
+        
+        # Integral term (I)
+        self.integral += thetaError
+        self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
+        I_term = self.Ki * self.integral
+        
+        # Derivative term (D)
+        D_term = self.Kd * (thetaError - self.previous_error)
+        
+        # PID output
+        pid_output = P_term + I_term + D_term
+        
+        # Update the previous error
+        self.previous_error = thetaError
+
+        # Adjust PWM values based on the PID output
+        pwmDel = pid_output
+
+        # If the angle is within this threshold then move forward
+        # otherwise stop an turn
+        threshold = 0.25
+        if abs(thetaError) > threshold:
+            self.get_logger().info(f"Turning")
+            pwmAvg = 0
+        else: 
+            # when in thresh shouldn't move alot, half the intergrator
+            I_term = I_term / 2
+
+        pwmr_value = pwmAvg + pwmDel
+        pwml_value = pwmAvg - pwmDel
+
+        max_pwm = 30
+        min_pwm = -30
+        
+        pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
+        pwml_value = self.constrain(self.pwml_value, min_pwm, max_pwm)
+
+        self.set_pwm(pwml_value, pwmr_value)
+
+        # false to say we are still going
+        return False
+    
     def set_pwm(self, left_pwm, right_pwm):
         """Send PWM commands to move the robot."""
         # remove dead zone between 39 and -39 for L and R
@@ -174,7 +248,7 @@ class Sync(Node):
             return
 
         # Compute optimal rotation using Procrustes analysis
-        encoder_mean = np.mean(encoder_array, axis=0)
+        encoder_mean = np.mean(, axis=0)
         gps_mean = np.mean(gps_array, axis=0)
 
         encoder_centered = encoder_array - encoder_mean
