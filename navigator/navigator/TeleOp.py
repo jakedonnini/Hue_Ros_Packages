@@ -180,32 +180,32 @@ class Teleop(Node):
         self.P = (np.eye(3) - K @ self.H) @ self.P
 
     def read_transformation_matrix(self, file_path):
-    """
-    Reads the transformation matrix and theta from a file and returns them as variables.
+        """
+        Reads the transformation matrix and theta from a file and returns them as variables.
+        
+        :param file_path: Path to the transformation matrix file
+        :return: Tuple (R, theta) where:
+                 - R is a 2x2 numpy array (rotation matrix)
+                 - theta is a float (final encoder angle)
+        """
+        try:
+            with open(file_path, 'r') as file:
+                lines = file.readlines()
     
-    :param file_path: Path to the transformation matrix file
-    :return: Tuple (R, theta) where:
-             - R is a 2x2 numpy array (rotation matrix)
-             - theta is a float (final encoder angle)
-    """
-    try:
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-
-        # Extract rotation matrix (assuming 2x2 format)
-        matrix_lines = [line.strip() for line in lines if "[" in line or "]" in line]
-        R = np.array([[float(num) for num in matrix_lines[0].strip('[]').split()],
-                      [float(num) for num in matrix_lines[1].strip('[]').split()]])
-
-        # Extract theta (last line contains the final encoder angle)
-        theta_line = [line for line in lines if "Final Encoder Angle" in line][0]
-        theta = float(theta_line.split(":")[1].strip())
-
-        return R, theta
-
-    except Exception as e:
-        print(f"Error reading transformation matrix file: {e}")
-        return None, None
+            # Extract rotation matrix (assuming 2x2 format)
+            matrix_lines = [line.strip() for line in lines if "[" in line or "]" in line]
+            R = np.array([[float(num) for num in matrix_lines[0].strip('[]').split()],
+                          [float(num) for num in matrix_lines[1].strip('[]').split()]])
+    
+            # Extract theta (last line contains the final encoder angle)
+            theta_line = [line for line in lines if "Final Encoder Angle" in line][0]
+            theta = float(theta_line.split(":")[1].strip())
+    
+            return R, theta
+    
+        except Exception as e:
+            print(f"Error reading transformation matrix file: {e}")
+            return None, None
 
     def log_positions(self):
         try:
