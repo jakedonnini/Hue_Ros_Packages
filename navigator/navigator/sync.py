@@ -201,6 +201,10 @@ class Sync(Node):
 
         self.set_pwm(int(pwml_value), int(pwmr_value))
 
+        self.get_logger().info(
+            f'PWM: {int(pwmr_value)}, {int(pwml_value)}, Waypoint: {x}, {y}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
+        )
+
         # false to say we are still going
         return False
     
