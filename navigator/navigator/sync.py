@@ -248,7 +248,7 @@ class Sync(Node):
             return
 
         # Compute optimal rotation using Procrustes analysis
-        encoder_mean = np.mean(, axis=0)
+        encoder_mean = np.mean(encoder_array, axis=0)
         gps_mean = np.mean(gps_array, axis=0)
 
         encoder_centered = encoder_array - encoder_mean
