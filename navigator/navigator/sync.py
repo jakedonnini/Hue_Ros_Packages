@@ -52,6 +52,8 @@ class Sync(Node):
 
         self.pwmr_value = 0
         self.pwml_value = 0
+        self.pwmr_value_old = 0
+        self.pwml_value_old = 0
 
         # Initialize PID terms
         self.integral = 0
@@ -99,17 +101,18 @@ class Sync(Node):
 
             # Check for waypoints to process
             # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
-            if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
-                with self.lock:
-                    x, y, t = self.waypointBuffer.pop(0)
-                    self.currentTWayPoint = (x, y)
-                    
-                    if not self.firstWayPointSent:
-                        # when the first waypoint is sent reset the origin so we always start at 0 0
-                        self.origin_lat = self.latitude
-                        self.origin_lon = self.longitude
-                        self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
-                        self.firstWayPointSent = True
+            if self.latitude is not None and self.longitude is not None and: # have to get first GPS reading before go
+                if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
+                    with self.lock:
+                        x, y, t = self.waypointBuffer.pop(0)
+                        self.currentTWayPoint = (x, y)
+                        
+                        if not self.firstWayPointSent:
+                            # when the first waypoint is sent reset the origin so we always start at 0 0
+                            self.origin_lat = self.latitude
+                            self.origin_lon = self.longitude
+                            self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
+                            self.firstWayPointSent = True
             time.sleep(0.05)
 
     def get_encoder_pose(self):
