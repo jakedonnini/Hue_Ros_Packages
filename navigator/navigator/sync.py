@@ -41,7 +41,8 @@ class Sync(Node):
         self.gps_positions = []
         self.encoder_positions = []
 
-        self.waypointBuffer = []
+        self.waypointBuffer = [(100,0,0), (100, 100, 0)] # start with L path
+        self.firstWayPointSent = False
         self.currentTWayPoint = None
 
         # Initialize PID constants
@@ -71,9 +72,6 @@ class Sync(Node):
         self.publisher_thread.start()
         self.processor_thread.start()
         self.logging_thread.start()
-
-        # Start movement sequence
-        self.execute_movement_sequence()
 
     def gps_callback(self, msg):
         with self.lock:
@@ -105,13 +103,7 @@ class Sync(Node):
                 with self.lock:
                     x, y, t = self.waypointBuffer.pop(0)
                     self.currentTWayPoint = (x, y)
-                    # keep track of spraying state
-                    if t == 1:
-                        # toggle every time t is 1
-                        self.shouldBePainting = not self.shouldBePainting
-                    self.sentToggle = False
-                    self.pantingToggle = t
-
+                    
                     if not self.firstWayPointSent:
                         # when the first waypoint is sent reset the origin so we always start at 0 0
                         self.origin_lat = self.latitude
