@@ -328,7 +328,7 @@ class Sync(Node):
         R = Vt.T @ U.T
 
         if np.linalg.det(R) < 0:
-            Vt[1, :] *= -1
+            # Vt[1, :] *= -1 # causes an incorrect reflection issue
             R = Vt.T @ U.T
 
         # Save matrix and angle
