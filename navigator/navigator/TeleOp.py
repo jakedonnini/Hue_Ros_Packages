@@ -132,6 +132,8 @@ class Teleop(Node):
 
         # Apply rotation matrix to align encoder position with GPS
         rotated_pos = self.Rot_Matrix @ np.array([[self.encoderX], [self.encoderY]])
+        print("normal: ", self.encoderX, self.encoderY)
+        print("vect: ",  np.array([[self.encoderX], [self.encoderY]]))
         print("rotated_pos: ", rotated_pos)
         print("Flattened: ", rotated_pos.flatten())
         self.encoderX, self.encoderY = rotated_pos.flatten()
@@ -151,6 +153,8 @@ class Teleop(Node):
         u = np.array([[V], [dV]])
 
         stateUpdate = self.B @ u
+        print("B: ", self.B)
+        print("u: ", u)
 
         print("stateUpdate: ", stateUpdate)
 
