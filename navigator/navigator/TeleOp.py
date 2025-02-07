@@ -42,6 +42,8 @@ class Teleop(Node):
         self.encoder_data_updated = False
         self.encoderX = 0
         self.encoderY = 0
+        self.encoderRotX = 0
+        self.encoderRotY = 0
         # start at the starting angle we left off at from the sync process
         # we need to do this or else the rot matrix will be meaningless as the encoders reset
         self.encoderTheta = self.startingAngle
@@ -136,7 +138,7 @@ class Teleop(Node):
         print("vect: ",  np.array([[self.encoderX], [self.encoderY]]))
         print("rotated_pos: ", rotated_pos)
         print("Flattened: ", rotated_pos.flatten())
-        self.encoderX, self.encoderY = rotated_pos.flatten()
+        self.encoderRotX, self.encoderRotY = rotated_pos.flatten()
 
         # Create extended 3x3 rotation matrix (includes theta)
         Rot_Extended = np.eye(3)
@@ -221,18 +223,20 @@ class Teleop(Node):
     def log_positions(self):
         try:
             with open("/home/hue/ros2_ws/src/position_log_teleop.txt", 'w') as file:
-                file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y,Theta\n")
+                file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y,Rot_x,Rot_yTheta\n")
                 while self.running:
                     with self.lock:
                         gps_x = self.x_gps_cm
                         gps_y = self.y_gps_cm
                         encoder_x = self.encoderX
                         encoder_y = self.encoderY
+                        rot_x = self.encoderRotX
+                        rot_y = self.encoderRotY
                         kalman_x = self.x[0, 0]
                         kalman_y = self.x[1, 0]
                         theta = self.encoderTheta
                     timestamp = time.time()
-                    file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y},{theta}\n")
+                    file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y},{rot_x},{rot_y},{theta}\n")
                     file.flush()
                     time.sleep(0.1)
         except Exception as e:
