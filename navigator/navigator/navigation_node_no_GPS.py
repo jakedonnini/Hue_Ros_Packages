@@ -215,7 +215,7 @@ class GPSSubscriberPublisher(Node):
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
-        threshold = 0.25
+        threshold = 0.10
         if abs(thetaError) > threshold:
             pwmAvg = 0
         elif self.currentTWayPoint is None:
