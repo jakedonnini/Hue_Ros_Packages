@@ -400,7 +400,7 @@ class GPSSubscriberPublisher(Node):
 
         # if less than 3/4 of nominal speed then stop painting
         # when speed is reached the next block of code should turn sprayer back on
-        notUpToSpeed = avgSpeed <= (pwmAvg * 0.75)
+        notUpToSpeed = avgSpeed <= (pwmAvg * 0.75) and self.shouldBePainting
         
         # only send the toggle comands once
         paintingIncorrect = int(self.shouldBePainting) != self.isPainting
