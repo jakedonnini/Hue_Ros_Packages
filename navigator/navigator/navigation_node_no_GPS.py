@@ -42,6 +42,7 @@ class GPSSubscriberPublisher(Node):
         # Initial values for PWMR and PWML
         self.pwmr_value = 0
         self.pwml_value = 0
+        self.dir = -1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
         self.Kp = 35.0   # Proportional constant (oscillates at 40)
@@ -134,8 +135,8 @@ class GPSSubscriberPublisher(Node):
 
     def getEncoderPose(self):
         """call everytime serial data comes in"""
-        vL = (6.2832*self.wheelR*self.encoder_left)/(self.encoderTicks*self.deltaT) #change with the number of ticks per encoder turn
-        vR = (6.2832*self.wheelR*self.encoder_right)/(self.encoderTicks*self.deltaT)
+        vL = (6.2832*self.wheelR*self.encoder_left*self.dir)/(self.encoderTicks*self.deltaT) #change with the number of ticks per encoder turn
+        vR = (6.2832*self.wheelR*self.encoder_right*self.dir)/(self.encoderTicks*self.deltaT)
         V = 0.5*(vR+vL)
         dV = vR - vL
         self.encoderX += self.deltaT*V*math.cos(self.encoderTheta)
@@ -215,7 +216,7 @@ class GPSSubscriberPublisher(Node):
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
-        threshold = 0.10
+        threshold = 0.20
         if abs(thetaError) > threshold:
             pwmAvg = 0
         elif self.currentTWayPoint is None:
@@ -258,10 +259,20 @@ class GPSSubscriberPublisher(Node):
         )
 
         pwm_msg = TwoInt()
-        pwm_msg.r = int(self.pwmr_value)
-        pwm_msg.l = int(self.pwml_value)
+        pwm_msg.r = int(self.pwmr_value)*self.dir # change direction 
+        pwm_msg.l = int(self.pwml_value)*self.dir
 
-        if int(self.shouldBePainting) != self.isPainting:
+        # if speed is below a threshold then we should stop painting to avoid pooling
+        avgSpeed = (self.pwmr_value + self.pwml_value) / 2
+
+        # if less than 3/4 of nominal speed then stop painting
+        # when speed is reached the next block of code should turn sprayer back on
+        notUpToSpeed = avgSpeed <= (pwmAvg * 0.75) and self.shouldBePainting
+        
+        # only send the toggle comands once
+        paintingIncorrect = int(self.shouldBePainting) != self.isPainting
+
+        if paintingIncorrect or notUpToSpeed:
             pwm_msg.toggle = 1
         else:
             pwm_msg.toggle = 0
@@ -276,7 +287,7 @@ class GPSSubscriberPublisher(Node):
 
         # Publish the PWM values
         # only send if new values
-        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff:
+        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff or paintingIncorrect:
             self.pwm_publisher.publish(pwm_msg)
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
