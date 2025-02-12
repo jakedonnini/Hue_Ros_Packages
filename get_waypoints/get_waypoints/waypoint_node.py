@@ -5,7 +5,7 @@ import time
 import sys
 
 class CoordinatesPublisher(Node):
-    def __init__(self, filename):
+    def __init__(self, filename, scaler):
         super().__init__('coordinates_publisher')
 
         # Create publisher for the coordinates
@@ -14,6 +14,7 @@ class CoordinatesPublisher(Node):
         # Load coordinates from the given file
         self.coordinates = self.load_coordinates_from_file(filename)
         self.index = 0
+        self.scaler = scaler
 
         # Start publishing loop only if coordinates were loaded
         if self.coordinates:
@@ -37,30 +38,32 @@ class CoordinatesPublisher(Node):
         while self.index < len(self.coordinates):
             x, y, t = self.coordinates[self.index]
             coord_msg = Coordinates()
-            coord_msg.x = x * 1.0  # Modify if scaling is needed
-            coord_msg.y = y * 1.0
+            coord_msg.x = x / self.scaler  # Apply scaling
+            coord_msg.y = y / self.scaler
             coord_msg.toggle = t
 
             self.coord_pub.publish(coord_msg)
-            self.get_logger().info(f'Published coordinates: X={x}, Y={y}, toggle: {t}')
+            self.get_logger().info(f'Published coordinates: X={coord_msg.x}, Y={coord_msg.y}, toggle: {t}')
 
             self.index += 1
             time.sleep(0.2)  # Adjust sleep time as needed
 
         self.get_logger().info("Finished publishing all coordinates. Node will shut down.")
+        self.destroy_node()
         rclpy.shutdown()
 
 
 def main(args=None):
     rclpy.init(args=args)
     
-    # Get filename from command-line arguments
-    if len(sys.argv) < 2:
-        print("Usage: ros2 run <package_name> <node_name> <filename>")
+    # Get filename and scaler from command-line arguments
+    if len(sys.argv) < 3:
+        print("Usage: ros2 run <package_name> <node_name> <filename> <scaler>")
         return
     filename = sys.argv[1]
+    scaler = float(sys.argv[2])
 
-    coord_publisher = CoordinatesPublisher('/home/hue/ros2_ws/src/get_waypoints/get_waypoints/' + filename)
+    coord_publisher = CoordinatesPublisher('/home/hue/ros2_ws/src/get_waypoints/get_waypoints/' + filename, scaler)
     try:
         rclpy.spin(coord_publisher)
     except KeyboardInterrupt:
@@ -74,4 +77,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
