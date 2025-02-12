@@ -106,12 +106,12 @@ class GPSPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    gps_publisher_2 = GPSPublisher()
+    gps2_publisher = GPSPublisher()
 
     try:
-        rclpy.spin(gps_publisher_2)
+        rclpy.spin(gps2_publisher)
     except KeyboardInterrupt:
-        gps_publisher_2.destroy_node()
+        gps2_publisher.destroy_node()
         ser.close()
         rclpy.shutdown()
         print("GPS data reading stopped.")
