@@ -151,7 +151,7 @@ class GPSSubscriberPublisher(Node):
     def getPosError(self):
         """Compute the distance and angular error to the next waypoint."""
         if self.currentTWayPoint is None:
-            return 0, 0
+            return 0, 0, 0
 
         waypointX, waypointY = self.currentTWayPoint
 
