@@ -8,7 +8,7 @@ import math
 
 
 class GPSSubscriberPublisher(Node):
-    def __init__(self):
+    def __init__(self, KP, KI, KD):
         super().__init__('navigation_node')
 
         self.encoder_subscription = self.create_subscription(
@@ -45,9 +45,9 @@ class GPSSubscriberPublisher(Node):
         self.dir = -1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
-        self.Kp = 50.0   # Proportional constant (oscillates at 40)
-        self.Ki = 0.0  # Integral constant
-        self.Kd = 0.0  # Derivative constant
+        self.Kp = KP   # Proportional constant (oscillates at 40)
+        self.Ki = KI  # Integral constant
+        self.Kd = KD  # Derivative constant
 
         # Initialize PID terms
         self.integral = 0
@@ -326,7 +326,21 @@ class GPSSubscriberPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    gps_subscriber_publisher = GPSSubscriberPublisher()
+    # default
+    Kp = 35.0
+    Ki = 0.2
+    Kd = 0.1
+
+    # Get filename and scaler from command-line arguments
+    if len(sys.argv) < 4:
+        print("Usage: ros2 run <package_name> <node_name> <Kp> <Ki> <Kd>")
+        print("Using default values")
+    else:
+        Kp = float(sys.argv[1])
+        Ki = float(sys.argv[2])
+        Kd = float(sys.argv[2])
+
+    gps_subscriber_publisher = GPSSubscriberPublisher(Kp, Ki, Kd)
 
     try:
         rclpy.spin(gps_subscriber_publisher)
