@@ -301,14 +301,15 @@ class GPSSubscriberPublisher(Node):
         try:
             # self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
             with open("/home/hue/ros2_ws/src/position_log_No_GPS.txt", 'w') as file:
-                file.write("Time,Encoder_X,Encoder_Y,Theta\n")  # Header
+                file.write("Time,Encoder_X,Encoder_Y,Theta,Paint\n")  # Header
                 while self.running:
                     with self.lock:
                         encoder_x = self.encoderX
                         encoder_y = self.encoderY
                         theta = self.encoderTheta
+                        paint = self.isPainting
                     timestamp = time.time()
-                    file.write(f"{timestamp},{encoder_x},{encoder_y},{theta}\n")
+                    file.write(f"{timestamp},{encoder_x},{encoder_y},{theta},{paint}\n")
                     file.flush()  # Ensure data is written to the file
                     time.sleep(0.1)  # Adjust logging frequency as needed
         except Exception as e:
