@@ -33,6 +33,7 @@ class GPSSubscriberPublisher(Node):
         self.isPainting = 0
         self.sentToggle = False
         self.prevWaypoint = 0, 0
+        self.prevWaypointHolder = 0, 0 # used to avoid timing isuses when prev = current
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -125,6 +126,8 @@ class GPSSubscriberPublisher(Node):
             # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
             if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
                 with self.lock:
+                    # set the pervious waypint when it is reached
+                    self.prevWaypoint = self.prevWaypointHolder
                     x, y, t = self.waypointBuffer.pop(0)
                     self.currentTWayPoint = (x, y)
                     # keep track of spraying state
@@ -163,8 +166,7 @@ class GPSSubscriberPublisher(Node):
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 5:  # threshold saying we hit the point (was 1)
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
-            # set the pervious waypint when it is reached
-            self.prevWaypoint = waypointX, waypointY
+            self.prevWaypointHolder = waypointX, waypointY
             self.currentTWayPoint = None
 
         desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
