@@ -32,6 +32,7 @@ class GPSSubscriberPublisher(Node):
         self.shouldBePainting = False
         self.isPainting = 0
         self.sentToggle = False
+        self.prevWaypoint = 0, 0
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -162,6 +163,8 @@ class GPSSubscriberPublisher(Node):
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 5:  # threshold saying we hit the point (was 1)
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
+            # set the pervious waypint when it is reached
+            self.prevWaypoint = waypointX, waypointY
             self.currentTWayPoint = None
 
         desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
@@ -172,11 +175,15 @@ class GPSSubscriberPublisher(Node):
         elif thetaError < -math.pi:
             thetaError += 2 * math.pi
 
+        # find the distance to the nearest point on the line between waypoints
+        distPoints = math.sqrt(math.pow(waypointX - self.prevWaypoint[0], 2) + math.pow(waypointY - self.prevWaypoint[1], 2))
+        distToLine = ((waypointX-self.prevWaypoint[0])*(self.prevWaypoint[1]-self.currentY)-(self.prevWaypoint[0]-self.currentX)*(waypointY-self.prevWaypoint[1]))/distPoints
+
         # self.get_logger().info(
         #     f'Theat error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
         # )
 
-        return dist2Go, thetaError
+        return dist2Go, thetaError, distToLine
 
     def constrain(self, val, min_val, max_val):
         return max(min_val, min(val, max_val))
@@ -188,7 +195,7 @@ class GPSSubscriberPublisher(Node):
 
     def adjust_pwm_values(self):
         """Adjust and publish PWMR and PWML values based on GPS data."""
-        dist, thetaError = self.getPosError()
+        dist, thetaError, distToLine = self.getPosError()
 
         # KQ = 20*2  # turn speed
         # pwmDel = KQ * thetaError
@@ -196,39 +203,42 @@ class GPSSubscriberPublisher(Node):
 
         # PID calculations
         # Proportional term (P)
-        P_term = self.Kp * thetaError
+        P_term = self.Kp * distToLine
         
         # Integral term (I)
-        self.integral += thetaError
+        self.integral += distToLine
         self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
         I_term = self.Ki * self.integral
         
         # Derivative term (D)
-        D_term = self.Kd * (thetaError - self.previous_error)
+        D_term = self.Kd * (distToLine - self.previous_error)
         
         # PID output
         pid_output = P_term + I_term + D_term
         
         # Update the previous error
-        self.previous_error = thetaError
+        self.previous_error = distToLine
 
         # Adjust PWM values based on the PID output
         pwmDel = pid_output
+        pwmDelTheta = 35 * thetaError
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
         threshold = 0.20
         if abs(thetaError) > threshold:
             pwmAvg = 0
+            pwmDel = 0
         elif self.currentTWayPoint is None:
             pwmAvg = 0
             pwmDel = 0
+            pwmDelTheta = 0
         else: 
             # when in thresh shouldn't move alot, half the intergrator
             I_term = I_term / 2
 
-        self.pwmr_value = pwmAvg + pwmDel
-        self.pwml_value = pwmAvg - pwmDel
+        self.pwmr_value = pwmAvg + pwmDel + pwmDelTheta
+        self.pwml_value = pwmAvg - pwmDel - pwmDelTheta
 
         max_pwm = 128
         min_pwm = -128
@@ -294,7 +304,7 @@ class GPSSubscriberPublisher(Node):
             self.pwml_value_old = self.pwml_value
 
         self.get_logger().info(
-            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, {int(avgSpeed)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
+            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, {int(avgSpeed)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} TE: {round(thetaError, 2)} D {round(dist, 2)}, DL {round(distToLine, 2)}'
         )
 
     def log_positions(self):
