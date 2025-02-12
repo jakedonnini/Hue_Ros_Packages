@@ -5,6 +5,7 @@ from custom_msg.msg import Coordinates
 from custom_msg.msg import TwoInt
 import time
 import math
+import sys
 
 
 class GPSSubscriberPublisher(Node):
