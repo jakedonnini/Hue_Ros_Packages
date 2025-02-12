@@ -254,9 +254,9 @@ class GPSSubscriberPublisher(Node):
             self.pwml_value -= 39
             
 
-        self.get_logger().info(
-            f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
-        )
+        # self.get_logger().info(
+        #     f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
+        # )
 
         pwm_msg = TwoInt()
         pwm_msg.r = int(self.pwmr_value)*self.dir # change direction 
@@ -293,7 +293,7 @@ class GPSSubscriberPublisher(Node):
             self.pwml_value_old = self.pwml_value
 
         self.get_logger().info(
-            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
+            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, {int(avgSpeed)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
         )
 
     def log_positions(self):
