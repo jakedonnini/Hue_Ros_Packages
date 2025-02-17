@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64  
+from std_msgs.msg import Float64  # Use Float64 for latitude/longitude
 from custom_msg.msg import Coordinates
 import serial
 import time
@@ -8,7 +8,7 @@ import time
 # Configure the serial connection to the GPS module
 ser = serial.Serial(
     # for linux
-    port='/dev/ttyACM3',  # Update this to your GPS module's serial port
+    port='/dev/ttyACM1',  # Update this to your GPS module's serial port
     # for windows 
     # port='COM4',  # Change this to your GPS module's serial port
     baudrate=9600  # GPS modules commonly use 9600 or 115200 baud
@@ -19,8 +19,8 @@ class GPSPublisher(Node):
         super().__init__('gps_publisher')
 
         # Create publishers for latitude and longitude
-        self.coords_publisher = self.create_publisher(Coordinates, 'gps2', 10)
-        self.heading_publisher = self.create_publisher(Float64, 'gps2/heading', 10)
+        self.coords_publisher = self.create_publisher(Coordinates, 'gps', 10)
+        self.heading_publisher = self.create_publisher(Float64, 'gps/heading', 10)
 
         while True:
             self.read_gps_data()
@@ -106,12 +106,12 @@ class GPSPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    gps2_publisher = GPSPublisher()
+    gps_publisher = GPSPublisher()
 
     try:
-        rclpy.spin(gps2_publisher)
+        rclpy.spin(gps_publisher)
     except KeyboardInterrupt:
-        gps2_publisher.destroy_node()
+        gps_publisher.destroy_node()
         ser.close()
         rclpy.shutdown()
         print("GPS data reading stopped.")
