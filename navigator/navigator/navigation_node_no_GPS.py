@@ -45,7 +45,7 @@ class GPSSubscriberPublisher(Node):
         # Initial values for PWMR and PWML
         self.pwmr_value = 0
         self.pwml_value = 0
-        self.dir = -1 # set to -1 to invert the forward direction
+        self.dir = 1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
         self.Kp = KP   # Proportional constant (oscillates at 40)
