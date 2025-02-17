@@ -1,8 +1,0 @@
-Metadata-Version: 2.1
-Name: gps-publisher
-Version: 0.0.0
-Summary: Publish GPS Data
-Maintainer: hue
-Maintainer-email: hue@todo.todo
-License: Apache-2.0
-License-File: LICENSE

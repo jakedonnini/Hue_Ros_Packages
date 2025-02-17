@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64  # Use Float64 for latitude/longitude
+from std_msgs.msg import Float64  
 from custom_msg.msg import Coordinates
 import serial
 import time
