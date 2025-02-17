@@ -34,6 +34,7 @@ class GPSSubscriberPublisher(Node):
         self.sentToggle = False
         self.prevWaypoint = 0, 0
         self.prevWaypointHolder = 0, 0 # used to avoid timing isuses when prev = current
+        self.errorScaler = 1.083
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -140,8 +141,8 @@ class GPSSubscriberPublisher(Node):
 
     def getEncoderPose(self):
         """call everytime serial data comes in"""
-        vL = (6.2832*self.wheelR*self.encoder_left*self.dir)/(self.encoderTicks*self.deltaT) #change with the number of ticks per encoder turn
-        vR = (6.2832*self.wheelR*self.encoder_right*self.dir)/(self.encoderTicks*self.deltaT)
+        vL = (6.2832*self.wheelR*self.encoder_left*self.errorScaler*self.dir)/(self.encoderTicks*self.deltaT) #change with the number of ticks per encoder turn
+        vR = (6.2832*self.wheelR*self.encoder_right*self.errorScaler*self.dir)/(self.encoderTicks*self.deltaT)
         V = 0.5*(vR+vL)
         dV = vR - vL
         self.encoderX += self.deltaT*V*math.cos(self.encoderTheta)
