@@ -13,7 +13,7 @@ class GPSSubscriberPublisher(Node):
         super().__init__('navigation_node')
 
         # Kalman Filter Matrices
-        self.dt = 0.1  # time step
+        self.dt = 0.025  # time step
         self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
         
         # Define initial state covariance matrix
