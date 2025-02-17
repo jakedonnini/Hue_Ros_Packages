@@ -1,121 +1,83 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64  # Use Float64 for latitude/longitude
+from std_msgs.msg import Float64
 from custom_msg.msg import Coordinates
-import serial
-import time
+import math
 
-# Configure the serial connection to the GPS module
-ser = serial.Serial(
-    # for linux
-    port='/dev/ttyACM1',  # Update this to your GPS module's serial port
-    # for windows 
-    # port='COM4',  # Change this to your GPS module's serial port
-    baudrate=9600  # GPS modules commonly use 9600 or 115200 baud
-)
-
-class GPSPublisher(Node):
+class GPSFusionNode(Node):
     def __init__(self):
-        super().__init__('gps_publisher')
-
-        # Create publishers for latitude and longitude
-        self.coords_publisher = self.create_publisher(Coordinates, 'gps', 10)
-        self.heading_publisher = self.create_publisher(Float64, 'gps/heading', 10)
-
-        while True:
-            self.read_gps_data()
-        # Start reading data from GPS
-
-    def read_gps_data(self):
-        if ser.in_waiting > 0:
-
-            # Read data from the GPS module
-            gps_data = ser.readline().decode('utf-8').strip()
-
-            # Only process lines starting with $G, which are NMEA sentences
-            if gps_data.startswith('$G'):
-                self.parse_nmea(gps_data)
-
-    def parse_nmea(self, nmea_sentence):
-        # Example: Parse a GGA sentence (for latitude, longitude, altitude)
-        if nmea_sentence.startswith('$GPGGA') or nmea_sentence.startswith('$GNGGA'):
-            parts = nmea_sentence.split(',')
-            
-            if len(parts) < 15:
-                self.get_logger().warn("Incomplete GGA data")
-                return
-            
-            # Extract relevant GPS data
-            latitude = self.convert_to_decimal(parts[2], parts[3])  # Latitude and N/S direction
-            longitude = self.convert_to_decimal(parts[4], parts[5])  # Longitude and E/W direction
-
-            # Publish latitude and longitude
-            if latitude is not None and longitude is not None:
-                self.publish_gps_data(latitude, longitude)
-
-        # Example: Parse a VTG sentence (for heading/direction in degrees)
-        if nmea_sentence.startswith('$GPVTG'):
-            parts = nmea_sentence.split(',')
-
-            if len(parts) < 9:
-                self.get_logger().warn("Incomplete VTG data")
-                return
-            
-            heading = parts[1]  # Heading in degrees (true track made good)
-            
-            try:
-                heading = float(heading)
-                self.publish_heading(heading)
-            except ValueError:
-                self.get_logger().warn("Invalid heading data")
-
-    def convert_to_decimal(self, value, direction):
-        """Convert NMEA latitude/longitude to decimal degrees."""
-        if not value or not direction:
-            return None
+        super().__init__('gps_fusion_node')
         
-        try:
-            degrees = float(value[:2])
-            minutes = float(value[2:])
-            decimal = degrees + minutes / 60.0
-            if direction in ['S', 'W']:
-                decimal = -decimal
-            return decimal
-        except ValueError:
-            return None
-
-    def publish_gps_data(self, latitude, longitude):
-        gps_msg = Coordinates()
-
-        gps_msg.x = latitude
-        gps_msg.y = longitude
-
-        self.coords_publisher.publish(gps_msg)
-
-        self.get_logger().info(f'Published Latitude: {latitude}, Longitude: {longitude}')
-
-    def publish_heading(self, heading):
-        heading_msg = Float64()
-        heading_msg.data = heading
-
-        self.heading_publisher.publish(heading_msg)
-        self.get_logger().info(f'Published Heading: {heading} degrees')
-
-
+        # Subscribing to both GPS topics
+        self.subscription1 = self.create_subscription(
+            Coordinates,
+            'gps',  # Primary GPS topic
+            self.gps_callback_1,
+            10)
+        
+        self.subscription2 = self.create_subscription(
+            Coordinates,
+            'gps2',  # Secondary GPS topic
+            self.gps_callback_2,
+            10)
+        
+        # Publisher for midpoint and robot angle
+        self.midpoint_publisher = self.create_publisher(Coordinates, 'gps/midpoint', 10)
+        self.angle_publisher = self.create_publisher(Float64, 'gps/angle', 10)
+        
+        # Variables to store GPS data
+        self.gps1 = None
+        self.gps2 = None
+    
+    def gps_callback_1(self, msg):
+        self.gps1 = (msg.x, msg.y)
+        self.compute_and_publish()
+    
+    def gps_callback_2(self, msg):
+        self.gps2 = (msg.x, msg.y)
+        self.compute_and_publish()
+    
+    def compute_and_publish(self):
+        if self.gps1 is None or self.gps2 is None:
+            return
+        
+        lat1, lon1 = self.gps1
+        lat2, lon2 = self.gps2
+        
+        # Compute the midpoint
+        mid_lat = (lat1 + lat2) / 2.0
+        mid_lon = (lon1 + lon2) / 2.0
+        
+        # Compute the angle of the robot with respect to the primary GPS as reference
+        delta_lat = lat2 - lat1
+        delta_lon = lon2 - lon1
+        angle = math.degrees(math.atan2(delta_lat, delta_lon))
+        
+        # Publish midpoint
+        midpoint_msg = Coordinates()
+        midpoint_msg.x = mid_lat
+        midpoint_msg.y = mid_lon
+        self.midpoint_publisher.publish(midpoint_msg)
+        
+        # Publish angle
+        angle_msg = Float64()
+        angle_msg.data = angle
+        self.angle_publisher.publish(angle_msg)
+        
+        self.get_logger().info(f'Midpoint: ({mid_lat}, {mid_lon}), Angle: {angle} degrees')
+        
 
 def main(args=None):
     rclpy.init(args=args)
-
-    gps_publisher = GPSPublisher()
-
+    gps_fusion_node = GPSFusionNode()
+    
     try:
-        rclpy.spin(gps_publisher)
+        rclpy.spin(gps_fusion_node)
     except KeyboardInterrupt:
-        gps_publisher.destroy_node()
-        ser.close()
+        pass
+    finally:
+        gps_fusion_node.destroy_node()
         rclpy.shutdown()
-        print("GPS data reading stopped.")
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
