@@ -177,7 +177,7 @@ class GPSSubscriberPublisher(Node):
         """Thread to continuously publish PWM values."""
         while self.running:
             self.adjust_pwm_values()
-            time.sleep(0.1)
+            time.sleep(self.dt)
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
@@ -212,7 +212,7 @@ class GPSSubscriberPublisher(Node):
                         self.origin_lon = self.longitude
                         self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
                         self.firstWayPointSent = True
-            time.sleep(0.05)
+            time.sleep(self.dt/2)
 
     def getEncoderPose(self):
         """call everytime serial data comes in"""
@@ -479,7 +479,7 @@ class GPSSubscriberPublisher(Node):
                     timestamp = time.time()
                     file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y},{theta}\n")
                     file.flush()
-                    time.sleep(0.1)
+                    time.sleep(self.dt)
         except Exception as e:
             self.get_logger().error(f"Failed to write log: {e}")
 
