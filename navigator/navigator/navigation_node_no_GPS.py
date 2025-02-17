@@ -164,7 +164,7 @@ class GPSSubscriberPublisher(Node):
         self.currentTheta = self.encoderTheta
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
-        if dist2Go < 3:  # threshold saying we hit the point (was 1)
+        if dist2Go < 5:  # threshold saying we hit the point (was 1)
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.prevWaypointHolder = waypointX, waypointY
             self.currentTWayPoint = None
@@ -223,7 +223,7 @@ class GPSSubscriberPublisher(Node):
 
         # Adjust PWM values based on the PID output
         pwmDel = pid_output
-        pwmDelTheta = 20 * thetaError
+        pwmDelTheta = 35 * thetaError
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
