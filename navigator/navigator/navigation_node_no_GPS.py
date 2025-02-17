@@ -74,7 +74,7 @@ class GPSSubscriberPublisher(Node):
         self.wheelR = 10.16
         self.wheelL = 64.77
         self.encoderTicks = 8192.0 / 2
-        self.deltaT = 0.1 # 100ms time intervals
+        self.deltaT = 0.025 # 100ms time intervals New at 1/4 the time
 
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
