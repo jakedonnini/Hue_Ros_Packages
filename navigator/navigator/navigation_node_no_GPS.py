@@ -53,6 +53,8 @@ class GPSSubscriberPublisher(Node):
         self.Ki = KI  # Integral constant
         self.Kd = KD  # Derivative constant
 
+        self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
+
         # Initialize PID terms
         self.integral = 0
         self.integral_min = -100  # Prevent excessive negative accumulation
