@@ -224,14 +224,14 @@ class GPSSubscriberPublisher(Node):
 
         # Adjust PWM values based on the PID output
         pwmDel = pid_output
-        pwmDelTheta = 35 * thetaError
+        pwmDelTheta = 30 * thetaError
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
         threshold = 0.20
         if abs(thetaError) > threshold:
             pwmAvg = 0
-            pwmDel = 0
+            # pwmDel = 0
         elif self.currentTWayPoint is None:
             pwmAvg = 0
             pwmDel = 0
@@ -341,9 +341,9 @@ def main(args=None):
     rclpy.init(args=args)
 
     # default
-    Kp = 35.0
-    Ki = 0.2
-    Kd = 0.1
+    Kp = 0.2
+    Ki = 0.0
+    Kd = 0.0
 
     # Get filename and scaler from command-line arguments
     if len(sys.argv) < 4:
