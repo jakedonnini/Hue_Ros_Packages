@@ -237,7 +237,7 @@ class GPSSubscriberPublisher(Node):
         if abs(thetaError) > 0.2618: # greater than 30 deg
             self.largeTurn = True # we have found a big turn
 
-        if self.largeTurn and abs(thetaError) > 0.05: # get 3 deg 
+        if self.largeTurn and abs(thetaError) > 0.02: # get 3 deg 
             pwmAvg = 0 # 0 point turn
         else:
             self.largeTurn = False
