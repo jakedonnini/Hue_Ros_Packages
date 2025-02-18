@@ -13,7 +13,7 @@ class GPSSubscriberPublisher(Node):
         super().__init__('navigation_node')
 
         # Kalman Filter Matrices
-        self.dt = 0.1  # time step
+        self.dt = 0.025  # time step
         self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
         
         # Define initial state covariance matrix
@@ -99,6 +99,7 @@ class GPSSubscriberPublisher(Node):
         # Initial values for PWMR and PWML
         self.pwmr_value = 0
         self.pwml_value = 0
+        self.dir = -1 # set to -1 to invert the forward direction
 
         # Initialize PID constants (may need more tuning)
         self.Kp = 35.0   # Proportional constant (oscillates at 40)
@@ -191,7 +192,7 @@ class GPSSubscriberPublisher(Node):
         """Thread to continuously publish PWM values."""
         while self.running:
             self.adjust_pwm_values()
-            time.sleep(0.1)
+            time.sleep(self.dt)
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
@@ -226,13 +227,13 @@ class GPSSubscriberPublisher(Node):
                         self.origin_lon = self.longitude
                         self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
                         self.firstWayPointSent = True
-            time.sleep(0.05)
+            time.sleep(self.dt/2)
 
     def getEncoderPose(self):
         """call everytime serial data comes in"""
         
-        vL = (6.2832*self.wheelR*self.encoder_left)/(self.encoderTicks*self.dt) #change with the number of ticks per encoder turn
-        vR = (6.2832*self.wheelR*self.encoder_right)/(self.encoderTicks*self.dt)
+        vL = (6.2832*self.wheelR*self.encoder_left*self.dir)/(self.encoderTicks*self.dt) #change with the number of ticks per encoder turn
+        vR = (6.2832*self.wheelR*self.encoder_right*self.dir)/(self.encoderTicks*self.dt)
         V = 0.5*(vR+vL)
         dV = (vR - vL) / self.wheelL
 
@@ -338,7 +339,8 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError = self.getPosError()
 
-        pwmAvg = 20 # normally 60 with dead zone
+        # for painting 40 seems to be pretty good for paint spread
+        pwmAvg = 40 # normally 60 with dead zone
 
         # PID calculations
         # Proportional term (P)
@@ -363,7 +365,7 @@ class GPSSubscriberPublisher(Node):
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
-        threshold = 0.25
+        threshold = 0.20
         if abs(thetaError) > threshold:
             pwmAvg = 0
         elif self.currentTWayPoint is None:
@@ -405,10 +407,20 @@ class GPSSubscriberPublisher(Node):
         )
 
         pwm_msg = TwoInt()
-        pwm_msg.r = int(self.pwmr_value)
-        pwm_msg.l = int(self.pwml_value)
+        pwm_msg.r = int(self.pwmr_value) * self.dir # dir will flip the direction of movement
+        pwm_msg.l = int(self.pwml_value) * self.dir
+
+        # if speed is below a threshold then we should stop painting to avoid pooling
+        avgSpeed = (self.pwmr_value + self.pwml_value) / 2
+
+        # if less than 3/4 of nominal speed then stop painting
+        # when speed is reached the next block of code should turn sprayer back on
+        notUpToSpeed = avgSpeed <= (pwmAvg * 0.75) and self.shouldBePainting
+        
         # only send the toggle comands once
-        if int(self.shouldBePainting) != self.isPainting:
+        paintingIncorrect = int(self.shouldBePainting) != self.isPainting
+
+        if paintingIncorrect or notUpToSpeed:
             pwm_msg.toggle = 1
         else:
             pwm_msg.toggle = 0
@@ -423,7 +435,7 @@ class GPSSubscriberPublisher(Node):
 
         # Publish the PWM values
         # only send if new values
-        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff:
+        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff or paintingIncorrect:
             self.pwm_publisher.publish(pwm_msg)
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
@@ -434,7 +446,7 @@ class GPSSubscriberPublisher(Node):
 
         # for Kalman filiter testing
         self.get_logger().info(
-            f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)},  [ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} Waypoint: {self.currentTWayPoint}, PWM R: {self.pwmr_value} L: {self.pwml_value}'
+            f'\rGPS: {round(self.x_gps_cm, 2)}, {round(self.y_gps_cm, 2)},  [ENCODER] X: {round(self.encoderX, 2)} Y: {round(self.encoderY, 2)} Q: {round(self.encoderTheta, 2)}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)} Waypoint: {self.currentTWayPoint}, PWM R: {int(self.pwmr_value)} L: {int(self.pwml_value)}, PWM AVG {int(avgSpeed)}'
         )
 
     def read_transformation_matrix(self, file_path):
@@ -482,7 +494,7 @@ class GPSSubscriberPublisher(Node):
                     timestamp = time.time()
                     file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y},{theta}\n")
                     file.flush()
-                    time.sleep(0.1)
+                    time.sleep(self.dt)
         except Exception as e:
             self.get_logger().error(f"Failed to write log: {e}")
 

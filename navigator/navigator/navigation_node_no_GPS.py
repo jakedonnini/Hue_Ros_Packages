@@ -5,10 +5,11 @@ from custom_msg.msg import Coordinates
 from custom_msg.msg import TwoInt
 import time
 import math
+import sys
 
 
 class GPSSubscriberPublisher(Node):
-    def __init__(self):
+    def __init__(self, KP, KI, KD):
         super().__init__('navigation_node')
 
         self.encoder_subscription = self.create_subscription(
@@ -31,6 +32,9 @@ class GPSSubscriberPublisher(Node):
         self.shouldBePainting = False
         self.isPainting = 0
         self.sentToggle = False
+        self.prevWaypoint = 0, 0
+        self.prevWaypointHolder = 0, 0 # used to avoid timing isuses when prev = current
+        self.largeTurn = False # use small threshold for large turns
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -42,11 +46,14 @@ class GPSSubscriberPublisher(Node):
         # Initial values for PWMR and PWML
         self.pwmr_value = 0
         self.pwml_value = 0
+        self.dir = -1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
-        self.Kp = 35.0   # Proportional constant (oscillates at 40)
-        self.Ki = 0.2  # Integral constant
-        self.Kd = 0.1  # Derivative constant
+        self.Kp = KP   # Proportional constant (oscillates at 40)
+        self.Ki = KI  # Integral constant
+        self.Kd = KD  # Derivative constant
+
+        self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
         # Initialize PID terms
         self.integral = 0
@@ -67,10 +74,11 @@ class GPSSubscriberPublisher(Node):
         self.currentY = 0
 
         # constants (change if drive train changes)
-        self.wheelR = 10.16
+        self.wheelR = 9.708 # 10.16  
         self.wheelL = 64.77
         self.encoderTicks = 8192.0 / 2
-        self.deltaT = 0.1 # 100ms time intervals
+        self.deltaT = 0.05 # 50ms time intervals New at 1/2 the time 20Hz
+        self.errorScaler = 1 # 0.9233 at bruces # 0.963 at our
 
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
@@ -107,7 +115,7 @@ class GPSSubscriberPublisher(Node):
         """Thread to continuously publish PWM values."""
         while self.running:
             self.adjust_pwm_values()
-            time.sleep(0.1)
+            time.sleep(self.deltaT)
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
@@ -122,6 +130,8 @@ class GPSSubscriberPublisher(Node):
             # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
             if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
                 with self.lock:
+                    # set the pervious waypint when it is reached
+                    self.prevWaypoint = self.prevWaypointHolder
                     x, y, t = self.waypointBuffer.pop(0)
                     self.currentTWayPoint = (x, y)
                     # keep track of spraying state
@@ -130,12 +140,12 @@ class GPSSubscriberPublisher(Node):
                         self.shouldBePainting = not self.shouldBePainting
                     self.sentToggle = False
                     self.pantingToggle = t
-            time.sleep(0.05)
+            time.sleep(self.deltaT/2)
 
     def getEncoderPose(self):
         """call everytime serial data comes in"""
-        vL = (6.2832*self.wheelR*self.encoder_left)/(self.encoderTicks*self.deltaT) #change with the number of ticks per encoder turn
-        vR = (6.2832*self.wheelR*self.encoder_right)/(self.encoderTicks*self.deltaT)
+        vL = (6.2832*self.wheelR*self.encoder_left*self.errorScaler*self.dir)/(self.encoderTicks*self.deltaT) #change with the number of ticks per encoder turn
+        vR = (6.2832*self.wheelR*self.encoder_right*self.errorScaler*self.dir)/(self.encoderTicks*self.deltaT)
         V = 0.5*(vR+vL)
         dV = vR - vL
         self.encoderX += self.deltaT*V*math.cos(self.encoderTheta)
@@ -148,7 +158,7 @@ class GPSSubscriberPublisher(Node):
     def getPosError(self):
         """Compute the distance and angular error to the next waypoint."""
         if self.currentTWayPoint is None:
-            return 0, 0
+            return 0, 0, 0
 
         waypointX, waypointY = self.currentTWayPoint
 
@@ -160,6 +170,8 @@ class GPSSubscriberPublisher(Node):
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 5:  # threshold saying we hit the point (was 1)
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
+            self.prevWaypointHolder = waypointX, waypointY
+            self.largeTurn = False
             self.currentTWayPoint = None
 
         desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
@@ -170,11 +182,15 @@ class GPSSubscriberPublisher(Node):
         elif thetaError < -math.pi:
             thetaError += 2 * math.pi
 
+        # find the distance to the nearest point on the line between waypoints
+        distPoints = math.sqrt(math.pow(waypointX - self.prevWaypoint[0], 2) + math.pow(waypointY - self.prevWaypoint[1], 2))
+        distToLine = ((waypointX-self.prevWaypoint[0])*(self.prevWaypoint[1]-self.currentY)-(self.prevWaypoint[0]-self.currentX)*(waypointY-self.prevWaypoint[1]))/distPoints
+
         # self.get_logger().info(
         #     f'Theat error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
         # )
 
-        return dist2Go, thetaError
+        return dist2Go, thetaError, distToLine
 
     def constrain(self, val, min_val, max_val):
         return max(min_val, min(val, max_val))
@@ -186,47 +202,54 @@ class GPSSubscriberPublisher(Node):
 
     def adjust_pwm_values(self):
         """Adjust and publish PWMR and PWML values based on GPS data."""
-        dist, thetaError = self.getPosError()
+        dist, thetaError, distToLine = self.getPosError()
 
         # KQ = 20*2  # turn speed
         # pwmDel = KQ * thetaError
-        pwmAvg = 40 # normally 60
+        pwmAvg = 20 # normally 60
 
         # PID calculations
         # Proportional term (P)
-        P_term = self.Kp * thetaError
+        P_term = self.Kp * distToLine
         
         # Integral term (I)
-        self.integral += thetaError
+        self.integral += distToLine
         self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
         I_term = self.Ki * self.integral
         
         # Derivative term (D)
-        D_term = self.Kd * (thetaError - self.previous_error)
+        # D_term = self.Kd * (distToLine - self.previous_error)
         
         # PID output
-        pid_output = P_term + I_term + D_term
+        pid_output = P_term + I_term  # + D_term
         
         # Update the previous error
-        self.previous_error = thetaError
+        self.previous_error = distToLine
 
         # Adjust PWM values based on the PID output
         pwmDel = pid_output
+        pwmDelTheta = self.Kd * thetaError
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
-        threshold = 0.10
-        if abs(thetaError) > threshold:
-            pwmAvg = 0
-        elif self.currentTWayPoint is None:
+        threshold = 0.20
+
+        if abs(thetaError) > 0.2618: # greater than 30 deg
+            self.largeTurn = True # we have found a big turn
+
+        if self.largeTurn and abs(thetaError) > 0.03: # get 3 deg 
+            pwmAvg = 0 # 0 point turn
+        else:
+            self.largeTurn = False
+            
+        
+        if len(self.waypointBuffer) == 0 and self.currentTWayPoint is None: # don't move if arnt any waypoints
             pwmAvg = 0
             pwmDel = 0
-        else: 
-            # when in thresh shouldn't move alot, half the intergrator
-            I_term = I_term / 2
+            pwmDelTheta = 0
 
-        self.pwmr_value = pwmAvg + pwmDel
-        self.pwml_value = pwmAvg - pwmDel
+        self.pwmr_value = pwmAvg + pwmDel + pwmDelTheta
+        self.pwml_value = pwmAvg - pwmDel - pwmDelTheta
 
         max_pwm = 128
         min_pwm = -128
@@ -253,15 +276,25 @@ class GPSSubscriberPublisher(Node):
             self.pwml_value -= 39
             
 
-        self.get_logger().info(
-            f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
-        )
+        # self.get_logger().info(
+        #     f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
+        # )
 
         pwm_msg = TwoInt()
-        pwm_msg.r = int(self.pwmr_value)
-        pwm_msg.l = int(self.pwml_value)
+        pwm_msg.r = int(self.pwmr_value)*self.dir # change direction 
+        pwm_msg.l = int(self.pwml_value)*self.dir
 
-        if int(self.shouldBePainting) != self.isPainting:
+        # if speed is below a threshold then we should stop painting to avoid pooling
+        avgSpeed = (self.pwmr_value + self.pwml_value) / 2
+
+        # if less than 3/4 of nominal speed then stop painting
+        # when speed is reached the next block of code should turn sprayer back on
+        notUpToSpeed = avgSpeed <= ((pwmAvg+39) * 0.9) and self.shouldBePainting
+        
+        # only send the toggle comands once
+        paintingIncorrect = int(self.shouldBePainting) != self.isPainting
+
+        if paintingIncorrect or notUpToSpeed:
             pwm_msg.toggle = 1
         else:
             pwm_msg.toggle = 0
@@ -276,13 +309,13 @@ class GPSSubscriberPublisher(Node):
 
         # Publish the PWM values
         # only send if new values
-        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff:
+        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff or paintingIncorrect:
             self.pwm_publisher.publish(pwm_msg)
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
 
         self.get_logger().info(
-            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} Theta error: {round(thetaError, 2)} dist2go {round(dist, 2)}'
+            f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, {int(avgSpeed)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} TE: {round(thetaError, 2)} D {round(dist, 2)}, DL {round(distToLine, 2)}'
         )
 
     def log_positions(self):
@@ -290,16 +323,17 @@ class GPSSubscriberPublisher(Node):
         try:
             # self.get_logger().info(f"Attempting to write log to: {os.path.abspath(self.log_file)}")
             with open("/home/hue/ros2_ws/src/position_log_No_GPS.txt", 'w') as file:
-                file.write("Time,Encoder_X,Encoder_Y,Theta\n")  # Header
+                file.write("Time,Encoder_X,Encoder_Y,Theta,Paint\n")  # Header
                 while self.running:
                     with self.lock:
                         encoder_x = self.encoderX
                         encoder_y = self.encoderY
                         theta = self.encoderTheta
+                        paint = self.isPainting
                     timestamp = time.time()
-                    file.write(f"{timestamp},{encoder_x},{encoder_y},{theta}\n")
+                    file.write(f"{timestamp},{encoder_x},{encoder_y},{theta},{paint}\n")
                     file.flush()  # Ensure data is written to the file
-                    time.sleep(0.1)  # Adjust logging frequency as needed
+                    time.sleep(self.deltaT)  # Adjust logging frequency as needed
         except Exception as e:
             self.get_logger().error(f"Failed to write log: {e}")
     
@@ -314,7 +348,21 @@ class GPSSubscriberPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    gps_subscriber_publisher = GPSSubscriberPublisher()
+    # default
+    Kp = 0.2
+    Ki = 0.0
+    Kd = 35.0
+
+    # Get filename and scaler from command-line arguments
+    if len(sys.argv) < 4:
+        print("Usage: ros2 run <package_name> <node_name> <Kp> <Ki> <Kd>")
+        print("Using default values")
+    else:
+        Kp = float(sys.argv[1])
+        Ki = float(sys.argv[2])
+        Kd = float(sys.argv[3])
+
+    gps_subscriber_publisher = GPSSubscriberPublisher(Kp, Ki, Kd)
 
     try:
         rclpy.spin(gps_subscriber_publisher)
