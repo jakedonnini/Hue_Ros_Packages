@@ -115,7 +115,7 @@ class GPSSubscriberPublisher(Node):
         """Thread to continuously publish PWM values."""
         while self.running:
             self.adjust_pwm_values()
-            time.sleep(self.deltaT)
+            time.sleep(self.deltaT/2)
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
@@ -206,7 +206,7 @@ class GPSSubscriberPublisher(Node):
 
         # KQ = 20*2  # turn speed
         # pwmDel = KQ * thetaError
-        pwmAvg = 40 # normally 60
+        pwmAvg = 20 # normally 60
 
         # PID calculations
         # Proportional term (P)
