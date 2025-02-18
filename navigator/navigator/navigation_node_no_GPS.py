@@ -214,17 +214,17 @@ class GPSSubscriberPublisher(Node):
         I_term = self.Ki * self.integral
         
         # Derivative term (D)
-        D_term = self.Kd * (distToLine - self.previous_error)
+        # D_term = self.Kd * (distToLine - self.previous_error)
         
         # PID output
-        pid_output = P_term + I_term + D_term
+        pid_output = P_term + I_term  # + D_term
         
         # Update the previous error
         self.previous_error = distToLine
 
         # Adjust PWM values based on the PID output
         pwmDel = pid_output
-        pwmDelTheta = 30 * thetaError
+        pwmDelTheta = self.Kd * thetaError
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
@@ -343,7 +343,7 @@ def main(args=None):
     # default
     Kp = 0.2
     Ki = 0.0
-    Kd = 0.0
+    Kd = 35.0
 
     # Get filename and scaler from command-line arguments
     if len(sys.argv) < 4:
