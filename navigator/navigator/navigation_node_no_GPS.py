@@ -34,6 +34,7 @@ class GPSSubscriberPublisher(Node):
         self.sentToggle = False
         self.prevWaypoint = 0, 0
         self.prevWaypointHolder = 0, 0 # used to avoid timing isuses when prev = current
+        self.largeTurn = False # use small threshold for large turns
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -170,6 +171,7 @@ class GPSSubscriberPublisher(Node):
         if dist2Go < 5:  # threshold saying we hit the point (was 1)
             self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
             self.prevWaypointHolder = waypointX, waypointY
+            self.largeTurn = False
             self.currentTWayPoint = None
 
         desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
@@ -231,16 +233,20 @@ class GPSSubscriberPublisher(Node):
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
         threshold = 0.20
-        if abs(thetaError) > threshold:
-            pwmAvg = 0
-            # pwmDel = 0
-        elif self.currentTWayPoint is None:
+
+        if abs(thetaError) > 0.2618: # greater than 30 deg
+            self.largeTurn = True # we have found a big turn
+
+        if self.largeTurn and abs(thetaError) > 0.05: # get 3 deg 
+            pwmAvg = 0 # 0 point turn
+        else:
+            self.largeTurn = False
+            
+        
+        if self.currentTWayPoint is None: # don't move if arnt any waypoints
             pwmAvg = 0
             pwmDel = 0
             pwmDelTheta = 0
-        else: 
-            # when in thresh shouldn't move alot, half the intergrator
-            I_term = I_term / 2
 
         self.pwmr_value = pwmAvg + pwmDel + pwmDelTheta
         self.pwml_value = pwmAvg - pwmDel - pwmDelTheta
