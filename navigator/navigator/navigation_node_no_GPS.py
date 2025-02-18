@@ -77,7 +77,7 @@ class GPSSubscriberPublisher(Node):
         self.wheelL = 64.77
         self.encoderTicks = 8192.0 / 2
         self.deltaT = 0.025 # 100ms time intervals New at 1/4 the time
-        self.errorScaler = 0.963 # 0.9233 at bruces
+        self.errorScaler = 0.8 # 0.9233 at bruces # 0.963 at our
 
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
