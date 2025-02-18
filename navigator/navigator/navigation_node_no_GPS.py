@@ -243,7 +243,7 @@ class GPSSubscriberPublisher(Node):
             self.largeTurn = False
             
         
-        if len(self.waypointBuffer) == 0: # don't move if arnt any waypoints
+        if len(self.waypointBuffer) == 0 and self.currentTWayPoint is None: # don't move if arnt any waypoints
             pwmAvg = 0
             pwmDel = 0
             pwmDelTheta = 0
