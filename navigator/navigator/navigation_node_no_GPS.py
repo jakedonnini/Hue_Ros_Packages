@@ -77,7 +77,7 @@ class GPSSubscriberPublisher(Node):
         self.wheelR = 9.708 # 10.16  
         self.wheelL = 64.77
         self.encoderTicks = 8192.0 / 2
-        self.deltaT = 0.025 # 100ms time intervals New at 1/4 the time
+        self.deltaT = 0.05 # 50ms time intervals New at 1/2 the time 20Hz
         self.errorScaler = 1 # 0.9233 at bruces # 0.963 at our
 
         # save old values to onlt send when it changes
@@ -115,7 +115,7 @@ class GPSSubscriberPublisher(Node):
         """Thread to continuously publish PWM values."""
         while self.running:
             self.adjust_pwm_values()
-            time.sleep(self.deltaT/2)
+            time.sleep(self.deltaT)
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
@@ -237,13 +237,13 @@ class GPSSubscriberPublisher(Node):
         if abs(thetaError) > 0.2618: # greater than 30 deg
             self.largeTurn = True # we have found a big turn
 
-        if self.largeTurn and abs(thetaError) > 0.02: # get 3 deg 
+        if self.largeTurn and abs(thetaError) > 0.03: # get 3 deg 
             pwmAvg = 0 # 0 point turn
         else:
             self.largeTurn = False
             
         
-        if self.currentTWayPoint is None: # don't move if arnt any waypoints
+        if len(self.waypointBuffer) == 0: # don't move if arnt any waypoints
             pwmAvg = 0
             pwmDel = 0
             pwmDelTheta = 0
