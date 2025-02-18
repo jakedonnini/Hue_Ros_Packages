@@ -52,18 +52,17 @@ class GPSSubscriberPublisher(Node):
         self.Rot_Matrix, self.startingAngle = self.read_transformation_matrix(save_path)
 
         # Create subscriptions to the latitude and longitude topics
-        #IDK HOW THIS WORKS
-        self.gps1_subscription = self.create_subscription(
+        self.gps_subscription = self.create_subscription(
             Coordinates, 
-            'gps', 
-            self.gps1_callback, 
+            'gps/midpoint', 
+            self.gps_callback, 
             10
         )
 
-        self.gps2_subscription2 = self.create_subscription(
-            Coordinates, 
-            'gps2', 
-            self.gps2_callback, 
+        self.gps_angle_subscription = self.create_subscription(
+            float,
+            'gps/angle',
+            self.gps_angle_callback,
             10
         )
 
@@ -93,12 +92,6 @@ class GPSSubscriberPublisher(Node):
         # Variables to store the most recent GPS values (latitude and longitude from both GPS, center point and theta calculated)
         self.latitude = None
         self.longitude = None
-
-        self.latitude1 = None
-        self.longitude1 = None
-
-        self.latitude2 = None
-        self.longitude2 = None
 
         # not sure what init value
         self.gpsTheta = self.startingAngle
@@ -171,50 +164,16 @@ class GPSSubscriberPublisher(Node):
         self.processor_thread.start()
         self.logging_thread.start()
 
-    def update_gps_values(self):
-        # Calculate the center
-        if self.latitude2 is not None and self.longitude2 is not None and \
-            self.latitude1 is not None and self.longitude1 is not None:
-            
-            self.latitude = (self.latitude1 + self.latitude2) / 2
-            self.longitude = (self.longitude1 + self.longitude2) / 2
-
-        # Calculate angle between the two points
-        # THIS IS GPT, ALSO SHOULD BE RELATIVE TO TRUE NORTH RIGHT?
-        # Convert latitude and longitude from degrees to radians
-        latitude1 = math.radians(self.latitude1)
-        longitude1 = math.radians(self.longitude1)
-        latitude2 = math.radians(self.latitude2)
-        longitude2 = math.radians(self.longitude2)
-
-        # Calculate the difference in longitude
-        difference_longitude = longitude2 - longitude1
-
-        # Compute the initial bearing using the formula
-        coordinate_x = math.sin(difference_longitude) * math.cos(latitude2)
-        coordinate_y = (math.cos(latitude1) * math.sin(latitude2)) - \
-                    (math.sin(latitude1) * math.cos(latitude2) * math.cos(difference_longitude))
         
-        initial_bearing_radians = math.atan2(coordinate_x, coordinate_y)
-
-        # Convert the bearing from radians to degrees
-        initial_bearing_degrees = math.degrees(initial_bearing_radians)
-
-        # Normalize the bearing to be within the range of 0 to 360 degrees
-        self.gpsTheta = (initial_bearing_degrees + 360) % 360
-
-        
-    def gps1_callback(self, msg):
+    def gps_callback(self, msg):
         with self.lock:
-            self.latitude1 = msg.x
-            self.longitude1 = msg.y
+            self.latitude = msg.x
+            self.longitude = msg.y
             self.new_gps_data = True
 
-    def gps2_callback(self, msg):
+    def gps_angle_callback(self, msg):
         with self.lock:
-            self.latitude2 = msg.x
-            self.longitude2 = msg.y
-            self.new_gps_data = True
+            self.gpsTheta = msg.data
 
     def encoder_callback(self, msg):
         with self.lock:
