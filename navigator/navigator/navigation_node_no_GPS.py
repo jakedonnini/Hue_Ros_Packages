@@ -34,7 +34,7 @@ class GPSSubscriberPublisher(Node):
         self.sentToggle = False
         self.prevWaypoint = 0, 0
         self.prevWaypointHolder = 0, 0 # used to avoid timing isuses when prev = current
-        self.errorScaler = 0.9233
+        self.errorScaler = 1 # 0.9233
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
