@@ -354,7 +354,7 @@ def main(args=None):
     else:
         Kp = float(sys.argv[1])
         Ki = float(sys.argv[2])
-        Kd = float(sys.argv[2])
+        Kd = float(sys.argv[3])
 
     gps_subscriber_publisher = GPSSubscriberPublisher(Kp, Ki, Kd)
 
