@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 from custom_msg.msg import Coordinates
 from custom_msg.msg import TwoInt
-from std_msgs.msg import Float64
+from custom_msg.msg import GpsData
 import time
 import math
 import numpy as np
@@ -52,18 +52,10 @@ class GPSSubscriberPublisher(Node):
         save_path = "/home/hue/ros2_ws/src/navigator/navigator/transformation_matrix.txt"
         self.Rot_Matrix, self.startingAngle = self.read_transformation_matrix(save_path)
 
-        # Create subscriptions to the latitude and longitude topics
         self.gps_subscription = self.create_subscription(
-            Coordinates, 
-            'gps/midpoint', 
+            GpsData, 
+            'gps/data', 
             self.gps_callback, 
-            10
-        )
-
-        self.gps_angle_subscription = self.create_subscription(
-            Float64,
-            'gps/angle',
-            self.gps_angle_callback,
             10
         )
 
@@ -171,11 +163,8 @@ class GPSSubscriberPublisher(Node):
         with self.lock:
             self.latitude = msg.x
             self.longitude = msg.y
+            self.gpsTheta = msg.angle
             self.new_gps_data = True
-
-    def gps_angle_callback(self, msg):
-        with self.lock:
-            self.gpsTheta = msg.data
 
     def encoder_callback(self, msg):
         with self.lock:

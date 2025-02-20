@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
 from custom_msg.msg import Coordinates
+from custom_msg.msg import GpsData
 import math
 
 class GPSFusionNode(Node):
@@ -22,8 +23,7 @@ class GPSFusionNode(Node):
             10)
         
         # Publisher for midpoint and robot angle
-        self.midpoint_publisher = self.create_publisher(Coordinates, 'gps/midpoint', 10)
-        self.angle_publisher = self.create_publisher(Float64, 'gps/angle', 10)
+        self.gps_fusion_publisher = self.create_publisher(GpsData, 'gps/data', 10)
         
         # Variables to store GPS data
         self.gps1 = None
@@ -51,18 +51,14 @@ class GPSFusionNode(Node):
         # Compute the angle of the robot with respect to the primary GPS as reference
         delta_lat = lat2 - lat1
         delta_lon = lon2 - lon1
-        angle = math.degrees(math.atan2(delta_lat, delta_lon))
+        angle = math.radians(math.atan2(delta_lat, delta_lon))
         
-        # Publish midpoint
-        midpoint_msg = Coordinates()
-        midpoint_msg.x = mid_lat
-        midpoint_msg.y = mid_lon
-        self.midpoint_publisher.publish(midpoint_msg)
-        
-        # Publish angle
-        angle_msg = Float64()
-        angle_msg.data = angle
-        self.angle_publisher.publish(angle_msg)
+        # Publish midpoint and angle
+        gps_data = GpsData()
+        gps_data.x = mid_lat
+        gps_data.y = mid_lon
+        gps_data.angle = angle
+        self.gps_fusion_publisher.publish(gps_data)
         
         self.get_logger().info(f'Midpoint: ({mid_lat}, {mid_lon}), Angle: {angle} degrees')
         
