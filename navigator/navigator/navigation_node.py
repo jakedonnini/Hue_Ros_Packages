@@ -3,6 +3,7 @@ import rclpy
 from rclpy.node import Node
 from custom_msg.msg import Coordinates
 from custom_msg.msg import TwoInt
+from std_msgs.msg import Float64
 import time
 import math
 import numpy as np
@@ -60,7 +61,7 @@ class GPSSubscriberPublisher(Node):
         )
 
         self.gps_angle_subscription = self.create_subscription(
-            float,
+            Float64,
             'gps/angle',
             self.gps_angle_callback,
             10
