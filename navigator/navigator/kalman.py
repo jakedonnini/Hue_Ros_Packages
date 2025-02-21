@@ -10,38 +10,32 @@ import numpy as np
 import copy
 
 class KalmanFilter(Node):
-  def __init__(self):
+    def __init__(self):
         super().__init__('navigation_node')
 
         # Kalman Filter Matrices
         self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
         self.lastx = copy.deepcopy(self.x)
-        
+
         # Define initial state covariance matrix
         self.P = np.eye(3)
-        
-        # Define state transition matrix
-        # this should be I unless external forces act on the bot
-        # self.F = np.array([
-        #     [1, 0, -self.dt * np.sin(self.x[2, 0])],
-        #     [0, 1,  self.dt * np.cos(self.x[2, 0])],
-        #     [0, 0, 1]
-        # ])
+
+        # State transition matrix (Identity unless external forces act)
         self.F = np.eye(3)
-        
+
         # Control matrix
         self.B = np.array([
             [self.dt * np.cos(self.x[2, 0]), 0],
             [self.dt * np.sin(self.x[2, 0]), 0],
             [0, self.dt]
         ])
-        
+
         # Process noise covariance
         self.Q = np.diag([0.4, 0.4, 0.3])
-        
-        # Measurement noise covariance (GPS noise) #0.11, 0.15
+
+        # Measurement noise covariance (GPS noise)
         self.R = np.diag([0.11, 0.15])
-        
+
         # Observation matrix
         self.H = np.array([
             [1, 0, 0],
@@ -81,24 +75,23 @@ class KalmanFilter(Node):
         self.kalman_publisher = self.create_publisher(GpsData, 'kalman/data', 10)
 
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
-
         self.processor_thread.start()
 
-  def gps_callback(self, msg):
+    def gps_callback(self, msg):
         with self.lock:
-          self.gps_x = msg.x
-          self.gps_y = msg.y
-          self.gps_Theta = msg.angle
-          self.new_gps_data = True
+            self.gps_x = msg.x
+            self.gps_y = msg.y
+            self.gps_Theta = msg.angle
+            self.new_gps_data = True
 
-  def deadReck_callback(self, msg):
+    def deadReck_callback(self, msg):
         with self.lock:
-          self.V = msg.x
-          self.dV = msg.y
-          self.isPainting = msg.toggle
-          self.encoder_data_updated = True  # Flag for new data
+            self.V = msg.x
+            self.dV = msg.y
+            self.isPainting = msg.toggle
+            self.encoder_data_updated = True  # Flag for new data
 
-  def run_processing_loop(self):
+    def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
         while self.running:
             # Process encoder data if updated
@@ -121,37 +114,31 @@ class KalmanFilter(Node):
                 kal_msg.angle = self.x[2, 0]
                 self.kalman_publisher.publish(kal_msg)
                 
-# TODO: add function, rotations, zero out cm
+    def update_kalman_with_DR(self):
+        """Call every time serial data comes in."""
 
-  def update_kalman_with_DR(self):
-    """call everytime serial data comes in"""
+        # Update B Control matrix
+        self.B = np.array([
+            [self.dt * np.cos(self.x[2, 0]), 0],
+            [self.dt * np.sin(self.x[2, 0]), 0],
+            [0, self.dt]
+        ])
+        u = np.array([[self.V], [self.dV]])
 
-    # TODO: add roation matix stuff here
-    # update B Control matrix
-      self.B = np.array([
-          [self.dt * np.cos(self.x[2, 0]), 0],
-          [self.dt * np.sin(self.x[2, 0]), 0],
-          [0, self.dt]
-      ])
-      u = np.array([[V], [dV]])
-  
-      self.x = self.F @ self.x + self.B @ u
-      self.P = self.F @ self.P @ self.F.T + self.Q
+        self.x = self.F @ self.x + self.B @ u
+        self.P = self.F @ self.P @ self.F.T + self.Q
 
-  def update_kalman_with_gps(self):
-      """Correct state estimate using GPS data."""
-      # TODO: add angle to filter
+    def update_kalman_with_gps(self):
+        """Correct state estimate using GPS data."""
+        # Measurement update
+        z = np.array([[self.x_gps], [self.y_gps]])
+        y = z - self.H @ self.x
+        S = self.H @ self.P @ self.H.T + self.R
+        K = self.P @ self.H.T @ np.linalg.inv(S)
+        self.x = self.x + K @ y
+        self.P = (np.eye(3) - K @ self.H) @ self.P
 
-      # Measurement update
-      z = np.array([[self.x_gps], [self.y_gps]])
-      y = z - self.H @ self.x
-      S = self.H @ self.P @ self.H.T + self.R
-      K = self.P @ self.H.T @ np.linalg.inv(S)
-      self.x = self.x + K @ y
-      self.P = (np.eye(3) - K @ self.H) @ self.P
-    
-
-  def stop_threads(self):
+    def stop_threads(self):
         """Stop the threads gracefully."""
         self.running = False
         self.processor_thread.join()
@@ -168,7 +155,6 @@ def main(args=None):
         KF.destroy_node()
         rclpy.shutdown()
         print("Kalman Filter node stopped.")
-
 
 if __name__ == '__main__':
     main()
