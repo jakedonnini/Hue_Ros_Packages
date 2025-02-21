@@ -20,8 +20,8 @@ class DeadReckoning(Node):
         self.get_logger().info("Subscribed to encoder topic")
 
         # Publishers for velocity and pose
-        self.vel_publisher = self.create_publisher(Coordinates, 'DR_velocity', 10)
-        self.pose_publisher = self.create_publisher(GpsData, 'DR_pose', 10)
+        self.vel_publisher = self.create_publisher(Coordinates, 'deadReckoning/vel', 10)
+        self.pose_publisher = self.create_publisher(GpsData, 'deadReckoning/pose', 10)
 
         # Robot kinematics variables
         self.encoderX = 0.0
