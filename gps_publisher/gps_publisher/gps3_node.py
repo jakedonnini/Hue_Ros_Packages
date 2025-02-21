@@ -28,6 +28,9 @@ class GPSFusionNode(Node):
         # Variables to store GPS data
         self.gps1 = None
         self.gps2 = None
+
+        self.lat_to_cm = 111139.0 * 100 # 100 for cm
+        self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat or 0))
     
     def gps_callback_1(self, msg):
         self.gps1 = (msg.x, msg.y)
@@ -43,6 +46,8 @@ class GPSFusionNode(Node):
         
         lat1, lon1 = self.gps1
         lat2, lon2 = self.gps2
+        lat1, lat2 = lat1*self.lat_to_cm, lat2*self.lat_to_cm
+        lon1, lon2 = lon1*self.lon_to_cm, lon2*self.lon_to_cm
         
         # Compute the midpoint
         mid_lat = (lat1 + lat2) / 2.0
