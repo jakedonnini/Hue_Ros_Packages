@@ -23,7 +23,9 @@ setup(
             'navigation_node = navigator.navigation_node:main',
             'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main',
             'TeleOp = navigator.TeleOp:main',
-            'Sync = navigator.sync:main'
+            'Sync = navigator.sync:main',
+            'DeadReck = navigator.DeadReck:main',
+            'kalman = navigator.kalman:main'
         ],
     },
 )
