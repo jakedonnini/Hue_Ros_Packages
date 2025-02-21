@@ -48,7 +48,7 @@ class GPSFusionNode(Node):
         
         lat1, lon1 = self.gps1
         lat2, lon2 = self.gps2
-        lat1, lat2 = lat1*self.lat_to_cm * np.cos(np.radians(self.lat1 or 0)), self.lat_to_cm * np.cos(np.radians(self.lat2 or 0))*self.lat_to_cm
+        lat1, lat2 = lat1*self.lat_to_cm * np.cos(np.radians(lat1 or 0)), self.lat_to_cm * np.cos(np.radians(lat2 or 0))*self.lat_to_cm
         lon1, lon2 = lon1*self.lon_to_cm, lon2*self.lon_to_cm
         
         # Compute the midpoint
