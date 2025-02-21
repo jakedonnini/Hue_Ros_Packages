@@ -59,7 +59,7 @@ class GPSFusionNode(Node):
         if not self.origin_lat_1 and not self.origin_lon_1:
             self.origin_lat_1 = lat1
             self.origin_lon_1 = lon1
-            self.lon_to_cm_1 = 111139.0 * 100 * np.cos(np.radians(self.origin_lat_1)
+            self.lon_to_cm_1 = 111139.0 * 100 * np.cos(np.radians(self.origin_lat_1))
                                                        
         if not self.origin_lat_2 and not self.origin_lon_2:
             self.origin_lat_2 = lat2
