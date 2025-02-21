@@ -14,7 +14,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='hue',
-    maintainer_email='hue@todo.todo',
+    maintainer_email='jdonnini@seas.upenn.edu',
     description='Publish GPS Data',
     license='Apache-2.0',
     tests_require=['pytest'],
@@ -24,7 +24,6 @@ setup(
             'gps2_node = gps_publisher.gps2_node:main',
             'gps3_node = gps_publisher.gps3_node:main',
             'gps_launch = gps_publisher.gps_launch:main'
-
         ],
     },
 )
