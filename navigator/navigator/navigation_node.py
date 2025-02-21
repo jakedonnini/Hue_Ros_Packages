@@ -14,7 +14,7 @@ class GPSSubscriberPublisher(Node):
         super().__init__('navigation_node')
 
         # Kalman Filter Matrices
-        self.dt = 0.025  # time step
+        self.dt = 0.05  # time step
         self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
         
         # Define initial state covariance matrix
@@ -78,6 +78,10 @@ class GPSSubscriberPublisher(Node):
         self.pantingToggle = 0
         self.shouldBePainting = False
         self.isPainting = 0
+        self.sentToggle = False
+        self.prevWaypoint = 0, 0
+        self.prevWaypointHolder = 0, 0 # used to avoid timing isuses when prev = current
+        self.largeTurn = False # use small threshold for large turns
 
         # Create publishers for the PWMR and PWML topics
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -122,9 +126,10 @@ class GPSSubscriberPublisher(Node):
         self.x[2, 0] = self.startingAngle
 
         # constants (change if drive train changes)
-        self.wheelR = 10.16
+        self.wheelR = 9.708
         self.wheelL = 64.77
-        self.encoderTicks = 8192.0/2 # only counts half the ticks of encoder
+        self.encoderTicks = 8192.0 / 2 # only counts half the ticks of encoder
+        self.errorScaler = 1
 
         # save old values to onlt send when it changes
         self.pwmr_value_old = 0
@@ -222,8 +227,8 @@ class GPSSubscriberPublisher(Node):
     def getEncoderPose(self):
         """call everytime serial data comes in"""
         
-        vL = (6.2832*self.wheelR*self.encoder_left*self.dir)/(self.encoderTicks*self.dt) #change with the number of ticks per encoder turn
-        vR = (6.2832*self.wheelR*self.encoder_right*self.dir)/(self.encoderTicks*self.dt)
+        vL = (6.2832*self.wheelR*self.encoder_left*self.errorScaler*self.dir)/(self.encoderTicks*self.dt) #change with the number of ticks per encoder turn
+        vR = (6.2832*self.wheelR*self.encoder_right*self.errorScaler*self.dir)/(self.encoderTicks*self.dt)
         V = 0.5*(vR+vL)
         dV = (vR - vL) / self.wheelL
 
@@ -306,6 +311,8 @@ class GPSSubscriberPublisher(Node):
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 5:  # threshold saying we hit the point
             # self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
+            self.prevWaypointsHolder = waypointX, waypointY
+            self.largeTurn = False
             self.currentTWayPoint = None
 
         desiredQ = math.atan2(waypointY - self.currentY, waypointX - self.currentX)
@@ -316,11 +323,15 @@ class GPSSubscriberPublisher(Node):
         elif thetaError < -math.pi:
             thetaError += 2 * math.pi
 
+        # find the distance to the nearest point on the line between waypoints
+        distPoints = math.sqrt(math.pow(waypointX - self.prevWaypoint[0], 2) + math.pow(waypointY - self.prevWaypoint[1], 2))
+        distToLine = ((waypointX-self.prevWaypoint[0])*(self.prevWaypoint[1]-self.currentY)-(self.prevWaypoint[0]-self.currentX)*(waypointY-self.prevWaypoint[1]))/distPoints
+
         # self.get_logger().info(
         #     f'[Theta error: {round(thetaError, 2)} desiredQ {round(desiredQ, 2)} CQ {round(self.currentTheta, 2)}'
         # )
 
-        return dist2Go, thetaError
+        return dist2Go, thetaError, distToLine
 
     def constrain(self, val, min_val, max_val):
         return max(min_val, min(val, max_val))
@@ -334,28 +345,44 @@ class GPSSubscriberPublisher(Node):
 
         # PID calculations
         # Proportional term (P)
-        P_term = self.Kp * thetaError
+        P_term = self.Kp * distToLine
         
         # Integral term (I)
-        self.integral += thetaError
+        self.integral += distToLine
         self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
         I_term = self.Ki * self.integral
         
         # Derivative term (D)
-        D_term = self.Kd * (thetaError - self.previous_error)
+        # D_term = self.Kd * (thetaError - self.previous_error)
         
         # PID output
-        pid_output = P_term + I_term + D_term
+        pid_output = P_term + I_term # + D_term
         
         # Update the previous error
-        self.previous_error = thetaError
+        self.previous_error = distToLine
 
         # Adjust PWM values based on the PID output
         pwmDel = pid_output
+        pwmDelTheta = self.Kd * thetaError
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
         threshold = 0.20
+
+        if abs(thetaError) > 0.2618:
+            self.largeTurn = True
+
+        if self.largeTurn and abs(thetaError) > 0.03:
+            pwmAvg = 0
+        else:
+            self.largeTurn = False
+
+        if len(self.waypointBuffer) == 0 and self.currentTWayPoint is None:
+            pwmAvg = 0
+            pwmDel = 0
+            pwmDelTheta = 0
+
+        '''
         if abs(thetaError) > threshold:
             pwmAvg = 0
         elif self.currentTWayPoint is None:
@@ -364,9 +391,10 @@ class GPSSubscriberPublisher(Node):
         else: 
             # when in thresh shouldn't move alot, half the intergrator
             I_term = I_term / 2
+        '''
 
-        self.pwmr_value = pwmAvg + pwmDel
-        self.pwml_value = pwmAvg - pwmDel
+        self.pwmr_value = pwmAvg + pwmDel + pwmDelTheta
+        self.pwml_value = pwmAvg - pwmDel - pwmDelTheta
 
         max_pwm = 128
         min_pwm = -128
