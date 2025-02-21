@@ -31,8 +31,11 @@ class GPSFusionNode(Node):
         self.gps1 = None
         self.gps2 = None
 
+        self.origin_lat = None
+        self.origin_lon = None
+
         self.lat_to_cm = 111139.0 * 100 
-        self.lon_to_cm = 111139.0 * 100 
+        self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat or 0))
     
     def gps_callback_1(self, msg):
         self.gps1 = (msg.x, msg.y)
@@ -45,11 +48,17 @@ class GPSFusionNode(Node):
     def compute_and_publish(self):
         if self.gps1 is None or self.gps2 is None:
             return
-        
         lat1, lon1 = self.gps1
         lat2, lon2 = self.gps2
-        lat1, lat2 = lat1*self.lat_to_cm * np.cos(np.radians(lat1 or 0)), self.lat_to_cm * np.cos(np.radians(lat2 or 0))*self.lat_to_cm
-        lon1, lon2 = lon1*self.lon_to_cm, lon2*self.lon_to_cm
+        if not self.origin_lat or not self.origin_lon:
+            self.origin_lat = (lat1 + lat2) / 2.0
+            self.origin_lon = (lon1 + long2) / 2.0
+            self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat))
+            
+        #lat1, lat2 = lat1*self.lat_to_cm * np.cos(np.radians(lat1 or 0)), self.lat_to_cm * np.cos(np.radians(lat2 or 0))*self.lat_to_cm
+        #lon1, lon2 = lon1*self.lon_to_cm, lon2*self.lon_to_cm
+        lat1, lat2 = lat1 * self.lat_to_cm, lat2 * self.lat_to_cm
+        lon1, lon2 = lon1 * self.lon_to_cm, lon2 * self.lon_to_cm
         
         # Compute the midpoint
         mid_lat = (lat1 + lat2) / 2.0
