@@ -7,14 +7,15 @@ from custom_msg.msg import GpsData
 import time
 import math
 import numpy as np
+import copy
 
 class KalmanFilter(Node):
   def __init__(self):
         super().__init__('navigation_node')
 
         # Kalman Filter Matrices
-        self.dt = 0.05  # time step
         self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
+        self.lastx = copy.deepcopy(self.x)
         
         # Define initial state covariance matrix
         self.P = np.eye(3)
@@ -55,14 +56,29 @@ class KalmanFilter(Node):
         )
 
         self.deadReck_subscription = self.create_subscription(
-            TwoInt, 
+            Coordinates, 
             'deadReckoning/data', 
             self.deadReck_callback, 
             10
         )
 
+        self.V = 0
+        self.dV = 0
+        self.isPainting = 0
+        self.gps_x = 0
+        self.gps_y = 0
+        self.gps_Theta = 0
+
+        self.new_gps_data = False
+        self.encoder_data_updated = False  # Reset flag
+        self.x_gps_cm = 0
+        self.y_gps_cm = 0
+
+        self.running = True
+        self.lock = threading.Lock()
+
         # Publisher for midpoint and robot angle
-        self.kalman_publisher = self.create_publisher(GpsData, 'kalman', 10)
+        self.kalman_publisher = self.create_publisher(GpsData, 'kalman/data', 10)
 
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
 
@@ -70,15 +86,15 @@ class KalmanFilter(Node):
 
   def gps_callback(self, msg):
         with self.lock:
-          self.latitude = msg.x
-          self.longitude = msg.y
-          self.gpsTheta = msg.angle
+          self.gps_x = msg.x
+          self.gps_y = msg.y
+          self.gps_Theta = msg.angle
           self.new_gps_data = True
 
   def deadReck_callback(self, msg):
         with self.lock:
-          self.encoder_left = msg.l
-          self.encoder_right = msg.r
+          self.V = msg.x
+          self.dV = msg.y
           self.isPainting = msg.toggle
           self.encoder_data_updated = True  # Flag for new data
 
@@ -95,7 +111,50 @@ class KalmanFilter(Node):
                 with self.lock:
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
+
+            if not (self.lastx == self.x).all():
+                self.lastx = copy.deepcopy(self.x)
+                # send message
+                kal_msg = GpsData()
+                kal_msg.x = self.x[0, 0]
+                kal_msg.y = self.x[1, 0]
+                kal_msg.angle = self.x[2, 0]
+                self.kalman_publisher.publish(kal_msg)
+                
 # TODO: add function, rotations, zero out cm
+
+  def update_kalman_with_DR(self):
+    """call everytime serial data comes in"""
+
+    # TODO: add roation matix stuff here
+    # update B Control matrix
+      self.B = np.array([
+          [self.dt * np.cos(self.x[2, 0]), 0],
+          [self.dt * np.sin(self.x[2, 0]), 0],
+          [0, self.dt]
+      ])
+      u = np.array([[V], [dV]])
+  
+      self.x = self.F @ self.x + self.B @ u
+      self.P = self.F @ self.P @ self.F.T + self.Q
+
+  def update_kalman_with_gps(self):
+      """Correct state estimate using GPS data."""
+      # TODO: add angle to filter
+
+      # Measurement update
+      z = np.array([[self.x_gps], [self.y_gps]])
+      y = z - self.H @ self.x
+      S = self.H @ self.P @ self.H.T + self.R
+      K = self.P @ self.H.T @ np.linalg.inv(S)
+      self.x = self.x + K @ y
+      self.P = (np.eye(3) - K @ self.H) @ self.P
+    
+
+  def stop_threads(self):
+        """Stop the threads gracefully."""
+        self.running = False
+        self.processor_thread.join()
 
 def main(args=None):
     rclpy.init(args=args)
