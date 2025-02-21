@@ -39,7 +39,7 @@ class GPSFusionNode(Node):
         self.origin_lat_2 = None
         self.origin_lon_2 = None
         self.lat_to_cm_2 = 111139.0 * 100
-        self.lon_to_cm_2 = 11139.0 * 100 * np.cos(np.radians(self.origin_lat_2 or 0))
+        self.lon_to_cm_2 = 111139.0 * 100 * np.cos(np.radians(self.origin_lat_2 or 0))
     
     def gps_callback_1(self, msg):
         self.gps1 = (msg.x, msg.y)
@@ -70,8 +70,8 @@ class GPSFusionNode(Node):
         #lon1, lon2 = lon1*self.lon_to_cm, lon2*self.lon_to_cm
         #lat1, lat2 = lat1 * self.lat_to_cm, lat2 * self.lat_to_cm
         #lon1, lon2 = lon1 * self.lon_to_cm, lon2 * self.lon_to_cm
-        x1, y1 = lat1 * (self.lat_to_cm_1 - self.origin_lat_1), lon1 * (self.lon_to_cm_1 - self.origin_lon_1)
-        x2, y2 = lat2 * (self.lat_to_cm_2 - self.origin_lat_2), lon2 * (self.lon_to_cm_2 - self.origin_lon_2)
+        x1, y1 = self.lat_to_cm_1 * (lat1 - self.origin_lat_1), self.lon_to_cm_1 * (lon1 - self.origin_lon_1)
+        x2, y2 = self.lat_to_cm_2 * (lat2 - self.origin_lat_2), self.lon_to_cm_2 * (lon2 - self.origin_lon_2)
 
         mid_x = (x1 + x2) / 2.0
         mid_y = (y1 + y2) / 2.0
