@@ -5,19 +5,19 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='gps_publisher',
-            executable='gps_publisher',
+            executable='gps_node',
             name='gps_publisher',
             output='screen'
         ),
         Node(
             package='gps_publisher',
-            executable='gps2_publisher',
+            executable='gps2_node',
             name='gps2_publisher',
             output='screen'
         ),
         Node(
             package='gps_publisher',
-            executable='gps_fusion_node',
+            executable='gps3_node',
             name='gps_fusion_node',
             output='screen'
         ),

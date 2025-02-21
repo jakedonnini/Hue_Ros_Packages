@@ -10,6 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + "/launch", ['launch/gps_launch.py'])
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,8 +23,8 @@ setup(
         'console_scripts': [
             'gps_node = gps_publisher.gps_node:main',
             'gps2_node = gps_publisher.gps2_node:main',
-            'gps3_node = gps_publisher.gps3_node:main',
-            'gps_launch = gps_publisher.gps_launch:main'
+            'gps3_node = gps_publisher.gps3_node:main'
         ],
     },
+
 )

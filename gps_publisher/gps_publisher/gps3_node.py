@@ -4,6 +4,8 @@ from std_msgs.msg import Float64
 from custom_msg.msg import Coordinates
 from custom_msg.msg import GpsData
 import math
+import numpy as np
+
 
 class GPSFusionNode(Node):
     def __init__(self):
@@ -29,8 +31,8 @@ class GPSFusionNode(Node):
         self.gps1 = None
         self.gps2 = None
 
-        self.lat_to_cm = 111139.0 * 100 # 100 for cm
-        self.lon_to_cm = 111139.0 * 100 * np.cos(np.radians(self.origin_lat or 0))
+        self.lat_to_cm = 111139.0 * 100 
+        self.lon_to_cm = 111139.0 * 100 
     
     def gps_callback_1(self, msg):
         self.gps1 = (msg.x, msg.y)
@@ -46,7 +48,7 @@ class GPSFusionNode(Node):
         
         lat1, lon1 = self.gps1
         lat2, lon2 = self.gps2
-        lat1, lat2 = lat1*self.lat_to_cm, lat2*self.lat_to_cm
+        lat1, lat2 = lat1*self.lat_to_cm * np.cos(np.radians(self.lat1 or 0)), np.cos(np.radians(self.lat2 or 0))*self.lat_to_cm
         lon1, lon2 = lon1*self.lon_to_cm, lon2*self.lon_to_cm
         
         # Compute the midpoint
