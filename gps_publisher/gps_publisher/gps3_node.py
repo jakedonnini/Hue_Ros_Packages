@@ -39,7 +39,7 @@ class GPSFusionNode(Node):
         self.origin_lat_2 = None
         self.origin_lon_2 = None
         self.lat_to_cm_2 = 111139.0 * 100
-        self.lon_to_cm_2 = 11139.0 * 100 * np.cos(np.radians(self.origin_lat_2 or 0))
+        self.lon_to_cm_2 = 111139.0 * 100 * np.cos(np.radians(self.origin_lat_2 or 0))
     
     def gps_callback_1(self, msg):
         self.gps1 = (msg.x, msg.y)
