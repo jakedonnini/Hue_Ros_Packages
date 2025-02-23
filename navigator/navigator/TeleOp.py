@@ -1,7 +1,7 @@
 import threading
 import rclpy
 from rclpy.node import Node
-from custom_msg.msg import Coordinates, TwoInt
+from custom_msg.msg import Coordinates, TwoInt, GpsData
 from geometry_msgs.msg import Twist
 import time
 import math
@@ -36,7 +36,7 @@ class Teleop(Node):
         self.twist_subscription = self.create_subscription(
             Twist, 'cmd_vel', self.twist_callback, 10)
         self.gps_subscription_combo = self.create_subscription(
-            Coordinates, 'gps/data', self.gps_callback_combo, 10)
+            GpsData, 'gps/data', self.gps_callback_combo, 10)
 
         # Publisher for PWM
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
