@@ -170,16 +170,16 @@ class Teleop(Node):
 
         # Apply rotation matrix to align encoder position with GPS
         rotated_pos = self.Rot_Matrix @ np.array([[self.encoderX], [self.encoderY]])
-        print("normal: ", self.encoderX, self.encoderY)
-        print("vect: ",  np.array([[self.encoderX], [self.encoderY]]))
-        print("rotated_pos: ", rotated_pos)
-        print("Flattened: ", rotated_pos.flatten())
+        # print("normal: ", self.encoderX, self.encoderY)
+        # print("vect: ",  np.array([[self.encoderX], [self.encoderY]]))
+        # print("rotated_pos: ", rotated_pos)
+        # print("Flattened: ", rotated_pos.flatten())
         self.encoderRotX, self.encoderRotY = rotated_pos.flatten()
 
         # Create extended 3x3 rotation matrix (includes theta)
         Rot_Extended = np.eye(3)
         Rot_Extended[:2, :2] = self.Rot_Matrix  # Embed the 2x2 rotation into the 3x3 matrix
-        print("Rot_Extended: ", Rot_Extended)
+        # print("Rot_Extended: ", Rot_Extended)
 
         # update B Control matrix
         self.B = np.array([
@@ -191,15 +191,15 @@ class Teleop(Node):
         u = np.array([[V], [dV]])
 
         stateUpdate = self.B @ u
-        print("B: ", self.B)
-        print("u: ", u)
+        # print("B: ", self.B)
+        # print("u: ", u)
 
-        print("stateUpdate: ", stateUpdate)
+        # print("stateUpdate: ", stateUpdate)
 
         # mult the u vector and B matrix by the rotation to get into the GPS frame
         correctedStateUpdate = Rot_Extended @ stateUpdate
 
-        print("correctedStateUpdate: ", correctedStateUpdate)
+        # print("correctedStateUpdate: ", correctedStateUpdate)
 
         # Predict Step
         self.x = self.F @ self.x + correctedStateUpdate
