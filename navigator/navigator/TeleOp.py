@@ -103,7 +103,6 @@ class Teleop(Node):
             self.gps_mid_x = msg.x
             self.gps_mid_y = msg.y
             self.gps_angle = msg.angle
-            print("self.gps_angle")
 
     def gps_callback(self, msg):
         with self.lock:
