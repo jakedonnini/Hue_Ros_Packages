@@ -84,6 +84,10 @@ class GPSFusionNode(Node):
         gps_data = GpsData()
         gps_data.x = mid_x
         gps_data.y = mid_y
+        gps_data.x1 = x1
+        gps_data.y1 = y1
+        gps_data.x2 = x2
+        gps_data.y2 = y2
         gps_data.angle = angle
         self.gps_fusion_publisher.publish(gps_data)
         
