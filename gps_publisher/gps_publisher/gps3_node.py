@@ -86,25 +86,6 @@ class GPSFusionNode(Node):
         
         self.get_logger().info(f'Midpoint: ({mid_x}, {mid_y}), Angle: {angle} degrees')
         
-        '''
-        # Compute the midpoint
-        mid_lat = (lat1 + lat2) / 2.0
-        mid_lon = (lon1 + lon2) / 2.0
-        
-        # Compute the angle of the robot with respect to the primary GPS as reference
-        delta_lat = lat2 - lat1
-        delta_lon = lon2 - lon1
-        angle = math.radians(math.atan2(delta_lat, delta_lon))
-        
-        # Publish midpoint and angle
-        gps_data = GpsData()
-        gps_data.x = mid_lat
-        gps_data.y = mid_lon
-        gps_data.angle = angle
-        self.gps_fusion_publisher.publish(gps_data)
-        
-        self.get_logger().info(f'Midpoint: ({mid_lat}, {mid_lon}), Angle: {angle} degrees')
-        '''
         
 
 def main(args=None):
