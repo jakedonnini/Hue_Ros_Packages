@@ -23,6 +23,7 @@ setup(
             'navigation_node = navigator.navigation_node:main',
             'navigation_node_no_GPS = navigator.navigation_node_no_GPS:main',
             'TeleOp = navigator.TeleOp:main',
+            'TeleOpLite = navigator.TeleOpLite:main',
             'Sync = navigator.sync:main'
         ],
     },
