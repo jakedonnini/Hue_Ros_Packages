@@ -25,7 +25,8 @@ setup(
             'TeleOp = navigator.TeleOp:main',
             'Sync = navigator.sync:main',
             'DeadReck = navigator.DeadReck:main',
-            'kalman = navigator.kalman:main'
+            'kalman = navigator.kalman:main',
+            'TeleOpLite = navigator.TeleOpLite:main',
         ],
     },
 )
