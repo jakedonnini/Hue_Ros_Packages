@@ -26,6 +26,10 @@ class GPSFusionNode(Node):
         
         # Publisher for midpoint and robot angle
         self.gps_fusion_publisher = self.create_publisher(GpsData, 'gps/data', 10)
+        self.gps1_cm_publisher = self.create_publisher(Coordinates, 'gps1_cm', 10)
+        self.gps2_cm_publisher = self.create_publisher(Coordinates, 'gps2_cm', 10)
+
+
         
         # Variables to store GPS data
         self.gps1 = None
@@ -82,7 +86,18 @@ class GPSFusionNode(Node):
         gps_data.x = mid_x
         gps_data.y = mid_y
         gps_data.angle = angle
+
+        gps_coord1 = Coordinates()
+        gps_coord1.x = x1
+        gps_coord1.y = y1
+
+        gps_coord2 = Coordinates()
+        gps_coord2.x = x2
+        gps_coord2.y = y2
+
         self.gps_fusion_publisher.publish(gps_data)
+        self.gps1_cm_publisher.publish(gps_coord1)
+        self.gps2_cm_publisher.publish(gps_coord2)
         
         self.get_logger().info(f'Midpoint: ({mid_x}, {mid_y}), Angle: {angle} degrees')
         
