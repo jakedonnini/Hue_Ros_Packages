@@ -99,7 +99,7 @@ class GPSPublisher(Node):
         heading_msg.data = heading
 
         self.heading_publisher.publish(heading_msg)
-        self.get_logger().info(f'Published Heading: {heading} degrees')
+        # self.get_logger().info(f'Published Heading: {heading} degrees')
 
 
 
