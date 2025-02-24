@@ -86,7 +86,6 @@ class GPSFusionNode(Node):
         
         self.get_logger().info(f'Midpoint: ({mid_x}, {mid_y}), Angle: {angle} degrees')
         
-        
 
 def main(args=None):
     rclpy.init(args=args)

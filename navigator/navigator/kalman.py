@@ -121,6 +121,8 @@ class KalmanFilter(Node):
     def update_kalman_with_DR(self):
         """Call every time serial data comes in."""
 
+        #TODO: add rotation based off the inital angle of the GPS
+
         # Update B Control matrix
         self.B = np.array([
             [self.dt * np.cos(self.x[2, 0]), 0],
@@ -134,6 +136,9 @@ class KalmanFilter(Node):
 
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
+
+        #TODO: update Kalman filter with the angle of the GPS. IDK how
+
         # Measurement update
         z = np.array([[self.x_gps], [self.y_gps]])
         y = z - self.H @ self.x
