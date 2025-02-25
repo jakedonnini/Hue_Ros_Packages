@@ -25,13 +25,13 @@ def generate_launch_description():
             package='arduino_reader',
             executable='arduino_serial_node',
             name='arduino_reader',
-            output='screen'
+            output='log'
         ),
         Node(
             package='navigator',
             executable='DeadReck',
             name='dead_reckoning',
-            output='screen'
+            output='log'
         ),
         Node(
             package='navigator',
