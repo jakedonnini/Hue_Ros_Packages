@@ -60,6 +60,7 @@ class KalmanFilter(Node):
         self.DR_angle_rot = 0
         self.R = np.eye(2)
         self.rotThata = 0
+        self.dt = 0.05
         
         self.gps_x = 0
         self.gps_y = 0
