@@ -29,7 +29,7 @@ def generate_launch_description():
         ),
         Node(
             package='navigator',
-            executable='DeadReck.py',
+            executable='DeadReck',
             name='dead_reckoning',
             output='screen'
         ),
