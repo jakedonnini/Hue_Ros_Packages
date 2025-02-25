@@ -86,7 +86,7 @@ class Log(Node):
 
     def log_positions(self):
         try:
-            with open("/home/hue/ros2_ws/src/position_log_total", 'w') as file:
+            with open("/home/hue/ros2_ws/src/position_log_total.txt", 'w') as file:
                 file.write("Time,GPS_X1,GPS_Y1,GPS_X2,GPS_Y2,GPS_MIDX,GPS_MIDY,GPS_MID_Theta,DR_X,DR_Y,DR_Theta,Kalman_X,Kalman_Y,Kalman_Theta,Painting\n")
                 while self.running:
                     with self.lock:
