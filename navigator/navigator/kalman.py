@@ -118,7 +118,7 @@ class KalmanFilter(Node):
                 with self.lock:
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
-
+            print(self.x, self.lastx, (self.lastx == self.x).all())
             if not (self.lastx == self.x).all():
                 self.lastx = copy.deepcopy(self.x)
                 # send message

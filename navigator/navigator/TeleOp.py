@@ -12,7 +12,7 @@ class Teleop(Node):
         super().__init__('teleop_node')
 
         # Kalman Filter Matrices
-        self.dt = 0.025  # time step
+        self.dt = 0.05  # time step
         self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
         self.P = np.eye(3)  # Initial state covariance
         self.F = np.eye(3)  # State transition matrix
