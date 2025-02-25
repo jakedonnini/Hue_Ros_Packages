@@ -69,8 +69,9 @@ class KalmanFilter(Node):
 
         self.new_gps_data = False
         self.encoder_data_updated = False  # Reset flag
-        self.x_gps_cm = 0
-        self.y_gps_cm = 0
+        self.x_gps = 0
+        self.y_gps = 0
+        self.gps_Theta = 0
 
         self.running = True
         self.lock = threading.Lock()
