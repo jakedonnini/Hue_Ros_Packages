@@ -119,26 +119,24 @@ class KalmanFilter(Node):
                 with self.lock:
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
-            print(self.x, self.lastx, (self.lastx == self.x).all())
-            if not (self.lastx == self.x).all():
-                self.lastx = copy.deepcopy(self.x)
-                # send message
-                kal_msg = GpsData()
-                kal_msg.x = self.x[0, 0]
-                kal_msg.y = self.x[1, 0]
-                kal_msg.angle = self.x[2, 0]
-                self.kalman_publisher.publish(kal_msg)
+            
+            # send message
+            kal_msg = GpsData()
+            kal_msg.x = self.x[0, 0]
+            kal_msg.y = self.x[1, 0]
+            kal_msg.angle = self.x[2, 0]
+            self.kalman_publisher.publish(kal_msg)
 
-                rot_msg = GpsData()
-                rot_msg.x = self.DR_x_rot
-                rot_msg.y = self.DR_y_rot
-                rot_msg.angle = self.DR_angle_rot
-                self.rotation_publisher.publish(rot_msg)
-                # for Kalman filiter testing
-                self.get_logger().info(
-                    f'\rGPS: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)}  [ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} [KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
-                )
-            time.sleep(0.02)
+            rot_msg = GpsData()
+            rot_msg.x = self.DR_x_rot
+            rot_msg.y = self.DR_y_rot
+            rot_msg.angle = self.DR_angle_rot
+            self.rotation_publisher.publish(rot_msg)
+            # for Kalman filiter testing
+            self.get_logger().info(
+                f'\rGPS: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)}  [ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} [KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
+            )
+            time.sleep(self.dt/2)
                 
     def update_kalman_with_DR(self):
         """Call every time serial data comes in."""
