@@ -23,6 +23,8 @@ class Log(Node):
             Coordinates, 'deadReckoning/vel', self.deadReck_callback_t, 10)
         self.Kalman = self.create_subscription(
             GpsData, 'kalman/data', self.kalman, 10)
+        print("Subscribed to all topics")
+        print("Logging data...")
         
         
         # gps varibles
@@ -93,8 +95,7 @@ class Log(Node):
                         gps_x1 = self.gps_cm_x1
                         gps_y1 = self.gps_cm_y1
                         gps_x2 = self.gps_cm_x2
-                        gps_y2 = self.gps_cm_x2
-                        print(round(gps_x1, 2), round(gps_y1, 2), round(gps_x2, 2), round(gps_y2, 2))
+                        gps_y2 = self.gps_cm_y2
                         gps_mid_x = self.gps_mid_x
                         gps_mid_y = self.gps_mid_y
                         gps_mid_theta = self.gps_angle
