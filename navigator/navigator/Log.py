@@ -46,6 +46,7 @@ class Log(Node):
         self.kalman_angle = 0
 
         self.running = True
+        self.lock = threading.Lock()
         self.logging_thread = threading.Thread(target=self.log_positions)
         self.logging_thread.start()
 
