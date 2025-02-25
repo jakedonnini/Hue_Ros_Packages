@@ -1,0 +1,71 @@
+[  2%] [34m[1mGenerating C code for ROS interfaces[0m
+[  4%] [34m[1mGenerating C++ code for ROS interfaces[0m
+[  4%] Built target ament_cmake_python_copy_custom_msg
+running egg_info
+creating custom_msg.egg-info
+writing custom_msg.egg-info/PKG-INFO
+writing dependency_links to custom_msg.egg-info/dependency_links.txt
+writing top-level names to custom_msg.egg-info/top_level.txt
+writing manifest file 'custom_msg.egg-info/SOURCES.txt'
+reading manifest file 'custom_msg.egg-info/SOURCES.txt'
+writing manifest file 'custom_msg.egg-info/SOURCES.txt'
+[  4%] Built target ament_cmake_python_build_custom_msg_egg
+[  4%] Built target custom_msg__cpp
+[  6%] [34m[1mGenerating C++ type support dispatch for ROS interfaces[0m
+[  8%] [34m[1mGenerating C++ type support for eProsima Fast-RTPS[0m
+[ 10%] [34m[1mGenerating C++ introspection for ROS interfaces[0m
+[ 12%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_generator_c.dir/rosidl_generator_c/custom_msg/msg/detail/two_int__functions.c.o[0m
+[ 14%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_generator_c.dir/rosidl_generator_c/custom_msg/msg/detail/coordinates__functions.c.o[0m
+[ 17%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_generator_c.dir/rosidl_generator_c/custom_msg/msg/detail/gps_data__functions.c.o[0m
+[ 19%] [32m[1mLinking C shared library libcustom_msg__rosidl_generator_c.so[0m
+[ 19%] Built target custom_msg__rosidl_generator_c
+[ 23%] [34m[1mGenerating C introspection for ROS interfaces[0m
+[ 23%] [34m[1mGenerating C type support dispatch for ROS interfaces[0m
+[ 25%] [34m[1mGenerating C type support for eProsima Fast-RTPS[0m
+[ 27%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/custom_msg/msg/coordinates__type_support.cpp.o[0m
+[ 29%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/custom_msg/msg/detail/coordinates__type_support.cpp.o[0m
+[ 31%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/custom_msg/msg/detail/dds_fastrtps/coordinates__type_support.cpp.o[0m
+[ 34%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_c.dir/rosidl_typesupport_c/custom_msg/msg/coordinates__type_support.cpp.o[0m
+[ 36%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_c.dir/rosidl_typesupport_c/custom_msg/msg/two_int__type_support.cpp.o[0m
+[ 38%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/custom_msg/msg/two_int__type_support.cpp.o[0m
+[ 40%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/custom_msg/msg/detail/coordinates__type_support.c.o[0m
+[ 42%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_c.dir/rosidl_typesupport_c/custom_msg/msg/gps_data__type_support.cpp.o[0m
+[ 44%] [32m[1mLinking CXX shared library libcustom_msg__rosidl_typesupport_c.so[0m
+[ 46%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/custom_msg/msg/detail/two_int__type_support.c.o[0m
+[ 48%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/custom_msg/msg/detail/coordinates__type_support_c.cpp.o[0m
+[ 51%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/custom_msg/msg/detail/two_int__type_support.cpp.o[0m
+[ 51%] Built target custom_msg__rosidl_typesupport_c
+[ 53%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/custom_msg/msg/detail/gps_data__type_support.c.o[0m
+[ 55%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/custom_msg/msg/detail/gps_data__type_support.cpp.o[0m
+[ 57%] [32m[1mLinking C shared library libcustom_msg__rosidl_typesupport_introspection_c.so[0m
+[ 59%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/custom_msg/msg/detail/dds_fastrtps/two_int__type_support.cpp.o[0m
+[ 59%] Built target custom_msg__rosidl_typesupport_introspection_c
+[ 61%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/custom_msg/msg/detail/dds_fastrtps/gps_data__type_support.cpp.o[0m
+[ 63%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/custom_msg/msg/gps_data__type_support.cpp.o[0m
+[ 65%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/custom_msg/msg/detail/two_int__type_support_c.cpp.o[0m
+[ 68%] [32mBuilding CXX object CMakeFiles/custom_msg__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/custom_msg/msg/detail/gps_data__type_support_c.cpp.o[0m
+[ 70%] [32m[1mLinking CXX shared library libcustom_msg__rosidl_typesupport_cpp.so[0m
+[ 72%] [32m[1mLinking CXX shared library libcustom_msg__rosidl_typesupport_introspection_cpp.so[0m
+[ 74%] [32m[1mLinking CXX shared library libcustom_msg__rosidl_typesupport_fastrtps_cpp.so[0m
+[ 74%] Built target custom_msg__rosidl_typesupport_cpp
+[ 74%] Built target custom_msg__rosidl_typesupport_introspection_cpp
+[ 74%] Built target custom_msg__rosidl_typesupport_fastrtps_cpp
+[ 76%] [32m[1mLinking CXX shared library libcustom_msg__rosidl_typesupport_fastrtps_c.so[0m
+[ 76%] Built target custom_msg__rosidl_typesupport_fastrtps_c
+[ 76%] Built target custom_msg
+[ 78%] [34m[1mGenerating Python code for ROS interfaces[0m
+[ 78%] Built target custom_msg__py
+[ 80%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_generator_py.dir/rosidl_generator_py/custom_msg/msg/_coordinates_s.c.o[0m
+[ 82%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_generator_py.dir/rosidl_generator_py/custom_msg/msg/_two_int_s.c.o[0m
+[ 85%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_generator_py.dir/rosidl_generator_py/custom_msg/msg/_gps_data_s.c.o[0m
+[ 87%] [32m[1mLinking C shared library rosidl_generator_py/custom_msg/libcustom_msg__rosidl_generator_py.so[0m
+[ 87%] Built target custom_msg__rosidl_generator_py
+[ 89%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_typesupport_fastrtps_c__pyext.dir/rosidl_generator_py/custom_msg/_custom_msg_s.ep.rosidl_typesupport_fastrtps_c.c.o[0m
+[ 91%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_typesupport_introspection_c__pyext.dir/rosidl_generator_py/custom_msg/_custom_msg_s.ep.rosidl_typesupport_introspection_c.c.o[0m
+[ 93%] [32mBuilding C object CMakeFiles/custom_msg__rosidl_typesupport_c__pyext.dir/rosidl_generator_py/custom_msg/_custom_msg_s.ep.rosidl_typesupport_c.c.o[0m
+[ 95%] [32m[1mLinking C shared library rosidl_generator_py/custom_msg/custom_msg_s__rosidl_typesupport_fastrtps_c.cpython-310-aarch64-linux-gnu.so[0m
+[ 97%] [32m[1mLinking C shared library rosidl_generator_py/custom_msg/custom_msg_s__rosidl_typesupport_introspection_c.cpython-310-aarch64-linux-gnu.so[0m
+[ 97%] Built target custom_msg__rosidl_typesupport_fastrtps_c__pyext
+[100%] [32m[1mLinking C shared library rosidl_generator_py/custom_msg/custom_msg_s__rosidl_typesupport_c.cpython-310-aarch64-linux-gnu.so[0m
+[100%] Built target custom_msg__rosidl_typesupport_introspection_c__pyext
+[100%] Built target custom_msg__rosidl_typesupport_c__pyext

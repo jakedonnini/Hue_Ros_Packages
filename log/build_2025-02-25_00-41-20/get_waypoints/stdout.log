@@ -1,0 +1,21 @@
+running egg_info
+writing ../build/get_waypoints/get_waypoints.egg-info/PKG-INFO
+writing dependency_links to ../build/get_waypoints/get_waypoints.egg-info/dependency_links.txt
+writing entry points to ../build/get_waypoints/get_waypoints.egg-info/entry_points.txt
+writing requirements to ../build/get_waypoints/get_waypoints.egg-info/requires.txt
+writing top-level names to ../build/get_waypoints/get_waypoints.egg-info/top_level.txt
+reading manifest file '../build/get_waypoints/get_waypoints.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file '../build/get_waypoints/get_waypoints.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/etnw/senior_design_ws/src/install/get_waypoints/lib/python3.10/site-packages/get_waypoints-0.0.0-py3.10.egg-info' (and everything under it)
+Copying ../build/get_waypoints/get_waypoints.egg-info to /home/etnw/senior_design_ws/src/install/get_waypoints/lib/python3.10/site-packages/get_waypoints-0.0.0-py3.10.egg-info
+running install_scripts
+Installing waypoint_from_txt_node script to /home/etnw/senior_design_ws/src/install/get_waypoints/lib/get_waypoints
+Installing waypoint_node script to /home/etnw/senior_design_ws/src/install/get_waypoints/lib/get_waypoints
+writing list of installed files to '/home/etnw/senior_design_ws/src/build/get_waypoints/install.log'

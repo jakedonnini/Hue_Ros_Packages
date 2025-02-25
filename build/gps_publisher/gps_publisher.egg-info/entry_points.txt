@@ -1,0 +1,5 @@
+[console_scripts]
+gps2_node = gps_publisher.gps2_node:main
+gps3_node = gps_publisher.gps3_node:main
+gps_node = gps_publisher.gps_node:main
+

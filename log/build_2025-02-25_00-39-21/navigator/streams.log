@@ -1,0 +1,66 @@
+[0.469s] Invoking command in '/home/etnw/senior_design_ws/src/navigator': AMENT_PREFIX_PATH=/home/etnw/senior_design_ws/src/install/custom_msg:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/etnw/senior_design_ws/src/install/custom_msg:${CMAKE_PREFIX_PATH} LD_LIBRARY_PATH=/home/etnw/senior_design_ws/src/install/custom_msg/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/etnw/senior_design_ws/src/build/navigator/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages:/home/etnw/senior_design_ws/src/install/custom_msg/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/navigator build --build-base /home/etnw/senior_design_ws/src/build/navigator/build install --record /home/etnw/senior_design_ws/src/build/navigator/install.log --single-version-externally-managed install_data
+[0.581s] running egg_info
+[0.581s] creating ../build/navigator/navigator.egg-info
+[0.581s] writing ../build/navigator/navigator.egg-info/PKG-INFO
+[0.581s] writing dependency_links to ../build/navigator/navigator.egg-info/dependency_links.txt
+[0.581s] writing entry points to ../build/navigator/navigator.egg-info/entry_points.txt
+[0.581s] writing requirements to ../build/navigator/navigator.egg-info/requires.txt
+[0.581s] writing top-level names to ../build/navigator/navigator.egg-info/top_level.txt
+[0.581s] writing manifest file '../build/navigator/navigator.egg-info/SOURCES.txt'
+[0.587s] reading manifest file '../build/navigator/navigator.egg-info/SOURCES.txt'
+[0.587s] adding license file 'LICENSE'
+[0.587s] writing manifest file '../build/navigator/navigator.egg-info/SOURCES.txt'
+[0.587s] running build
+[0.587s] running build_py
+[0.587s] creating /home/etnw/senior_design_ws/src/build/navigator/build
+[0.588s] creating /home/etnw/senior_design_ws/src/build/navigator/build/lib
+[0.588s] creating /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/TeleOpLite.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/__init__.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/Log.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/navigation_node.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/TeleOp.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/navigation_node_no_GPS.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/kalman.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/DeadReck.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] copying navigator/sync.py -> /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator
+[0.588s] running install
+[0.588s] running install_lib
+[0.588s] creating /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/TeleOpLite.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/__init__.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/Log.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/navigation_node.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/TeleOp.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/navigation_node_no_GPS.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/kalman.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/DeadReck.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] copying /home/etnw/senior_design_ws/src/build/navigator/build/lib/navigator/sync.py -> /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator
+[0.588s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/TeleOpLite.py to TeleOpLite.cpython-310.pyc
+[0.588s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/__init__.py to __init__.cpython-310.pyc
+[0.588s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/Log.py to Log.cpython-310.pyc
+[0.588s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/navigation_node.py to navigation_node.cpython-310.pyc
+[0.588s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/TeleOp.py to TeleOp.cpython-310.pyc
+[0.590s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/navigation_node_no_GPS.py to navigation_node_no_GPS.cpython-310.pyc
+[0.591s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/kalman.py to kalman.cpython-310.pyc
+[0.591s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/DeadReck.py to DeadReck.cpython-310.pyc
+[0.592s] byte-compiling /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator/sync.py to sync.cpython-310.pyc
+[0.593s] running install_data
+[0.593s] creating /home/etnw/senior_design_ws/src/install/navigator/share/ament_index
+[0.593s] creating /home/etnw/senior_design_ws/src/install/navigator/share/ament_index/resource_index
+[0.593s] creating /home/etnw/senior_design_ws/src/install/navigator/share/ament_index/resource_index/packages
+[0.593s] copying resource/navigator -> /home/etnw/senior_design_ws/src/install/navigator/share/ament_index/resource_index/packages
+[0.594s] copying package.xml -> /home/etnw/senior_design_ws/src/install/navigator/share/navigator
+[0.594s] running install_egg_info
+[0.595s] Copying ../build/navigator/navigator.egg-info to /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator-0.0.0-py3.10.egg-info
+[0.595s] running install_scripts
+[0.605s] Installing DeadReck script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.605s] Installing Log script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.606s] Installing Sync script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.606s] Installing TeleOp script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.606s] Installing TeleOpLite script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.606s] Installing kalman script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.606s] Installing navigation_node script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.606s] Installing navigation_node_no_GPS script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.606s] writing list of installed files to '/home/etnw/senior_design_ws/src/build/navigator/install.log'
+[0.621s] Invoked command in '/home/etnw/senior_design_ws/src/navigator' returned '0': AMENT_PREFIX_PATH=/home/etnw/senior_design_ws/src/install/custom_msg:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/etnw/senior_design_ws/src/install/custom_msg:${CMAKE_PREFIX_PATH} LD_LIBRARY_PATH=/home/etnw/senior_design_ws/src/install/custom_msg/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/etnw/senior_design_ws/src/build/navigator/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages:/home/etnw/senior_design_ws/src/install/custom_msg/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/navigator build --build-base /home/etnw/senior_design_ws/src/build/navigator/build install --record /home/etnw/senior_design_ws/src/build/navigator/install.log --single-version-externally-managed install_data

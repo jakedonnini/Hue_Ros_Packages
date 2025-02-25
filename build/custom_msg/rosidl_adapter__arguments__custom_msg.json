@@ -1,0 +1,8 @@
+{
+  "package_name": "custom_msg",
+  "non_idl_tuples": [
+    "/home/etnw/senior_design_ws/src/custom_msg:msg/Coordinates.msg",
+    "/home/etnw/senior_design_ws/src/custom_msg:msg/TwoInt.msg",
+    "/home/etnw/senior_design_ws/src/custom_msg:msg/GpsData.msg"
+  ]
+}
