@@ -96,6 +96,7 @@ class KalmanFilter(Node):
             self.new_gps_data = True
 
     def deadReck_callback(self, msg):
+        self.get_logger().info(f'Received Dead Reckoning Message: x={msg.x}, y={msg.y}, toggle={msg.toggle}')
         with self.lock:
             self.V = msg.x
             self.dV = msg.y
