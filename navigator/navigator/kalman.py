@@ -43,18 +43,11 @@ class KalmanFilter(Node):
         ])
 
         self.gps_subscription = self.create_subscription(
-            GpsData, 
-            'gps/data', 
-            self.gps_callback, 
-            10
-        )
-
+            GpsData, 'gps/data', self.gps_callback, 10)
         self.deadReck_subscription = self.create_subscription(
-            Coordinates, 
-            'deadReckoning/data', 
-            self.deadReck_callback, 
-            10
-        )
+            Coordinates,'deadReckoning/data', self.deadReck_callback, 10)
+        self.DR_subscription = self.create_subscription(
+            GpsData, 'deadReckoning/pose', self.deadReck_callback, 10)
 
         self.V = 0
         self.dV = 0
