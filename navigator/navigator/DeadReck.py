@@ -35,7 +35,7 @@ class DeadReckoning(Node):
         self.dir = -1  # Set to -1 to invert the forward direction
 
     def encoder_callback(self, msg):
-        self.get_logger().info("Received encoder data")  # Debugging print
+        # self.get_logger().info("Received encoder data")  # Debugging print
 
         vL = (6.2832 * self.wheelR * msg.l * self.errorScaler * self.dir) / (self.encoderTicks * self.dt)
         vR = (6.2832 * self.wheelR * msg.r * self.errorScaler * self.dir) / (self.encoderTicks * self.dt)

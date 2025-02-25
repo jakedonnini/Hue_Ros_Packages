@@ -129,17 +129,18 @@ class KalmanFilter(Node):
         while self.running:
             with self.lock:
                 # Publish Kalman Filtered State
+                # Publish Kalman Filtered State
                 kal_msg = GpsData()
-                kal_msg.x = self.x[0, 0]
-                kal_msg.y = self.x[1, 0]
-                kal_msg.angle = self.x[2, 0]
+                kal_msg.x = float(self.x[0, 0])  # Explicitly cast to float
+                kal_msg.y = float(self.x[1, 0])  # Explicitly cast to float
+                kal_msg.angle = float(self.x[2, 0])  # Explicitly cast to float
                 self.kalman_publisher.publish(kal_msg)
 
                 # Publish Rotated Dead Reckoning Data
                 rot_msg = GpsData()
-                rot_msg.x = self.DR_x_rot
-                rot_msg.y = self.DR_y_rot
-                rot_msg.angle = self.DR_angle_rot
+                rot_msg.x = float(self.DR_x_rot)  # Explicitly cast to float
+                rot_msg.y = float(self.DR_y_rot)  # Explicitly cast to float
+                rot_msg.angle = float(self.DR_angle_rot)  # Explicitly cast to float
                 self.rotation_publisher.publish(rot_msg)
 
                 # Debugging Log
