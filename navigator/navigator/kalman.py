@@ -89,6 +89,7 @@ class KalmanFilter(Node):
         self.rotation_calculated = False
 
     def gps_callback(self, msg):
+        self.get_logger().info(f'Received GPS')
         with self.lock:
             self.gps_x = msg.x
             self.gps_y = msg.y
@@ -104,6 +105,7 @@ class KalmanFilter(Node):
             self.encoder_data_updated = True  # Flag for new data
 
     def deadReck_callback(self, msg):
+        self.get_logger().info(f'Received DR')
         with self.lock:
             self.DR_x = msg.x
             self.DR_y = msg.y
