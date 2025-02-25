@@ -45,6 +45,7 @@ class Log(Node):
         self.kalman_y = 0
         self.kalman_angle = 0
 
+        self.running = True
         self.logging_thread = threading.Thread(target=self.log_positions)
         self.logging_thread.start()
 
@@ -110,6 +111,7 @@ class Log(Node):
             self.get_logger().error(f"Failed to write log: {e}")
 
     def stop_threads(self):
+        self.running = False
         self.logging_thread.join()
 
 
