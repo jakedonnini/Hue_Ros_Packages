@@ -19,6 +19,8 @@ class Log(Node):
             GpsData, 'gps/data', self.gps_callback_combo, 10)
         self.DR_subscription = self.create_subscription(
             GpsData, 'deadReckoning/pose', self.deadReck_callback, 10)
+        self.DR_subscription_rot = self.create_subscription(
+            GpsData, 'deadReckoning/rotation', self.deadReck_callback_rot, 10)
         self.DR_subscription_vel = self.create_subscription(
             Coordinates, 'deadReckoning/vel', self.deadReck_callback_t, 10)
         self.Kalman = self.create_subscription(
@@ -41,6 +43,9 @@ class Log(Node):
         self.DR_x = 0
         self.DR_y = 0
         self.DR_angle = 0
+        self.DR_x_rot = 0
+        self.DR_y_rot = 0
+        self.DR_angle_rot = 0
 
         # kalman
         self.kalman_x = 0
@@ -79,6 +84,12 @@ class Log(Node):
         with self.lock:
             self.isPainting = msg.toggle
 
+    def deadReck_callback_rot(self, msg):
+        with self.lock:
+            self.DR_x_rot = msg.x
+            self.DR_y_rot = msg.y
+            self.DR_angle_rot = msg.angle
+
     def kalman(self, msg):
         with self.lock:
             self.kalman_x = msg.x
@@ -89,7 +100,7 @@ class Log(Node):
     def log_positions(self):
         try:
             with open("/home/hue/ros2_ws/src/position_log_total.txt", 'w') as file:
-                file.write("Time,GPS_X1,GPS_Y1,GPS_X2,GPS_Y2,GPS_MIDX,GPS_MIDY,GPS_MID_Theta,DR_X,DR_Y,DR_Theta,Kalman_X,Kalman_Y,Kalman_Theta,Painting\n")
+                file.write("Time,GPS_X1,GPS_Y1,GPS_X2,GPS_Y2,GPS_MIDX,GPS_MIDY,GPS_MID_Theta,DR_X,DR_Y,DR_Theta,DR_X_r,DR_Y_r,DR_Theta_r,Kalman_X,Kalman_Y,Kalman_Theta,Painting\n")
                 while self.running:
                     with self.lock:
                         gps_x1 = self.gps_cm_x1
@@ -102,12 +113,15 @@ class Log(Node):
                         encoder_x = self.DR_x
                         encoder_y = self.DR_y
                         encoder_theta = self.DR_angle
+                        DR_x_rot = self.DR_x_rot
+                        DR_y_rot = self.DR_y_rot
+                        DR_angle_rot = self.DR_angle_rot
                         kalman_x = self.kalman_x
                         kalman_y = self.kalman_y
                         kalman_theta = self.kalman_angle
                         painting = self.isPainting
                     timestamp = time.time()
-                    file.write(f"{timestamp},{gps_x1},{gps_y1},{gps_x2},{gps_y2},{gps_mid_x},{gps_mid_y},{gps_mid_theta},{encoder_x},{encoder_y},{encoder_theta},{kalman_x},{kalman_y},{kalman_theta},{painting}\n")
+                    file.write(f"{timestamp},{gps_x1},{gps_y1},{gps_x2},{gps_y2},{gps_mid_x},{gps_mid_y},{gps_mid_theta},{encoder_x},{encoder_y},{encoder_theta},{DR_x_rot},{DR_y_rot},{DR_angle_rot},{kalman_x},{kalman_y},{kalman_theta},{painting}\n")
                     file.flush()
                     time.sleep(0.1)
         except Exception as e:

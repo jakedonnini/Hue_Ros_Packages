@@ -52,6 +52,15 @@ class KalmanFilter(Node):
         self.V = 0
         self.dV = 0
         self.isPainting = 0
+        self.DR_x = 0
+        self.DR_y = 0
+        self.DR_angle = 0
+        self.DR_x_rot = 0
+        self.DR_y_rot = 0
+        self.DR_angle_rot = 0
+        self.R = np.eye(2)
+        self.rotThata = 0
+        
         self.gps_x = 0
         self.gps_y = 0
         self.gps_Theta = 0
@@ -66,6 +75,7 @@ class KalmanFilter(Node):
 
         # Publisher for midpoint and robot angle
         self.kalman_publisher = self.create_publisher(GpsData, 'kalman/data', 10)
+        self.rotation_publisher = self.create_publisher(GpsData, 'deadReckoning/rotation', 10)
 
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
         self.processor_thread.start()
@@ -87,13 +97,19 @@ class KalmanFilter(Node):
             self.isPainting = msg.toggle
             self.encoder_data_updated = True  # Flag for new data
 
+    def deadReck_callback(self, msg):
+        with self.lock:
+            self.DR_x = msg.x
+            self.DR_y = msg.y
+            self.DR_angle = msg.angle
+
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
         while self.running:
             # Process encoder data if updated
             if self.encoder_data_updated:
                 with self.lock:
-                    self.getEncoderPose()
+                    self.update_kalman_with_DR()
                     self.encoder_data_updated = False  # Reset flag
 
             if self.new_gps_data:
@@ -109,6 +125,12 @@ class KalmanFilter(Node):
                 kal_msg.y = self.x[1, 0]
                 kal_msg.angle = self.x[2, 0]
                 self.kalman_publisher.publish(kal_msg)
+
+                rot_msg = GpsData()
+                rot_msg.x = self.DR_x_rot
+                rot_msg.y = self.DR_y_rot
+                rot_msg.angle = self.DR_angle_rot
+                self.rotation_publisher.publish(rot_msg)
                 # for Kalman filiter testing
                 self.get_logger().info(
                     f'\rGPS: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)}  [ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} [KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
@@ -117,13 +139,19 @@ class KalmanFilter(Node):
     def update_kalman_with_DR(self):
         """Call every time serial data comes in."""
         
-        #TODO: add rotation based off the inital angle of the GPS
         # emmet is confused :(((((
         if not self.rotation_calculated:
-            theta = self.gps_Theta
             self.rotation_calculated = True
-            theta = self.gps_Theta
-            R = np.array([[-np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]) # this includes rotation and relfection about y-axis
+            self.rotThata = self.gps_Theta
+            self.R = np.array([[-np.cos(self.rotThata), -np.sin(self.rotThata)], [np.sin(self.rotThata), np.cos(self.rotThata)]]) # this includes rotation and relfection about y-axis
+
+        # apply the R to the points
+        self.DR_x_rot = (self.R[0, 0] * self.DR_x + self.R[0, 1] * self.DR_y)
+        self.DR_y_rot = (self.R[1, 0] * self.DR_x + self.R[1, 1] * self.DR_y)
+
+        # aline angle using the R matrix
+        theta_rot_vec = self.R @ np.stack((np.cos(self.rotThata), np.sin(self.rotThata)))
+        self.DR_angle_rot = np.arctan2(theta_rot_vec[1], theta_rot_vec[0])
 
         # Update B Control matrix
         self.B = np.array([
@@ -133,7 +161,10 @@ class KalmanFilter(Node):
         ])
         u = np.array([[self.V], [self.dV]])
 
-        self.x = self.F @ self.x + self.B @ u
+        state = self.B @ u
+
+        # rotate the state
+        self.x = self.F @ self.x + self.R @ state
         self.P = self.F @ self.P @ self.F.T + self.Q
 
     def update_kalman_with_gps(self):
