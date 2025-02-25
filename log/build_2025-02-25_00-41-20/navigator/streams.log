@@ -1,0 +1,29 @@
+[0.503s] Invoking command in '/home/etnw/senior_design_ws/src/navigator': AMENT_PREFIX_PATH=/home/etnw/senior_design_ws/src/install/custom_msg:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/etnw/senior_design_ws/src/install/custom_msg:${CMAKE_PREFIX_PATH} LD_LIBRARY_PATH=/home/etnw/senior_design_ws/src/install/custom_msg/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/etnw/senior_design_ws/src/build/navigator/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages:/home/etnw/senior_design_ws/src/install/custom_msg/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/navigator build --build-base /home/etnw/senior_design_ws/src/build/navigator/build install --record /home/etnw/senior_design_ws/src/build/navigator/install.log --single-version-externally-managed install_data
+[0.620s] running egg_info
+[0.620s] writing ../build/navigator/navigator.egg-info/PKG-INFO
+[0.620s] writing dependency_links to ../build/navigator/navigator.egg-info/dependency_links.txt
+[0.620s] writing entry points to ../build/navigator/navigator.egg-info/entry_points.txt
+[0.621s] writing requirements to ../build/navigator/navigator.egg-info/requires.txt
+[0.621s] writing top-level names to ../build/navigator/navigator.egg-info/top_level.txt
+[0.622s] reading manifest file '../build/navigator/navigator.egg-info/SOURCES.txt'
+[0.622s] adding license file 'LICENSE'
+[0.622s] writing manifest file '../build/navigator/navigator.egg-info/SOURCES.txt'
+[0.622s] running build
+[0.623s] running build_py
+[0.623s] running install
+[0.623s] running install_lib
+[0.624s] running install_data
+[0.624s] running install_egg_info
+[0.625s] removing '/home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator-0.0.0-py3.10.egg-info' (and everything under it)
+[0.625s] Copying ../build/navigator/navigator.egg-info to /home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages/navigator-0.0.0-py3.10.egg-info
+[0.625s] running install_scripts
+[0.634s] Installing DeadReck script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.635s] Installing Log script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.635s] Installing Sync script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.635s] Installing TeleOp script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.635s] Installing TeleOpLite script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.635s] Installing kalman script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.635s] Installing navigation_node script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.635s] Installing navigation_node_no_GPS script to /home/etnw/senior_design_ws/src/install/navigator/lib/navigator
+[0.635s] writing list of installed files to '/home/etnw/senior_design_ws/src/build/navigator/install.log'
+[0.650s] Invoked command in '/home/etnw/senior_design_ws/src/navigator' returned '0': AMENT_PREFIX_PATH=/home/etnw/senior_design_ws/src/install/custom_msg:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/etnw/senior_design_ws/src/install/custom_msg:${CMAKE_PREFIX_PATH} LD_LIBRARY_PATH=/home/etnw/senior_design_ws/src/install/custom_msg/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/etnw/senior_design_ws/src/build/navigator/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/etnw/senior_design_ws/src/install/navigator/lib/python3.10/site-packages:/home/etnw/senior_design_ws/src/install/custom_msg/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/navigator build --build-base /home/etnw/senior_design_ws/src/build/navigator/build install --record /home/etnw/senior_design_ws/src/build/navigator/install.log --single-version-externally-managed install_data

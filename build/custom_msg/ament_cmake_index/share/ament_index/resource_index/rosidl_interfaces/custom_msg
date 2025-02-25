@@ -1,0 +1,6 @@
+msg/Coordinates.idl
+msg/Coordinates.msg
+msg/GpsData.idl
+msg/GpsData.msg
+msg/TwoInt.idl
+msg/TwoInt.msg

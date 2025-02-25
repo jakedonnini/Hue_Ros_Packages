@@ -1,0 +1,25 @@
+[0.659s] Invoking command in '/home/etnw/senior_design_ws/src/gps_publisher': PYTHONPATH=/home/etnw/senior_design_ws/src/build/gps_publisher/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/etnw/senior_design_ws/src/install/gps_publisher/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/gps_publisher build --build-base /home/etnw/senior_design_ws/src/build/gps_publisher/build install --record /home/etnw/senior_design_ws/src/build/gps_publisher/install.log --single-version-externally-managed install_data
+[0.786s] running egg_info
+[0.786s] writing ../build/gps_publisher/gps_publisher.egg-info/PKG-INFO
+[0.786s] writing dependency_links to ../build/gps_publisher/gps_publisher.egg-info/dependency_links.txt
+[0.786s] writing entry points to ../build/gps_publisher/gps_publisher.egg-info/entry_points.txt
+[0.787s] writing requirements to ../build/gps_publisher/gps_publisher.egg-info/requires.txt
+[0.787s] writing top-level names to ../build/gps_publisher/gps_publisher.egg-info/top_level.txt
+[0.788s] reading manifest file '../build/gps_publisher/gps_publisher.egg-info/SOURCES.txt'
+[0.788s] adding license file 'LICENSE'
+[0.788s] writing manifest file '../build/gps_publisher/gps_publisher.egg-info/SOURCES.txt'
+[0.788s] running build
+[0.788s] running build_py
+[0.789s] running install
+[0.789s] running install_lib
+[0.790s] running install_data
+[0.790s] copying launch/gps_launch.py -> /home/etnw/senior_design_ws/src/install/gps_publisher/share/gps_publisher/launch
+[0.790s] running install_egg_info
+[0.792s] removing '/home/etnw/senior_design_ws/src/install/gps_publisher/lib/python3.10/site-packages/gps_publisher-0.0.0-py3.10.egg-info' (and everything under it)
+[0.796s] Copying ../build/gps_publisher/gps_publisher.egg-info to /home/etnw/senior_design_ws/src/install/gps_publisher/lib/python3.10/site-packages/gps_publisher-0.0.0-py3.10.egg-info
+[0.796s] running install_scripts
+[0.806s] Installing gps2_node script to /home/etnw/senior_design_ws/src/install/gps_publisher/lib/gps_publisher
+[0.807s] Installing gps3_node script to /home/etnw/senior_design_ws/src/install/gps_publisher/lib/gps_publisher
+[0.807s] Installing gps_node script to /home/etnw/senior_design_ws/src/install/gps_publisher/lib/gps_publisher
+[0.807s] writing list of installed files to '/home/etnw/senior_design_ws/src/build/gps_publisher/install.log'
+[0.821s] Invoked command in '/home/etnw/senior_design_ws/src/gps_publisher' returned '0': PYTHONPATH=/home/etnw/senior_design_ws/src/build/gps_publisher/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/etnw/senior_design_ws/src/install/gps_publisher/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/gps_publisher build --build-base /home/etnw/senior_design_ws/src/build/gps_publisher/build install --record /home/etnw/senior_design_ws/src/build/gps_publisher/install.log --single-version-externally-managed install_data

@@ -1,0 +1,10 @@
+[console_scripts]
+DeadReck = navigator.DeadReck:main
+Log = navigator.Log:main
+Sync = navigator.sync:main
+TeleOp = navigator.TeleOp:main
+TeleOpLite = navigator.TeleOpLite:main
+kalman = navigator.kalman:main
+navigation_node = navigator.navigation_node:main
+navigation_node_no_GPS = navigator.navigation_node_no_GPS:main
+
