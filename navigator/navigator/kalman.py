@@ -81,7 +81,9 @@ class KalmanFilter(Node):
         self.rotation_publisher = self.create_publisher(GpsData, 'deadReckoning/rotation', 10)
 
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
+        self.publisher_thread = threading.Thread(target=self.run_publishing_loop)
         self.processor_thread.start()
+        self.publisher_thread.start()
 
         # is rotation matrix calculated?
         self.rotation_calculated = False
@@ -120,23 +122,34 @@ class KalmanFilter(Node):
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
             
-            # send message
-            kal_msg = GpsData()
-            kal_msg.x = self.x[0, 0]
-            kal_msg.y = self.x[1, 0]
-            kal_msg.angle = self.x[2, 0]
-            self.kalman_publisher.publish(kal_msg)
-
-            rot_msg = GpsData()
-            rot_msg.x = self.DR_x_rot
-            rot_msg.y = self.DR_y_rot
-            rot_msg.angle = self.DR_angle_rot
-            self.rotation_publisher.publish(rot_msg)
-            # for Kalman filiter testing
-            self.get_logger().info(
-                f'\rGPS: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)}  [ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} [KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
-            )
             time.sleep(self.dt/2)
+
+    def run_publishing_loop(self):
+        """Publishes Kalman-filtered data at a constant rate."""
+        while self.running:
+            with self.lock:
+                # Publish Kalman Filtered State
+                kal_msg = GpsData()
+                kal_msg.x = self.x[0, 0]
+                kal_msg.y = self.x[1, 0]
+                kal_msg.angle = self.x[2, 0]
+                self.kalman_publisher.publish(kal_msg)
+
+                # Publish Rotated Dead Reckoning Data
+                rot_msg = GpsData()
+                rot_msg.x = self.DR_x_rot
+                rot_msg.y = self.DR_y_rot
+                rot_msg.angle = self.DR_angle_rot
+                self.rotation_publisher.publish(rot_msg)
+
+                # Debugging Log
+                self.get_logger().info(
+                    f'[GPS]: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)} '
+                    f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} '
+                    f'[KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
+                )
+
+            time.sleep(self.dt)  # Publish at `dt` interval
                 
     def update_kalman_with_DR(self):
         """Call every time serial data comes in."""
@@ -172,8 +185,6 @@ class KalmanFilter(Node):
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
 
-        
-
         #TODO: update Kalman filter with the angle of the GPS. IDK how
 
         # Measurement update
@@ -188,6 +199,7 @@ class KalmanFilter(Node):
         """Stop the threads gracefully."""
         self.running = False
         self.processor_thread.join()
+        self.publisher_thread.join()
 
 def main(args=None):
     rclpy.init(args=args)
