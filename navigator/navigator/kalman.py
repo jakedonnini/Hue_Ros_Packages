@@ -13,6 +13,8 @@ class KalmanFilter(Node):
     def __init__(self):
         super().__init__('navigation_node')
 
+        self.dt = 0.05
+
         # Kalman Filter Matrices
         self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
         self.lastx = copy.deepcopy(self.x)
@@ -60,7 +62,6 @@ class KalmanFilter(Node):
         self.DR_angle_rot = 0
         self.R = np.eye(2)
         self.rotThata = 0
-        self.dt = 0.05
         
         self.gps_x = 0
         self.gps_y = 0
