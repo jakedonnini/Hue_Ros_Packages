@@ -138,6 +138,7 @@ class KalmanFilter(Node):
                 self.get_logger().info(
                     f'\rGPS: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)}  [ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} [KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
                 )
+            time.sleep(0.02)
                 
     def update_kalman_with_DR(self):
         """Call every time serial data comes in."""
