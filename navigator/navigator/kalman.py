@@ -77,6 +77,9 @@ class KalmanFilter(Node):
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
         self.processor_thread.start()
 
+        # is rotation matrix calculated?
+        self.rotation_calculated = False
+
     def gps_callback(self, msg):
         with self.lock:
             self.gps_x = msg.x
@@ -120,8 +123,14 @@ class KalmanFilter(Node):
                 
     def update_kalman_with_DR(self):
         """Call every time serial data comes in."""
-
+        
         #TODO: add rotation based off the inital angle of the GPS
+        # emmet is confused :(((((
+        if not self.rotation_calculated:
+            theta = self.gps_Theta
+            self.rotation_calculated = True
+            theta = self.gps_Theta
+            R = np.array([[-np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]) # this includes rotation and relfection about y-axis
 
         # Update B Control matrix
         self.B = np.array([
@@ -136,6 +145,8 @@ class KalmanFilter(Node):
 
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
+
+        
 
         #TODO: update Kalman filter with the angle of the GPS. IDK how
 
