@@ -49,7 +49,7 @@ class KalmanFilter(Node):
         self.deadReck_subscription = self.create_subscription(
             Coordinates,'deadReckoning/data', self.deadReck_callback, 10)
         self.DR_subscription = self.create_subscription(
-            GpsData, 'deadReckoning/pose', self.deadReck_callback, 10)
+            GpsData, 'deadReckoning/pose', self.deadReck_callback_pose, 10)
 
         self.V = 0
         self.dV = 0
@@ -89,7 +89,7 @@ class KalmanFilter(Node):
         self.rotation_calculated = False
 
     def gps_callback(self, msg):
-        self.get_logger().info(f'Received GPS')
+        # self.get_logger().info(f'Received GPS')
         with self.lock:
             self.gps_x = msg.x
             self.gps_y = msg.y
@@ -97,15 +97,15 @@ class KalmanFilter(Node):
             self.new_gps_data = True
 
     def deadReck_callback(self, msg):
-        self.get_logger().info(f'Received Dead Reckoning Message: x={msg.x}, y={msg.y}, toggle={msg.toggle}')
+        # self.get_logger().info(f'Received Dead Reckoning Message: x={msg.x}, y={msg.y}, toggle={msg.toggle}')
         with self.lock:
             self.V = msg.x
             self.dV = msg.y
             self.isPainting = msg.toggle
             self.encoder_data_updated = True  # Flag for new data
 
-    def deadReck_callback(self, msg):
-        self.get_logger().info(f'Received DR')
+    def deadReck_callback_pose(self, msg):
+        # self.get_logger().info(f'Received Dead Reckoning Message:')
         with self.lock:
             self.DR_x = msg.x
             self.DR_y = msg.y
