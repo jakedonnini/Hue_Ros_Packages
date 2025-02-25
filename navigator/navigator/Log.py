@@ -8,6 +8,7 @@ import numpy as np
 
 class Log(Node):
     def __init__(self):
+        super().__init__('navigation_node')
 
         # Subscribers for GPS, Encoder, and Teleop Twist Keyboard
         self.gps_subscription1 = self.create_subscription(
