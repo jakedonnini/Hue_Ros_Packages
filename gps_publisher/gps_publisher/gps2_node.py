@@ -92,7 +92,7 @@ class GPSPublisher(Node):
 
         self.coords_publisher.publish(gps_msg)
 
-        self.get_logger().info(f'Published Latitude: {latitude}, Longitude: {longitude}')
+        # self.get_logger().info(f'Published Latitude: {latitude}, Longitude: {longitude}')
 
     def publish_heading(self, heading):
         heading_msg = Float64()

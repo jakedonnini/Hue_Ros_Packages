@@ -17,7 +17,7 @@ class DeadReckoning(Node):
             self.encoder_callback, 
             10
         )
-        self.get_logger().info("Subscribed to encoder topic")
+        # self.get_logger().info("Subscribed to encoder topic")
 
         # Publishers for velocity and pose
         self.vel_publisher = self.create_publisher(Coordinates, 'deadReckoning/vel', 10)
