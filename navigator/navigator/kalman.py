@@ -181,6 +181,8 @@ class KalmanFilter(Node):
 
         state = self.B @ u
 
+        print("state", state)
+
         # rotate the state
         self.x = self.F @ self.x + self.R @ state
         self.P = self.F @ self.P @ self.F.T + self.Q
