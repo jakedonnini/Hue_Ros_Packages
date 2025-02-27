@@ -181,11 +181,14 @@ class KalmanFilter(Node):
         u = np.array([[self.V], [self.dV]])
 
         state = self.B @ u
+        self.get_logger().info(f"u: {u}")
+        state[0, :2] = self.Rot @ state[0, :2]
+        state[0, 2] = self.DR_angle_rot
 
-        print("state", state)
+        self.get_logger().info(f"State: {state}")
 
         # rotate the state
-        self.x = self.F @ self.x + self.Rot @ state
+        self.x = self.F @ self.x + state
         self.P = self.F @ self.P @ self.F.T + self.Q
 
     def update_kalman_with_gps(self):
