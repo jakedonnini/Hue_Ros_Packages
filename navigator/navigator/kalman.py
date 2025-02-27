@@ -120,7 +120,7 @@ class KalmanFilter(Node):
 
             if self.new_gps_data:
                 with self.lock:
-                    self.update_kalman_with_gps()
+                    # self.update_kalman_with_gps()
                     self.new_gps_data = False
             
             time.sleep(self.dt/2)
