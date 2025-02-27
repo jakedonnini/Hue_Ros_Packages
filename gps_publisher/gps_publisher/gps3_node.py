@@ -86,8 +86,8 @@ class GPSFusionNode(Node):
         # mid_x -= self.x_mid_zero
         # mid_y -= self.y_mid_zero
 
-        delta_x = x2 - x1
-        delta_y = y2 - y1
+        delta_x = x1 - x2
+        delta_y = y1 - y2
         angle = math.atan2(delta_y, delta_x) + math.pi
         
         # Publish midpoint and angle
