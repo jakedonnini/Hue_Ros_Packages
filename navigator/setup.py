@@ -27,6 +27,7 @@ setup(
             'DeadReck = navigator.DeadReck:main',
             'kalman = navigator.kalman:main',
             'TeleOpLite = navigator.TeleOpLite:main',
+            'NavLite = navigator.navigation_nodeLite:main',
             'Log = navigator.Log:main'
         ],
     },
