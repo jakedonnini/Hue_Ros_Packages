@@ -120,7 +120,7 @@ class KalmanFilter(Node):
 
             if self.new_gps_data:
                 with self.lock:
-                    # self.update_kalman_with_gps()
+                    self.update_kalman_with_gps()
                     self.new_gps_data = False
             
             time.sleep(self.dt/2)
@@ -185,19 +185,19 @@ class KalmanFilter(Node):
         u = np.array([[self.V], [self.dV]])
 
         state = self.B @ u
-        self.get_logger().info(f"State before rot: {state}")
+        # self.get_logger().info(f"State before rot: {state}")
 
         state = Rot_Extended @ state
         # state[2, 0] = self.DR_angle_rot
 
-        self.get_logger().info(f"State after rot: {state}")
+        # self.get_logger().info(f"State after rot: {state}")
 
         # rotate the state
         self.x = self.F @ self.x + state
         self.P = self.F @ self.P @ self.F.T + self.Q
 
         self.get_logger().info(f"x: {self.x}")
-        self.get_logger().info(f"P: {self.P}")
+        self.get_logger().info(f"rotation Matrix: {Rot_Extended}")
 
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
