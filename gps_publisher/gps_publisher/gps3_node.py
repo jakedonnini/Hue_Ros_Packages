@@ -74,7 +74,7 @@ class GPSFusionNode(Node):
 
         # use the same origin to keep on same basis
         x1, y1 = self.lat_to_cm_1 * (lat1 - self.origin_lat_1), self.lon_to_cm_1 * (lon1 - self.origin_lon_1)
-        x2, y2 = self.lat_to_cm_2 * (lat2 - self.origin_lat_1), self.lon_to_cm_2 * (lon2 - self.origin_lon_1)
+        x2, y2 = self.lat_to_cm_1 * (lat2 - self.origin_lat_1), self.lon_to_cm_1 * (lon2 - self.origin_lon_1)
 
         mid_x = (x1 + x2) / 2.0
         mid_y = (y1 + y2) / 2.0
