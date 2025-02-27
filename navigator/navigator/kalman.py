@@ -159,7 +159,7 @@ class KalmanFilter(Node):
         """Call every time serial data comes in."""
         
         # emmet is confused :(((((
-        if not self.rotation_calculated:
+        if not self.rotation_calculated and self.gps_Theta != 0:
             self.rotation_calculated = True
             self.rotThata = self.gps_Theta
             self.Rot = np.array([[-np.cos(self.rotThata), -np.sin(self.rotThata)], [np.sin(self.rotThata), np.cos(self.rotThata)]]) # this includes rotation and relfection about y-axis
