@@ -181,11 +181,11 @@ class KalmanFilter(Node):
         u = np.array([[self.V], [self.dV]])
 
         state = self.B @ u
-        self.get_logger().info(f"u: {u}")
+        self.get_logger().info(f"State before rot: {state}")
         state[0, :2] = self.Rot @ state[0, :2]
         state[0, 2] = self.DR_angle_rot
 
-        self.get_logger().info(f"State: {state}")
+        self.get_logger().info(f"State before rot: {state}")
 
         # rotate the state
         self.x = self.F @ self.x + state
