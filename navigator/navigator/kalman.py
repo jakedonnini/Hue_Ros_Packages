@@ -36,12 +36,13 @@ class KalmanFilter(Node):
         self.Q = np.diag([0.4, 0.4, 0.3])
 
         # Measurement noise covariance (GPS noise)
-        self.R = np.diag([0.11, 0.15])
+        self.R = np.diag([0.11, 0.15, 0.05])
 
         # Observation matrix
         self.H = np.array([
-            [1, 0, 0],
-            [0, 1, 0]
+        [1, 0, 0],  # Observation for x
+        [0, 1, 0],  # Observation for y
+        [0, 0, 1]   # Observation for theta
         ])
 
         self.gps_subscription = self.create_subscription(
@@ -60,7 +61,7 @@ class KalmanFilter(Node):
         self.DR_x_rot = 0
         self.DR_y_rot = 0
         self.DR_angle_rot = 0
-        self.R = np.eye(2)
+        self.Rot = np.eye(2)
         self.rotThata = 0
         
         self.gps_x = 0
@@ -161,14 +162,14 @@ class KalmanFilter(Node):
         if not self.rotation_calculated:
             self.rotation_calculated = True
             self.rotThata = self.gps_Theta
-            self.R = np.array([[-np.cos(self.rotThata), -np.sin(self.rotThata)], [np.sin(self.rotThata), np.cos(self.rotThata)]]) # this includes rotation and relfection about y-axis
+            self.Rot = np.array([[-np.cos(self.rotThata), -np.sin(self.rotThata)], [np.sin(self.rotThata), np.cos(self.rotThata)]]) # this includes rotation and relfection about y-axis
 
         # apply the R to the points
-        self.DR_x_rot = (self.R[0, 0] * self.DR_x + self.R[0, 1] * self.DR_y)
-        self.DR_y_rot = (self.R[1, 0] * self.DR_x + self.R[1, 1] * self.DR_y)
+        self.DR_x_rot = (self.Rot[0, 0] * self.DR_x + self.Rot[0, 1] * self.DR_y)
+        self.DR_y_rot = (self.Rot[1, 0] * self.DR_x + self.Rot[1, 1] * self.DR_y)
 
         # aline angle using the R matrix
-        theta_rot_vec = self.R @ np.stack((np.cos(self.rotThata), np.sin(self.rotThata)))
+        theta_rot_vec = self.Rot @ np.stack((np.cos(self.rotThata), np.sin(self.rotThata)))
         self.DR_angle_rot = np.arctan2(theta_rot_vec[1], theta_rot_vec[0])
 
         # Update B Control matrix
@@ -184,19 +185,16 @@ class KalmanFilter(Node):
         print("state", state)
 
         # rotate the state
-        self.x = self.F @ self.x + self.R @ state
+        self.x = self.F @ self.x + self.Rot @ state
         self.P = self.F @ self.P @ self.F.T + self.Q
 
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
-
-        #TODO: update Kalman filter with the angle of the GPS. IDK how
-
         # Measurement update
-        z = np.array([[self.x_gps], [self.y_gps]])
-        y = z - self.H @ self.x
-        S = self.H @ self.P @ self.H.T + self.R
-        K = self.P @ self.H.T @ np.linalg.inv(S)
+        z = np.array([[self.x_gps], [self.y_gps], [self.gps_Theta]])
+        y = z - self.H @ self.x # Measurement residual
+        S = self.H @ self.P @ self.H.T + self.R # Residual covariance
+        K = self.P @ self.H.T @ np.linalg.inv(S) # Kalman gain
         self.x = self.x + K @ y
         self.P = (np.eye(3) - K @ self.H) @ self.P
 
