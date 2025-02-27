@@ -168,6 +168,10 @@ class KalmanFilter(Node):
         self.DR_x_rot = (self.Rot[0, 0] * self.DR_x + self.Rot[0, 1] * self.DR_y)
         self.DR_y_rot = (self.Rot[1, 0] * self.DR_x + self.Rot[1, 1] * self.DR_y)
 
+        # Create extended 3x3 rotation matrix (includes theta)
+        Rot_Extended = np.eye(3)
+        Rot_Extended[:2, :2] = self.Rot  # Embed the 2x2 rotation into the 3x3 matrix
+
         # aline angle using the R matrix
         theta_rot_vec = self.Rot @ np.stack((np.cos(self.rotThata), np.sin(self.rotThata)))
         self.DR_angle_rot = np.arctan2(theta_rot_vec[1], theta_rot_vec[0])
@@ -182,14 +186,18 @@ class KalmanFilter(Node):
 
         state = self.B @ u
         self.get_logger().info(f"State before rot: {state}")
-        state[:2, 0] = self.Rot @ state[:2, 0]
+
+        state = Rot_Extended @ state
         state[2, 0] = self.DR_angle_rot
 
-        self.get_logger().info(f"State before rot: {state}")
+        self.get_logger().info(f"State after rot: {state}")
 
         # rotate the state
         self.x = self.F @ self.x + state
         self.P = self.F @ self.P @ self.F.T + self.Q
+
+        self.get_logger().info(f"x: {self.x}")
+        self.get_logger().info(f"P: {self.P}")
 
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
