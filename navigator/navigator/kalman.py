@@ -188,7 +188,7 @@ class KalmanFilter(Node):
         self.get_logger().info(f"State before rot: {state}")
 
         state = Rot_Extended @ state
-        state[2, 0] = self.DR_angle_rot
+        # state[2, 0] = self.DR_angle_rot
 
         self.get_logger().info(f"State after rot: {state}")
 
