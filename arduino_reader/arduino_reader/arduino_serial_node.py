@@ -9,7 +9,7 @@ class ArduinoSerialNode(Node):
         super().__init__('arduino_serial_node')
 
         # Initialize serial connection
-        self.ser = serial.Serial('/dev/ttyACM0', 460800, timeout=0.01)  # Increased baud rate
+        self.ser = serial.Serial('/dev/ttyRobot1', 460800, timeout=0.01)  # Increased baud rate
         self.ser_lock = threading.Lock()  # Ensure thread-safe serial access
 
         # Publishers and Subscribers

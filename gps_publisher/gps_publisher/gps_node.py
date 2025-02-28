@@ -8,7 +8,7 @@ import time
 # Configure the serial connection to the GPS module
 ser = serial.Serial(
     # for linux
-    port='/dev/ttyACM2',  # Update this to your GPS module's serial port
+    port='/dev/ttyRobot3',  # Update this to your GPS module's serial port
     # for windows 
     # port='COM4',  # Change this to your GPS module's serial port
     baudrate=9600  # GPS modules commonly use 9600 or 115200 baud
