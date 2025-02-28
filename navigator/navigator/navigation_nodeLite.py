@@ -282,7 +282,7 @@ class GPSSubscriberPublisher(Node):
             self.pwm_publisher.publish(pwm_msg)
 
         # if wheel still spinning send off again
-        sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) and (self.encoder_left != 0 or self.encoder_right != 0)
+        sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) # TODO: FIND A WAY TO DO THIS and (self.encoder_left != 0 or self.encoder_right != 0)
 
         # Publish the PWM values
         # only send if new values

@@ -144,11 +144,11 @@ class KalmanFilter(Node):
                 #TODO: kalman and rot are both 0 for some reason
 
                 # Debugging Log
-                self.get_logger().info(
-                    f'[GPS]: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)} '
-                    f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} '
-                    f'[KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
-                )
+                # self.get_logger().info(
+                #     f'[GPS]: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)} '
+                #     f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} '
+                #     f'[KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
+                # )
 
             time.sleep(self.dt)  # Publish at `dt` interval
                 
