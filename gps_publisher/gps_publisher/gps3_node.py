@@ -56,7 +56,6 @@ class GPSFusionNode(Node):
         delta_y = y2 - y1
         angle = math.atan2(delta_y, delta_x) + np.pi
         
-        # Publish midpoint and angle
         gps_data = GpsData()
         gps_data.x = mid_x
         gps_data.y = mid_y
