@@ -1,7 +1,7 @@
 import threading
 import rclpy
 from rclpy.node import Node
-from custom_msg.msg import Coordinates, TwoInt
+from custom_msg.msg import Coordinates, TwoInt, GpsData
 from geometry_msgs.msg import Twist
 import time
 import math
@@ -12,7 +12,7 @@ class Teleop(Node):
         super().__init__('teleop_node')
 
         # Kalman Filter Matrices
-        self.dt = 0.025  # time step
+        self.dt = 0.05  # time step
         self.x = np.array([[0], [0], [0]])  # initial state [x, y, theta]
         self.P = np.eye(3)  # Initial state covariance
         self.F = np.eye(3)  # State transition matrix
@@ -23,15 +23,20 @@ class Teleop(Node):
 
         # read from the rotation matrix
         save_path = "/home/hue/ros2_ws/src/navigator/navigator/transformation_matrix.txt"
-        self.Rot_Matrix, self.startingAngle = self.read_transformation_matrix(save_path)
+        # self.Rot_Matrix, self.startingAngle = self.read_transformation_matrix(save_path)
+        self.Rot_Matrix, self.startingAngle = np.eye(2), 0
 
         # Subscribers for GPS, Encoder, and Teleop Twist Keyboard
         self.gps_subscription = self.create_subscription(
             Coordinates, 'gps', self.gps_callback, 10)
+        self.gps_subscription2 = self.create_subscription(
+            Coordinates, 'gps2', self.gps_callback2, 10)
         self.encoder_subscription = self.create_subscription(
             TwoInt, 'encoder', self.encoder_callback, 10)
         self.twist_subscription = self.create_subscription(
             Twist, 'cmd_vel', self.twist_callback, 10)
+        self.gps_subscription_combo = self.create_subscription(
+            GpsData, 'gps/data', self.gps_callback_combo, 10)
 
         # Publisher for PWM
         self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
@@ -65,6 +70,20 @@ class Teleop(Node):
         self.lat_to_cm = 111139.0 * 100
         self.lon_to_cm = 111139.0 * 100
 
+        self.latitude2 = None
+        self.longitude2 = None
+        self.origin_lat2 = None
+        self.origin_lon2 = None
+        self.new_gps_data2 = False
+        self.x_gps_cm2 = 0
+        self.y_gps_cm2 = 0
+        self.lat_to_cm2 = 111139.0 * 100
+        self.lon_to_cm2 = 111139.0 * 100
+
+        self.gps_mid_x = 0
+        self.gps_mid_y = 0
+        self.gps_angle = 0
+
         # PWM Variables
         self.pwmr_value = 0
         self.pwml_value = 0
@@ -79,11 +98,23 @@ class Teleop(Node):
         self.processor_thread.start()
         self.logging_thread.start()
 
+    def gps_callback_combo(self, msg):
+         with self.lock:
+            self.gps_mid_x = msg.x
+            self.gps_mid_y = msg.y
+            self.gps_angle = msg.angle
+
     def gps_callback(self, msg):
         with self.lock:
             self.latitude = msg.x
             self.longitude = msg.y
             self.new_gps_data = True
+
+    def gps_callback2(self, msg):
+        with self.lock:
+            self.latitude2 = msg.x
+            self.longitude2 = msg.y
+            self.new_gps_data2 = True
 
     def encoder_callback(self, msg):
         with self.lock:
@@ -120,6 +151,10 @@ class Teleop(Node):
                 with self.lock:
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
+            if self.new_gps_data2:
+                with self.lock:
+                    self.update_kalman_with_gps2()
+                    self.new_gps_data2 = False
             time.sleep(0.05)
 
     def get_encoder_pose(self):
@@ -134,16 +169,16 @@ class Teleop(Node):
 
         # Apply rotation matrix to align encoder position with GPS
         rotated_pos = self.Rot_Matrix @ np.array([[self.encoderX], [self.encoderY]])
-        print("normal: ", self.encoderX, self.encoderY)
-        print("vect: ",  np.array([[self.encoderX], [self.encoderY]]))
-        print("rotated_pos: ", rotated_pos)
-        print("Flattened: ", rotated_pos.flatten())
+        # print("normal: ", self.encoderX, self.encoderY)
+        # print("vect: ",  np.array([[self.encoderX], [self.encoderY]]))
+        # print("rotated_pos: ", rotated_pos)
+        # print("Flattened: ", rotated_pos.flatten())
         self.encoderRotX, self.encoderRotY = rotated_pos.flatten()
 
         # Create extended 3x3 rotation matrix (includes theta)
         Rot_Extended = np.eye(3)
         Rot_Extended[:2, :2] = self.Rot_Matrix  # Embed the 2x2 rotation into the 3x3 matrix
-        print("Rot_Extended: ", Rot_Extended)
+        # print("Rot_Extended: ", Rot_Extended)
 
         # update B Control matrix
         self.B = np.array([
@@ -155,15 +190,15 @@ class Teleop(Node):
         u = np.array([[V], [dV]])
 
         stateUpdate = self.B @ u
-        print("B: ", self.B)
-        print("u: ", u)
+        # print("B: ", self.B)
+        # print("u: ", u)
 
-        print("stateUpdate: ", stateUpdate)
+        # print("stateUpdate: ", stateUpdate)
 
         # mult the u vector and B matrix by the rotation to get into the GPS frame
         correctedStateUpdate = Rot_Extended @ stateUpdate
 
-        print("correctedStateUpdate: ", correctedStateUpdate)
+        # print("correctedStateUpdate: ", correctedStateUpdate)
 
         # Predict Step
         self.x = self.F @ self.x + correctedStateUpdate
@@ -191,6 +226,17 @@ class Teleop(Node):
         K = self.P @ self.H.T @ np.linalg.inv(S)
         self.x = self.x + K @ y
         self.P = (np.eye(3) - K @ self.H) @ self.P
+
+    def update_kalman_with_gps2(self):
+        if self.origin_lat2 is None or self.origin_lon2 is None:
+            self.origin_lat2 = self.latitude2
+            self.origin_lon2 = self.longitude2
+            self.lon_to_cm2 = 111139.0 * 100 * np.cos(np.radians(self.origin_lat2))
+
+        delta_lat = self.latitude2 - self.origin_lat2
+        delta_lon = self.longitude2 - self.origin_lon2
+        self.x_gps_cm2 = delta_lon * self.lon_to_cm2
+        self.y_gps_cm2 = delta_lat * self.lat_to_cm2
 
     def read_transformation_matrix(self, file_path):
         """
@@ -223,11 +269,16 @@ class Teleop(Node):
     def log_positions(self):
         try:
             with open("/home/hue/ros2_ws/src/position_log_teleop.txt", 'w') as file:
-                file.write("Time,GPS_X,GPS_Y,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y,Rot_x,Rot_yTheta\n")
+                file.write("Time,GPS_X1,GPS_Y1,GPS_X2,GPS_Y2,Encoder_X,Encoder_Y,Kalman_X,Kalman_Y,Rot_x,Rot_yTheta,gps_middle_x,gps_middle_y,gps_angle\n")
                 while self.running:
                     with self.lock:
+                        gps_middle_x = self.gps_mid_x
+                        gps_middle_y = self.gps_mid_y
+                        gps_angle = self.gps_angle
                         gps_x = self.x_gps_cm
                         gps_y = self.y_gps_cm
+                        gps_x2 = self.x_gps_cm2
+                        gps_y2 = self.y_gps_cm2
                         encoder_x = self.encoderX
                         encoder_y = self.encoderY
                         rot_x = self.encoderRotX
@@ -236,7 +287,7 @@ class Teleop(Node):
                         kalman_y = self.x[1, 0]
                         theta = self.encoderTheta
                     timestamp = time.time()
-                    file.write(f"{timestamp},{gps_x},{gps_y},{encoder_x},{encoder_y},{kalman_x},{kalman_y},{rot_x},{rot_y},{theta}\n")
+                    file.write(f"{timestamp},{gps_x},{gps_y},{gps_x2},{gps_y2},{encoder_x},{encoder_y},{kalman_x},{kalman_y},{rot_x},{rot_y},{theta},{gps_middle_x},{gps_middle_y},{gps_angle}\n")
                     file.flush()
                     time.sleep(0.1)
         except Exception as e:

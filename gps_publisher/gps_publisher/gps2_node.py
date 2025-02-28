@@ -8,7 +8,7 @@ import time
 # Configure the serial connection to the GPS module
 ser = serial.Serial(
     # for linux
-    port='/dev/ttyACM3',  # Update this to your GPS module's serial port
+    port='/dev/ttyRobot2',  # Update this to your GPS module's serial port
     # for windows 
     # port='COM4',  # Change this to your GPS module's serial port
     baudrate=9600  # GPS modules commonly use 9600 or 115200 baud
@@ -92,14 +92,14 @@ class GPSPublisher(Node):
 
         self.coords_publisher.publish(gps_msg)
 
-        self.get_logger().info(f'Published Latitude: {latitude}, Longitude: {longitude}')
+        # self.get_logger().info(f'Published Latitude: {latitude}, Longitude: {longitude}')
 
     def publish_heading(self, heading):
         heading_msg = Float64()
         heading_msg.data = heading
 
         self.heading_publisher.publish(heading_msg)
-        self.get_logger().info(f'Published Heading: {heading} degrees')
+        # self.get_logger().info(f'Published Heading: {heading} degrees')
 
 
 
