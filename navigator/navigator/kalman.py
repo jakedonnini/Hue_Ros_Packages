@@ -70,9 +70,6 @@ class KalmanFilter(Node):
 
         self.new_gps_data = False
         self.encoder_data_updated = False  # Reset flag
-        self.x_gps = 0
-        self.y_gps = 0
-        self.gps_Theta = 0
 
         self.running = True
         self.lock = threading.Lock()
@@ -210,7 +207,7 @@ class KalmanFilter(Node):
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
         # Measurement update
-        z = np.array([[self.x_gps], [self.y_gps], [self.gps_Theta]])
+        z = np.array([[self.gps_x], [self.gps_y], [self.gps_Theta]])
         y = z - self.H @ self.x # Measurement residual
         S = self.H @ self.P @ self.H.T + self.R # Residual covariance
         K = self.P @ self.H.T @ np.linalg.inv(S) # Kalman gain
