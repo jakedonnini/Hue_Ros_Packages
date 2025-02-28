@@ -14,7 +14,7 @@ class GPSFusionNode(Node):
         self.gps_sub1 = Subscriber(self, Coordinates, 'gps')
         self.gps_sub2 = Subscriber(self, Coordinates, 'gps2')
         
-        self.ts = ApproximateTimeSynchronizer([self.gps_sub1, self.gps_sub2], queue_size=10, slop=0.1)
+        self.ts = ApproximateTimeSynchronizer([self.gps_sub1, self.gps_sub2], queue_size=10, slop=0.1, allow_headerless=True)
         self.ts.registerCallback(self.gps_callback)
         
         # Publisher for midpoint and robot angle
