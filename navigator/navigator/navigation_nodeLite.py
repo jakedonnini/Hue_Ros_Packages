@@ -8,7 +8,7 @@ import sys
 
 
 class GPSSubscriberPublisher(Node):
-    def __init__(self, UseGPS):
+    def __init__(self):
         super().__init__('navigation_node')
         """This node is ment to be used with the new decentralized system"""
 
@@ -53,7 +53,8 @@ class GPSSubscriberPublisher(Node):
         self.integral_max = 100   # Prevent excessive positive accumulation
         self.previous_error = 0
 
-        self.usingGPS = UseGPS
+        # self.usingGPS = UseGPS
+        self.usingGPS = 1 # 1 for GPS, 0 for DR
 
         self.currentX = 0
         self.currentY = 0
@@ -303,18 +304,18 @@ class GPSSubscriberPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    # Get filename and scaler from command-line arguments
-    if len(sys.argv) < 2:
-        print("Usage: ros2 run <package_name> <node_name> <UseGPS(0 or 1)>")
-        print("Using default values")
-    else:
-        UseGPS = int(sys.argv[1])
-        if UseGPS == 1:
-            print("Using GPS")
-        else:
-            print("Not using GPS")
+    # # Get filename and scaler from command-line arguments
+    # if len(sys.argv) < 2:
+    #     print("Usage: ros2 run <package_name> <node_name> <UseGPS(0 or 1)>")
+    #     print("Using default values")
+    # else:
+    #     UseGPS = int(sys.argv[1])
+    #     if UseGPS == 1:
+    #         print("Using GPS")
+    #     else:
+    #         print("Not using GPS")
 
-    gps_subscriber_publisher = GPSSubscriberPublisher(UseGPS)
+    gps_subscriber_publisher = GPSSubscriberPublisher() # UseGPS
 
     try:
         rclpy.spin(gps_subscriber_publisher)
