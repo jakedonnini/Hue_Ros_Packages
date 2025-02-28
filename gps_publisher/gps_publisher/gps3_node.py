@@ -45,16 +45,21 @@ class GPSFusionNode(Node):
         mid_x = (x1 + x2) / 2.0
         mid_y = (y1 + y2) / 2.0
 
-        # if self.x_mid_zero == 0 and self.y_mid_zero == 0:
-        #     self.x_mid_zero = mid_x
-        #     self.y_mid_zero = mid_y
+        if self.x_mid_zero == 0 and self.y_mid_zero == 0:
+            self.x_mid_zero = mid_x
+            self.y_mid_zero = mid_y
 
-        # mid_x -= self.x_mid_zero
-        # mid_y -= self.y_mid_zero
-
-        delta_x = x2 - x1
-        delta_y = y2 - y1
+        delta_x = x1 - x2
+        delta_y = y1 - y2
         angle = math.atan2(delta_y, delta_x) + np.pi
+
+        # Adjust coordinates to origin
+        mid_x -= self.x_mid_zero
+        mid_y -= self.y_mid_zero
+        x1 -= self.x_mid_zero
+        x2 -= self.x_mid_zero
+        y1 -= self.y_mid_zero
+        y2 -= self.y_mid_zero
         
         gps_data = GpsData()
         gps_data.x = mid_x

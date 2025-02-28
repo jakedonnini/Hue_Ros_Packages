@@ -161,8 +161,17 @@ class KalmanFilter(Node):
         # emmet is confused :(((((
         if not self.rotation_calculated and self.gps_Theta != 0:
             self.rotation_calculated = True
-            self.rotThata = self.gps_Theta
-            self.Rot = np.array([[-np.cos(self.rotThata), -np.sin(self.rotThata)], [np.sin(self.rotThata), np.cos(self.rotThata)]]) # this includes rotation and relfection about y-axis
+
+            # make sure the roation is all the way
+            # this worked for most cases in testing
+            offest_angle = 0
+            if self.gps_Theta > np.pi:
+                offest_angle = 0
+            else:
+                offest_angle = np.pi
+
+            self.rotThata = offest_angle - self.gps_Theta
+            self.Rot = np.array([[-np.cos(self.rotThata), np.sin(self.rotThata)], [np.sin(self.rotThata), np.cos(self.rotThata)]]) # this includes rotation and relfection about y-axis
 
         # apply the R to the points
         self.DR_x_rot = (self.Rot[0, 0] * self.DR_x + self.Rot[0, 1] * self.DR_y)
@@ -188,7 +197,6 @@ class KalmanFilter(Node):
         # self.get_logger().info(f"State before rot: {state}")
 
         state = Rot_Extended @ state
-        # state[2, 0] = self.DR_angle_rot
 
         # self.get_logger().info(f"State after rot: {state}")
 
