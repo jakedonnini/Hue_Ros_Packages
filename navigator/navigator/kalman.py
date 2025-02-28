@@ -201,8 +201,8 @@ class KalmanFilter(Node):
         self.x = self.F @ self.x + state
         self.P = self.F @ self.P @ self.F.T + self.Q
 
-        self.get_logger().info(f"x: {self.x}")
-        self.get_logger().info(f"P: {self.P}")
+        # self.get_logger().info(f"x: {self.x}")
+        # self.get_logger().info(f"P: {self.P}")
 
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
@@ -213,10 +213,10 @@ class KalmanFilter(Node):
         K = self.P @ self.H.T @ np.linalg.inv(S) # Kalman gain
         self.x = self.x + K @ y
         self.P = (np.eye(3) - K @ self.H) @ self.P
-        self.get_logger().info(f"z: {z}")
-        self.get_logger().info(f"y: {y}")
-        self.get_logger().info(f"S: {S}")
-        self.get_logger().info(f"K: {K}")
+        # self.get_logger().info(f"z: {z}")
+        # self.get_logger().info(f"y: {y}")
+        # self.get_logger().info(f"S: {S}")
+        # self.get_logger().info(f"K: {K}")
 
     def stop_threads(self):
         """Stop the threads gracefully."""
