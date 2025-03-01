@@ -119,15 +119,15 @@ class GPSSubscriberPublisher(Node):
         if self.usingGPS == 1:
             self.adjust_pwm_values() # adjuest pwm values imediately
 
-    # def deadReck_callback_t(self, msg):
-    #     with self.lock:
-    #         self.isPainting = msg.toggle
+    def deadReck_callback_t(self, msg):
+        with self.lock:
+            self.isPainting = msg.toggle
 
-    def run_publish_loop(self):
-        """Thread to continuously publish PWM values."""
-        while self.running:
-            self.adjust_pwm_values()
-            time.sleep(self.deltaT/2)
+    # def run_publish_loop(self):
+    #     """Thread to continuously publish PWM values."""
+    #     while self.running:
+    #         self.adjust_pwm_values()
+    #         time.sleep(self.deltaT/2)
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
