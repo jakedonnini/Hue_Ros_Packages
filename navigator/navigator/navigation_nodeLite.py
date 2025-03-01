@@ -38,7 +38,7 @@ class GPSSubscriberPublisher(Node):
         # Initial values for PWMR and PWML
         self.pwmr_value = 0
         self.pwml_value = 0
-        self.dir = -1 # set to -1 to invert the forward direction
+        self.dir = 1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
         self.Kp = 0.2   # Proportional constant
@@ -230,8 +230,8 @@ class GPSSubscriberPublisher(Node):
         self.pwmr_value = pwmAvg + pwmDel + pwmDelTheta
         self.pwml_value = pwmAvg - pwmDel - pwmDelTheta
 
-        max_pwm = 128
-        min_pwm = -128
+        max_pwm = 20 # 128
+        min_pwm = 20 # -128
         
         self.pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
         self.pwml_value = self.constrain(self.pwml_value, min_pwm, max_pwm)
