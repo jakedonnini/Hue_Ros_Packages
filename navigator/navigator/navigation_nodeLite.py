@@ -80,10 +80,10 @@ class GPSSubscriberPublisher(Node):
         self.lock = threading.Lock()
 
         # Start threads for publishing and processing
-        self.publisher_thread = threading.Thread(target=self.run_publish_loop)
+        # self.publisher_thread = threading.Thread(target=self.run_publish_loop)
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
 
-        self.publisher_thread.start()
+        # self.publisher_thread.start()
         self.processor_thread.start()
         
 
@@ -309,7 +309,7 @@ class GPSSubscriberPublisher(Node):
     def stop_threads(self):
         """Stop the threads gracefully."""
         self.running = False
-        self.publisher_thread.join()
+        # self.publisher_thread.join()
         self.processor_thread.join()
 
 def main(args=None):
