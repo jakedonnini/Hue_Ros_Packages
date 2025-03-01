@@ -41,7 +41,7 @@ class ArduinoSerialNode(Node):
                         enc_msg.r = right_enc
                         enc_msg.toggle = toggleState
                         self.encoder_pub.publish(enc_msg)
-                        self.get_logger().info(f'Publish: {right_enc}, {left_enc}, {toggleState}')
+                        self.get_logger().info(f'Publish: {left_enc}, {right_enc}, {toggleState}')
                     except ValueError:
                         self.get_logger().warn(f'Invalid data received: {data}')
             except serial.SerialException as e:
