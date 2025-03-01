@@ -43,7 +43,7 @@ class GPSSubscriberPublisher(Node):
         # Initialize PID constants
         self.Kp = 0.2   # Proportional constant
         self.Ki = 0.0  # Integral constant
-        self.Kd = 10.0  # Derivative constant
+        self.Kd = 20.0  # Derivative constant
 
         self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
@@ -121,7 +121,7 @@ class GPSSubscriberPublisher(Node):
         """Thread to continuously publish PWM values."""
         while self.running:
             self.adjust_pwm_values()
-            time.sleep(self.deltaT)
+            time.sleep(self.deltaT/2)
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
@@ -140,7 +140,7 @@ class GPSSubscriberPublisher(Node):
                         self.shouldBePainting = not self.shouldBePainting
                     self.sentToggle = False
                     self.pantingToggle = t
-            time.sleep(self.deltaT/2)
+            time.sleep(self.deltaT/4)
 
     def getPosError(self):
         """Compute the distance and angular error to the next waypoint."""
