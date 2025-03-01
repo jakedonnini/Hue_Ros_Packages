@@ -78,7 +78,7 @@ class GPSFusionNode(Node):
         self.gps1_cm_publisher.publish(gps_coord1)
         self.gps2_cm_publisher.publish(gps_coord2)
         
-        self.get_logger().info(f'Midpoint: ({mid_x}, {mid_y}), Angle: {math.degrees(angle)} degrees')
+        # self.get_logger().info(f'Midpoint: ({mid_x}, {mid_y}), Angle: {math.degrees(angle)} degrees')
         
 
 def main(args=None):
