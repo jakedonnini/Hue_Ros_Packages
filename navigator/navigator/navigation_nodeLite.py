@@ -102,6 +102,9 @@ class GPSSubscriberPublisher(Node):
                 self.currentTheta = self.DR_angle
                 self.pos_data_updated = True
 
+        if self.usingGPS == 0:
+            self.adjust_pwm_values()
+
     def kalman(self, msg):
         with self.lock:
             self.kalman_x = msg.x
@@ -113,9 +116,12 @@ class GPSSubscriberPublisher(Node):
                 self.currentTheta = self.kalman_angle
                 self.pos_data_updated = True
 
-    def deadReck_callback_t(self, msg):
-        with self.lock:
-            self.isPainting = msg.toggle
+        if self.usingGPS == 1:
+            self.adjust_pwm_values() # adjuest pwm values imediately
+
+    # def deadReck_callback_t(self, msg):
+    #     with self.lock:
+    #         self.isPainting = msg.toggle
 
     def run_publish_loop(self):
         """Thread to continuously publish PWM values."""
