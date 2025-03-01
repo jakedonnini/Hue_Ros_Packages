@@ -12,11 +12,7 @@ class DeadReckoning(Node):
         
         # Subscription to encoder data
         self.encoder_subscription = self.create_subscription(
-            TwoInt, 
-            'encoder', 
-            self.encoder_callback, 
-            10
-        )
+            TwoInt, 'encoder', self.encoder_callback, 10)
         # self.get_logger().info("Subscribed to encoder topic")
 
         # Publishers for velocity and pose
