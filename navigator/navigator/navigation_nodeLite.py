@@ -230,8 +230,8 @@ class GPSSubscriberPublisher(Node):
         self.pwmr_value = pwmAvg + pwmDel + pwmDelTheta
         self.pwml_value = pwmAvg - pwmDel - pwmDelTheta
 
-        max_pwm = 20 # 128
-        min_pwm = 20 # -128
+        max_pwm = 128
+        min_pwm = -128
         
         self.pwmr_value = self.constrain(self.pwmr_value, min_pwm, max_pwm)
         self.pwml_value = self.constrain(self.pwml_value, min_pwm, max_pwm)
