@@ -43,7 +43,7 @@ class GPSSubscriberPublisher(Node):
         # Initialize PID constants
         self.Kp = 0.2   # Proportional constant
         self.Ki = 0.0  # Integral constant
-        self.Kd = 35.0  # Derivative constant
+        self.Kd = 10.0  # Derivative constant
 
         self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
