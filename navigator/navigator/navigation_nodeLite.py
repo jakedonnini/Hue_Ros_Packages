@@ -43,7 +43,7 @@ class GPSSubscriberPublisher(Node):
         # Initialize PID constants
         self.Kp = 0.2   # Proportional constant
         self.Ki = 0.0  # Integral constant
-        self.Kd = 20.0  # Derivative constant
+        self.Kd = 30.0  # Derivative constant
 
         self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
@@ -209,6 +209,8 @@ class GPSSubscriberPublisher(Node):
         pwmDel = pid_output
         pwmDelTheta = self.Kd * thetaError
 
+        pwmDelTheta = self.constrain(pwmDelTheta, -20, 20)
+
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
         threshold = 0.20
@@ -218,6 +220,7 @@ class GPSSubscriberPublisher(Node):
 
         if self.largeTurn and abs(thetaError) > 0.03: # get 3 deg 
             pwmAvg = 0 # 0 point turn
+            # pwmDel = 0 # prevents rounded corners
         else:
             self.largeTurn = False
             
