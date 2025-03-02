@@ -33,10 +33,10 @@ class KalmanFilter(Node):
         ])
 
         # Process noise covariance
-        self.Q = np.diag([0.4, 0.4, 0.3])
+        self.Q = np.diag([0.2, 0.2, 0.1])
 
         # Measurement noise covariance (GPS noise)
-        self.R = np.diag([0.11, 0.15, 0.05])
+        self.R = np.diag([0.5, 0.5, 0.1])
 
         # Observation matrix
         self.H = np.array([
@@ -207,7 +207,19 @@ class KalmanFilter(Node):
         # Measurement update
         z = np.array([[self.gps_x], [self.gps_y], [self.gps_Theta]])
         y = z - self.H @ self.x # Measurement residual
-        S = self.H @ self.P @ self.H.T + self.R # Residual covariance
+
+        # Measurement residual
+        y = z - self.H @ self.x
+
+        # Compute Mahalanobis distance (how much GPS disagrees)
+        mahalanobis_dist = np.linalg.norm(y)  
+
+        # Adjust R dynamically: If GPS jumps far, increase R (reduce trust)
+        dynamic_R = self.R  # Base R
+        if mahalanobis_dist > 1.0:  # If GPS is far from prediction
+            dynamic_R *= 1.5  # Reduce trust in GPS   
+
+        S = self.H @ self.P @ self.H.T + dynamic_R # Residual covariance
         K = self.P @ self.H.T @ np.linalg.inv(S) # Kalman gain
         self.x = self.x + K @ y
         self.P = (np.eye(3) - K @ self.H) @ self.P

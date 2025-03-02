@@ -57,7 +57,7 @@ class DeadReckoning(Node):
         pose_msg.angle = self.encoderTheta
         self.pose_publisher.publish(pose_msg)
 
-        self.get_logger().info(f'Publish: Pose: x={self.encoderX:.2f}, y={self.encoderY:.2f}, theta={self.encoderTheta:.2f}')
+        # self.get_logger().info(f'Publish: Pose: x={self.encoderX:.2f}, y={self.encoderY:.2f}, theta={self.encoderTheta:.2f}')
         # self.get_logger().info(f'Velocity: V={V:.2f}, dV={dV:.2f}')
 
 def main(args=None):

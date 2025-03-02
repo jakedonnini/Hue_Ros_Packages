@@ -41,7 +41,7 @@ class ArduinoSerialNode(Node):
                         enc_msg.r = right_enc
                         enc_msg.toggle = toggleState
                         self.encoder_pub.publish(enc_msg)
-                        self.get_logger().info(f'Publish: {left_enc}, {right_enc}, {toggleState}')
+                        # self.get_logger().info(f'Publish: {left_enc}, {right_enc}, {toggleState}')
                     except ValueError:
                         self.get_logger().warn(f'Invalid data received: {data}')
             except serial.SerialException as e:
@@ -50,7 +50,7 @@ class ArduinoSerialNode(Node):
     def pwm_callback(self, msg):
         """Handles incoming PWM values and sends them to Arduino."""
         self.pwml_value, self.pwmr_value, self.isSpraying = msg.l, msg.r, msg.toggle
-        self.get_logger().info(f'Recived: {self.pwml_value}, {self.pwmr_value}, {self.isSpraying}')
+        # self.get_logger().info(f'Recived: {self.pwml_value}, {self.pwmr_value}, {self.isSpraying}')
         self.send_pwm_to_arduino()
 
     def send_pwm_to_arduino(self):
