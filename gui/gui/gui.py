@@ -4,7 +4,7 @@ from tkinter import filedialog
 from tkintermapview import TkinterMapView
 from PIL import Image, ImageTk
 import geocoder
-import image_processing as img_processing
+from . import image_processing as img_processing
 import rclpy
 from rclpy.node import Node
 
@@ -216,7 +216,9 @@ class RobotPainterGUI(customtkinter.CTk):
     def start(self):
         self.mainloop()
 
-
-if __name__ == "__main__":
+def main(args=None):
     app = RobotPainterGUI()
     app.start()
+
+if __name__ == "__main__":
+    main()
