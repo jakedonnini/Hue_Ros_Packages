@@ -5,6 +5,8 @@ from tkintermapview import TkinterMapView
 from PIL import Image, ImageTk
 import geocoder
 import image_processing as img_processing
+import rclpy
+from rclpy.node import Node
 
 customtkinter.set_default_color_theme("blue")
 

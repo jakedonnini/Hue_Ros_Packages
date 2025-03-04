@@ -5,3 +5,5 @@ matplotlib
 scipy
 scikit-learn
 rdp
+customtkinter
+tkintermapview
