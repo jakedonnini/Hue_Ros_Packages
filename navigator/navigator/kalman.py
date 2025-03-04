@@ -33,10 +33,12 @@ class KalmanFilter(Node):
         ])
 
         # Process noise covariance
-        self.Q = np.diag([0.2, 0.2, 0.1])
+        # self.Q = np.diag([0.2, 0.2, 0.1])
+        self.Q = np.diag([0.4, 0.4, 0.3])
 
         # Measurement noise covariance (GPS noise)
-        self.R = np.diag([0.5, 0.5, 0.1])
+        # self.R = np.diag([0.5, 0.5, 0.1])
+        self.R = np.diag([0.11, 0.15, 0.05])
 
         # Observation matrix
         self.H = np.array([
@@ -166,7 +168,7 @@ class KalmanFilter(Node):
                 offest_angle = np.pi
 
             self.rotThata = offest_angle - self.gps_Theta
-            self.Rot = np.array([[np.cos(self.rotThata), np.sin(self.rotThata)], [np.sin(self.rotThata), np.cos(self.rotThata)]]) # this includes rotation and relfection about y-axis
+            self.Rot = np.array([[-np.cos(self.rotThata), np.sin(self.rotThata)], [np.sin(self.rotThata), np.cos(self.rotThata)]]) # this includes rotation and relfection about y-axis
 
         # apply the R to the points
         self.DR_x_rot = (self.Rot[0, 0] * self.DR_x + self.Rot[0, 1] * self.DR_y)
