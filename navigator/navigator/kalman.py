@@ -217,7 +217,7 @@ class KalmanFilter(Node):
         # Adjust R dynamically: If GPS jumps far, increase R (reduce trust)
         dynamic_R = self.R  # Base R
         if mahalanobis_dist > 1.0:  # If GPS is far from prediction
-            dynamic_R *= 1.5  # Reduce trust in GPS   
+            dynamic_R *= 4  # Reduce trust in GPS   
 
         S = self.H @ self.P @ self.H.T + dynamic_R # Residual covariance
         K = self.P @ self.H.T @ np.linalg.inv(S) # Kalman gain
