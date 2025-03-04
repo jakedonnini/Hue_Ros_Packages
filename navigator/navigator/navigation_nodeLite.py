@@ -181,8 +181,8 @@ class GPSSubscriberPublisher(Node):
         """Adjust and publish PWMR and PWML values based on GPS data."""
         dist, thetaError, distToLine = self.getPosError()
 
-        if self.usingGPS == 0:
-            thetaError = thetaError * -self.dir
+        # if self.usingGPS == 0:
+        thetaError = thetaError * -self.dir
 
         # KQ = 20*2  # turn speed
         # pwmDel = KQ * thetaError
