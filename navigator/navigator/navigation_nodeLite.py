@@ -54,7 +54,7 @@ class GPSSubscriberPublisher(Node):
         self.previous_error = 0
 
         # self.usingGPS = UseGPS
-        self.usingGPS = 0 # 1 for GPS, 0 for DR
+        self.usingGPS = 1 # 1 for GPS, 0 for DR
 
         self.currentX = 0
         self.currentY = 0
@@ -122,12 +122,6 @@ class GPSSubscriberPublisher(Node):
     def deadReck_callback_t(self, msg):
         with self.lock:
             self.isPainting = msg.toggle
-
-    # def run_publish_loop(self):
-    #     """Thread to continuously publish PWM values."""
-    #     while self.running:
-    #         self.adjust_pwm_values()
-    #         time.sleep(self.deltaT/2)
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
