@@ -29,7 +29,7 @@ def process_image(uploaded_image_path):
 
 
 class RobotPainterGUI(customtkinter.CTk):
-    APP_NAME = "Hue Controller"
+    APP_NAME = "Hue GUI"
     WIDTH = 1200
     HEIGHT = 600
 
@@ -102,11 +102,27 @@ class RobotPainterGUI(customtkinter.CTk):
 
         self.process_image_btn = customtkinter.CTkButton(master=self.frame_left, text="Process Image", command=self.select_and_process_image)
         self.process_image_btn.grid(row=2, column=0, padx=20, pady=(10, 10))
-
-
-       
-
         self.center_map_on_current_location()
+        self.map_widget.canvas.bind("<Button-3>", self.on_right_click)
+        self.map_widget.canvas.bind("<Control-Button-1>", self.on_right_click)
+        self.map_widget.canvas.bind("<Button-2>", self.on_right_click)
+
+
+    def on_right_click(self, event):
+        self.map_widget.delete_all_marker()
+        lat, lon = self.map_widget.convert_canvas_coords_to_decimal_coords(event.x, event.y)
+        self.lat_entry.delete(0, tk.END)
+        self.lon_entry.delete(0, tk.END)
+        self.lat_entry.insert(-1,lat)
+        self.lon_entry.insert(-1,lon)
+        self.map_widget.set_marker(
+            lat,
+            lon,
+            text="Start",
+            marker_color_circle="red",
+            marker_color_outside="black",
+        )
+
 
     def center_map_on_current_location(self):
         try:
@@ -162,8 +178,7 @@ class RobotPainterGUI(customtkinter.CTk):
         if index < len(self.path_coordinates):
             lat, lon = self.path_coordinates[index]
             self.robot_marker.set_position(lat, lon)
-            
-            self.after(500, self.move_robot_along_path, index + 1) 
+            self.after(100, self.move_robot_along_path, index + 1) 
         else:
             print("Robot has completed its journey along the path!")
 
