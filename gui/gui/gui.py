@@ -7,25 +7,23 @@ import geocoder
 from . import image_processing as img_processing
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Int8
+from custom_msg.msg import Coordinates
 
 customtkinter.set_default_color_theme("blue")
 
 
-def process_image(uploaded_image_path):
-    k = 3
-    border_size = 2
-    min_points_per_edge = 50
-    max_dist_betw_points = 5
-    min_section_size = 10
-    waypoints_output_filename = 'image_waypoints.txt'
-    img_rgb = img_processing.s0_prepare_img(uploaded_image_path, border_size=border_size, display=False)
-    img_reduced_rgb = img_processing.s1_reduce_img_rgbs(img_rgb, k=k, display=False)
+class GuiNode(Node):
+    def __init__(self):
+        super().__init__('GUI_node')
+        self.publisher = self.create_publisher(Coordinates, 'coordinates', 10)
 
-    img_edges = img_processing.s2_generate_edges(img_reduced_rgb, display=False)
-    grouped_edges = img_processing.s3_group_edges(img_edges, edge_threshold=min_points_per_edge)
-    ordered_edges = img_processing.s4_order_edges(grouped_edges, dist_thresh=max_dist_betw_points, section_size_thresh=min_section_size)
-    simplified_paths = img_processing.s5_simplify_path(ordered_edges, epsilon=1.4)
-    img_processing.s6_generate_output(simplified_paths, waypoints_output_filename)
+    def publish_gps_data(self, x, y, toggle):
+        msg = Coordinates()
+        msg.x = float(x)
+        msg.y = float(y)
+        msg.toggle = int(toggle)
+        self.publisher.publish(msg)
 
 
 class RobotPainterGUI(customtkinter.CTk):
@@ -38,6 +36,7 @@ class RobotPainterGUI(customtkinter.CTk):
         self.title(RobotPainterGUI.APP_NAME)
         self.geometry(f"{RobotPainterGUI.WIDTH}x{RobotPainterGUI.HEIGHT}")
         self.minsize(RobotPainterGUI.WIDTH, RobotPainterGUI.HEIGHT)
+        self.node = GuiNode()
 
         self.paint_image = None
         self.start_location_marker = None
@@ -102,11 +101,23 @@ class RobotPainterGUI(customtkinter.CTk):
 
         self.process_image_btn = customtkinter.CTkButton(master=self.frame_left, text="Process Image", command=self.select_and_process_image)
         self.process_image_btn.grid(row=2, column=0, padx=20, pady=(10, 10))
+        
+        self.send_gps_msg_btn = customtkinter.CTkButton(master=self.frame_left, text="Publish Waypoints", command=self.publish_gps_data)
+        self.send_gps_msg_btn.grid(row=9, column=0, padx=20, pady=(10, 10))
+
         self.center_map_on_current_location()
+        
+
         self.map_widget.canvas.bind("<Button-3>", self.on_right_click)
         self.map_widget.canvas.bind("<Control-Button-1>", self.on_right_click)
         self.map_widget.canvas.bind("<Button-2>", self.on_right_click)
 
+        self.status_bar = customtkinter.CTkLabel(self, text="Status: Ready", height=24, anchor="w", fg_color="gray", text_color="white")
+        self.status_bar.grid(row=2, column=0, columnspan=2, sticky="we")
+
+
+    def set_status(self, message):
+        self.status_bar.configure(text=message)
 
     def on_right_click(self, event):
         self.map_widget.delete_all_marker()
@@ -122,6 +133,29 @@ class RobotPainterGUI(customtkinter.CTk):
             marker_color_circle="red",
             marker_color_outside="black",
         )
+
+
+    def process_image(self, uploaded_image_path):
+        k = 3
+        border_size = 2
+        min_points_per_edge = 50
+        max_dist_betw_points = 5
+        min_section_size = 10
+
+        self.set_status("Status: Processing image...")
+
+
+        waypoints_output_filename = 'image_waypoints.txt'
+        img_rgb = img_processing.s0_prepare_img(uploaded_image_path, border_size=border_size, display=False)
+        img_reduced_rgb = img_processing.s1_reduce_img_rgbs(img_rgb, k=k, display=False)
+
+        self.set_status("Status: Generating waypoints...")
+
+        img_edges = img_processing.s2_generate_edges(img_reduced_rgb, display=False)
+        grouped_edges = img_processing.s3_group_edges(img_edges, edge_threshold=min_points_per_edge)
+        ordered_edges = img_processing.s4_order_edges(grouped_edges, dist_thresh=max_dist_betw_points, section_size_thresh=min_section_size)
+        simplified_paths = img_processing.s5_simplify_path(ordered_edges, epsilon=1.4)
+        img_processing.s6_generate_output(simplified_paths, waypoints_output_filename)
 
 
     def center_map_on_current_location(self):
@@ -174,7 +208,6 @@ class RobotPainterGUI(customtkinter.CTk):
         self.move_robot_along_path(1)
 
     def move_robot_along_path(self, index):
-        """Move the robot marker along the polyline."""
         if index < len(self.path_coordinates):
             lat, lon = self.path_coordinates[index]
             self.robot_marker.set_position(lat, lon)
@@ -223,16 +256,43 @@ class RobotPainterGUI(customtkinter.CTk):
         """Open a file dialog to select an image and process it."""
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.jpeg")])
         if file_path:
-            process_image(file_path)
-            print(f"Processed image: {file_path}")
+            self.process_image(file_path)
             self.load_coordinates_triple("image_waypoints.txt")
+            self.set_status("Status: Image processing complete")
 
+    def publish_gps_data(self):
+        coords = []
+        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("CSV files", "*.csv")])
+        if file_path:
+            with open(file_path, "r") as file:
+                for line in file:
+                    x, y, z = map(float, line.strip().split(", "))
+                    coords.append((x, y, z))
+        
+            for x, y, toggle in coords:
+                print(x,y,toggle)
+                msg = Coordinates()
+                msg.x = float(x)
+                msg.y = float(y)
+                msg.toggle = int(toggle)
+                self.node.publish_gps_data(x, y, toggle)
+                rclpy.spin_once(self.node, timeout_sec=0.1) 
 
     def start(self):
         self.mainloop()
 
+    def ros_spin(self):
+        rclpy.spin_once(self.node, timeout_sec=0.1)
+        self.after(100, self.ros_spin)  
+
+    def on_closing(self):
+        rclpy.shutdown()
+        self.destroy()
+
 def main(args=None):
+    rclpy.init(args=args)
     app = RobotPainterGUI()
+    app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.start()
 
 if __name__ == "__main__":
