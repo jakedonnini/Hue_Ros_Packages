@@ -9,9 +9,53 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int8
 from custom_msg.msg import Coordinates
+from custom_msg.msg import GpsData
+import matplotlib as matplotlib
+import matplotlib.pyplot as plt
+
+matplotlib.use('Agg')
+
 
 customtkinter.set_default_color_theme("blue")
 
+class GPSPlotterNode(Node):
+    def __init__(self):
+        super().__init__('gps_plotter_node')
+        
+        self.subscription = self.create_subscription(
+            GpsData, 
+            '/gps/data', 
+            self.gps_callback, 
+            10)
+        
+        self.x_data = []
+        self.y_data = []
+        self.angle_data = []
+
+        self.fig, self.ax = plt.subplots()
+        self.sc = self.ax.scatter([], [], c='red', label="Robot Position")
+        self.ax.set_xlim(-10, 10)
+        self.ax.set_ylim(-10, 10)
+        self.ax.set_xlabel("X Coordinate")
+        self.ax.set_ylabel("Y Coordinate")
+        self.ax.legend()
+        self.ax.grid(True)
+
+        self.timer = self.create_timer(0.5, self.update_plot)
+
+    def gps_callback(self, msg):
+        self.x_data.append(msg.x)
+        self.y_data.append(msg.y)
+        self.angle_data.append(msg.angle)
+        self.get_logger().info(f"Received GPS Data - X: {msg.x}, Y: {msg.y}, Angle: {msg.angle}")
+
+    def update_plot(self):
+        if self.x_data and self.y_data:
+            self.sc.set_offsets(np.c_[self.x_data, self.y_data])
+            self.ax.set_xlim(min(self.x_data) - 1, max(self.x_data) + 1)
+            self.ax.set_ylim(min(self.y_data) - 1, max(self.y_data) + 1)
+            plt.draw()
+        plt.pause(0.01)
 
 class GuiNode(Node):
     def __init__(self):
@@ -25,7 +69,6 @@ class GuiNode(Node):
         msg.toggle = int(toggle)
         self.publisher.publish(msg)
 
-
 class RobotPainterGUI(customtkinter.CTk):
     APP_NAME = "Hue GUI"
     WIDTH = 1200
@@ -37,6 +80,7 @@ class RobotPainterGUI(customtkinter.CTk):
         self.geometry(f"{RobotPainterGUI.WIDTH}x{RobotPainterGUI.HEIGHT}")
         self.minsize(RobotPainterGUI.WIDTH, RobotPainterGUI.HEIGHT)
         self.node = GuiNode()
+        self.live_plotter = GPSPlotterNode()
 
         self.paint_image = None
         self.start_location_marker = None
