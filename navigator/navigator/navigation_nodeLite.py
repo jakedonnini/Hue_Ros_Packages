@@ -151,7 +151,7 @@ class GPSSubscriberPublisher(Node):
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
         if dist2Go < 5:  # threshold saying we hit the point (was 1)
-            self.get_logger().info(f'Hit ({waypointX}, {waypointY}) waypoint')
+            self.get_logger().info(f'\n\n\n\n --------------------------------------\n Hit ({waypointX}, {waypointY}) waypoint \n --------------------------------------\n\n\n\n')
             self.prevWaypointHolder = waypointX, waypointY
             self.largeTurn = False
             self.currentTWayPoint = None
