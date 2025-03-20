@@ -33,12 +33,12 @@ class KalmanFilter(Node):
         ])
 
         # Process noise covariance
-        # self.Q = np.diag([0.2, 0.2, 0.2])
-        self.Q = np.diag([0.4, 0.4, 0.3])
+        self.Q = np.diag([0.2, 0.2, 0.2])
+        # self.Q = np.diag([0.4, 0.4, 0.3])
 
         # Measurement noise covariance (GPS noise)
-        # self.R = np.diag([0.4 0.4, 0.1])
-        self.R = np.diag([0.11, 0.15, 0.05])
+        self.R = np.diag([0.4, 0.4, 0.1])
+        # self.R = np.diag([0.11, 0.15, 0.05])
 
         # Observation matrix
         self.H = np.array([
