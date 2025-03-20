@@ -42,15 +42,15 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 0.2   # Proportional constant
-        self.Ki = 0.0  # Integral constant
-        self.Kd = 30.0  # Derivative constant
+        self.Ki = 0.1  # Integral constant
+        self.Kd = 25.0  # Derivative constant
 
         self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
         # Initialize PID terms
         self.integral = 0
-        self.integral_min = -100  # Prevent excessive negative accumulation
-        self.integral_max = 100   # Prevent excessive positive accumulation
+        self.integral_min = -50  # Prevent excessive negative accumulation
+        self.integral_max = 50   # Prevent excessive positive accumulation
         self.previous_error = 0
 
         # self.usingGPS = UseGPS
@@ -192,8 +192,8 @@ class GPSSubscriberPublisher(Node):
         # Proportional term (P)
         P_term = self.Kp * distToLine
         
-        # Integral term (I)
-        self.integral += distToLine
+        # Integral term (I) for theta error
+        self.integral += thetaError
         self.integral = max(self.integral_min, min(self.integral, self.integral_max))  # Clamping
         I_term = self.Ki * self.integral
         
@@ -201,14 +201,14 @@ class GPSSubscriberPublisher(Node):
         # D_term = self.Kd * (distToLine - self.previous_error)
         
         # PID output
-        pid_output = P_term + I_term  # + D_term
+        pid_output = P_term + # I_term  # + D_term
         
         # Update the previous error
         self.previous_error = distToLine
 
         # Adjust PWM values based on the PID output
         pwmDel = pid_output
-        pwmDelTheta = self.Kd * thetaError
+        pwmDelTheta = self.Kd * thetaError + I_term
 
         pwmDelTheta = self.constrain(pwmDelTheta, -20, 20)
 
