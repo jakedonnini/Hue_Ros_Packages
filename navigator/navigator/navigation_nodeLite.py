@@ -201,7 +201,7 @@ class GPSSubscriberPublisher(Node):
         # D_term = self.Kd * (distToLine - self.previous_error)
         
         # PID output
-        pid_output = P_term + # I_term  # + D_term
+        pid_output = P_term # + I_term  # + D_term
         
         # Update the previous error
         self.previous_error = distToLine
