@@ -42,7 +42,7 @@ class GPSSubscriberPublisher(Node):
         self.dir = 1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
-        self.Kp = 0.5   # Proportional constant
+        self.Kp = 0.3   # Proportional constant
         self.Ki = 0.1  # Integral constant
         self.Kd = 25.0  # Derivative constant
 
@@ -234,7 +234,7 @@ class GPSSubscriberPublisher(Node):
             pwmDelTheta = 0
 
         # slow down as we get closer to the point
-        constrainedDist = self.constrain(dist/40, 0, 1) # at 40cm away we start to slow down (twice the overshoot)
+        constrainedDist = self.constrain(dist/20, 0, 1) # at 40cm away we start to slow down (twice the overshoot)
         speed = pwmAvg * constrainedDist
 
         self.pwmr_value = speed + pwmDel + pwmDelTheta
