@@ -211,6 +211,14 @@ class KalmanFilter(Node):
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
         # Measurement update
+
+        # if between 0-2pi then dont change to qucikly
+        # dog what the hell is this
+        unwrapLow = self.x[2, 0] - 2 * np.pi - self.gps_Theta
+        unwrapHigh = self.x[2, 0] + 2 * np.pi - self.gps_Theta
+        oldAngle = self.x[2, 0]
+        self.x[2, 0] = np.min([unwrapLow, unwrapHigh, oldAngle]) + self.gps_Theta
+
         z = np.array([[self.gps_x], [self.gps_y], [self.gps_Theta]])
         y = z - self.H @ self.x # Measurement residual
 
