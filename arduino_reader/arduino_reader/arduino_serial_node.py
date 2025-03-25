@@ -13,8 +13,8 @@ class ArduinoSerialNode(Node):
         self.ser_lock = threading.Lock()  # Ensure thread-safe serial access
 
         # Publishers and Subscribers
-        self.encoder_pub = self.create_publisher(TwoInt, 'encoder', 10)
-        self.pwm_sub = self.create_subscription(TwoInt, 'PWM', self.pwm_callback, 10)
+        self.encoder_pub = self.create_publisher(TwoInt, 'encoder', 5)
+        self.pwm_sub = self.create_subscription(TwoInt, 'PWM', self.pwm_callback, 5)
 
         # Variables to store PWM values
         self.pwmr_value = 0

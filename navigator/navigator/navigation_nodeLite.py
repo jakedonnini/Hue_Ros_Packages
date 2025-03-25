@@ -14,13 +14,13 @@ class GPSSubscriberPublisher(Node):
         """This node is ment to be used with the new decentralized system"""
 
         self.waypoint_subscription = self.create_subscription(
-            Coordinates, 'coordinates', self.waypoint_callback, 10)
+            Coordinates, 'coordinates', self.waypoint_callback, 5)
         self.Kalman = self.create_subscription(
-            GpsData, 'kalman/data', self.kalman, 10)
+            GpsData, 'kalman/data', self.kalman, 5)
         self.DR_subscription = self.create_subscription(
-            GpsData, 'deadReckoning/pose', self.deadReck_callback, 10)
+            GpsData, 'deadReckoning/pose', self.deadReck_callback, 5)
         self.DR_subscription_vel = self.create_subscription(
-            Coordinates, 'deadReckoning/vel', self.deadReck_callback_t, 10)
+            Coordinates, 'deadReckoning/vel', self.deadReck_callback_t, 5)
 
         self.waypointBuffer = []
         self.currentTWayPoint = None
@@ -34,7 +34,7 @@ class GPSSubscriberPublisher(Node):
         self.deltaT = 0.05 # 20Hz
 
         # Create publishers for the PWMR and PWML topics
-        self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 10)
+        self.pwm_publisher = self.create_publisher(TwoInt, 'PWM', 5)
 
         # Initial values for PWMR and PWML
         self.pwmr_value = 0
