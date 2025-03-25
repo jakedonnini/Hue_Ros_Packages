@@ -42,7 +42,7 @@ class GPSSubscriberPublisher(Node):
         self.dir = 1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
-        self.Kp = 0.2   # Proportional constant
+        self.Kp = 0.5   # Proportional constant
         self.Ki = 0.1  # Integral constant
         self.Kd = 25.0  # Derivative constant
 
@@ -234,7 +234,7 @@ class GPSSubscriberPublisher(Node):
             pwmDelTheta = 0
 
         # slow down as we get closer to the point
-        constrainedDist = self.constrain(dist/10, 0, 1) # at 10cm away we start to slow down
+        constrainedDist = self.constrain(dist/40, 0, 1) # at 40cm away we start to slow down (twice the overshoot)
         speed = pwmAvg * constrainedDist
 
         self.pwmr_value = speed + pwmDel + pwmDelTheta
@@ -276,9 +276,9 @@ class GPSSubscriberPublisher(Node):
         # if speed is below a threshold then we should stop painting to avoid pooling
         avgSpeed = (self.pwmr_value + self.pwml_value) / 2
 
-        # if less than 3/4 of nominal speed then stop painting
+        # if less than 1/4 of nominal speed then stop painting
         # when speed is reached the next block of code should turn sprayer back on
-        notUpToSpeed = avgSpeed <= ((pwmAvg+39) * 0.6) and self.shouldBePainting
+        notUpToSpeed = avgSpeed <= ((pwmAvg+39) * 0.25) and self.shouldBePainting
         
         # only send the toggle comands once
         paintingIncorrect = int(self.shouldBePainting) != self.isPainting
@@ -315,17 +315,6 @@ class GPSSubscriberPublisher(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
-    # # Get filename and scaler from command-line arguments
-    # if len(sys.argv) < 2:
-    #     print("Usage: ros2 run <package_name> <node_name> <UseGPS(0 or 1)>")
-    #     print("Using default values")
-    # else:
-    #     UseGPS = int(sys.argv[1])
-    #     if UseGPS == 1:
-    #         print("Using GPS")
-    #     else:
-    #         print("Not using GPS")
 
     gps_subscriber_publisher = GPSSubscriberPublisher() # UseGPS
 
