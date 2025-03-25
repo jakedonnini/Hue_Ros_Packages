@@ -42,7 +42,7 @@ class GPSSubscriberPublisher(Node):
         self.dir = 1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
-        self.Kp = 0.3   # Proportional constant
+        self.Kp = 1.0   # Proportional constant
         self.Ki = 0.1  # Integral constant
         self.Kd = 25.0  # Derivative constant
 
