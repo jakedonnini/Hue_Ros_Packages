@@ -33,12 +33,16 @@ class KalmanFilter(Node):
         ])
 
         # Process noise covariance
-        self.Q = np.diag([0.2, 0.2, 0.1])
+        self.Q = np.diag([0.1, 0.1, 0.2])
         # self.Q = np.diag([0.4, 0.4, 0.3])
 
         # Measurement noise covariance (GPS noise)
-        self.R = np.diag([0.5, 0.5, 0.2])
+        self.R = np.diag([0.2, 0.2, 0.2])
         # self.R = np.diag([0.11, 0.15, 0.05])
+
+        # If Kalman is too slow to update, lower R
+        # If Kalman is too jumpy, increase R
+        # Decrease Q to allow for quicker updates from the encoders.
 
         # Observation matrix
         self.H = np.array([

@@ -5,6 +5,7 @@ from custom_msg.msg import Coordinates, GpsData, TwoInt
 import time
 import math
 import sys
+import numpy as np
 
 
 class GPSSubscriberPublisher(Node):
@@ -214,12 +215,13 @@ class GPSSubscriberPublisher(Node):
 
         # If the angle is within this threshold then move forward
         # otherwise stop an turn
-        threshold = 0.20
+        largeTurnThreshold = ((np.pi/180) / 2) * 45 # 45 deg converted to rad, /2 for abs value
+        fineThreshold = ((np.pi/180) / 2) * 5 # 5 deg converted to rad, /2 for abs value for fine turning
 
-        if abs(thetaError) > 0.2618: # greater than 30 deg
+        if abs(thetaError) > largeTurnThreshold: # greater than 45 deg
             self.largeTurn = True # we have found a big turn
 
-        if self.largeTurn and abs(thetaError) > 0.03: # get 3 deg 
+        if self.largeTurn and abs(thetaError) > fineThreshold: # get 5 deg 
             pwmAvg = 0 # 0 point turn
             # pwmDel = 0 # prevents rounded corners
         else:
@@ -231,8 +233,12 @@ class GPSSubscriberPublisher(Node):
             pwmDel = 0
             pwmDelTheta = 0
 
-        self.pwmr_value = pwmAvg + pwmDel + pwmDelTheta
-        self.pwml_value = pwmAvg - pwmDel - pwmDelTheta
+        # slow down as we get closer to the point
+        constrainedDist = self.constrain(dist/10, 0, 1) # at 10cm away we start to slow down
+        speed = pwmAvg * constrainedDist
+
+        self.pwmr_value = speed + pwmDel + pwmDelTheta
+        self.pwml_value = speed - pwmDel - pwmDelTheta
 
         max_pwm = 100
         min_pwm = -100
@@ -272,7 +278,7 @@ class GPSSubscriberPublisher(Node):
 
         # if less than 3/4 of nominal speed then stop painting
         # when speed is reached the next block of code should turn sprayer back on
-        notUpToSpeed = avgSpeed <= ((pwmAvg+39) * 0.9) and self.shouldBePainting
+        notUpToSpeed = avgSpeed <= ((pwmAvg+39) * 0.6) and self.shouldBePainting
         
         # only send the toggle comands once
         paintingIncorrect = int(self.shouldBePainting) != self.isPainting
