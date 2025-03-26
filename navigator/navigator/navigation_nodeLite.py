@@ -43,8 +43,9 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 0.2   # Proportional constant
+        self.Kd_line = 0.1 # Derivative constant for line following
         self.Ki = 0.1  # Integral constant
-        self.Kd = 10.0  # Derivative constant
+        self.Kd = 10.0  # Derivative constant for 0 point turn
 
         self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
@@ -199,10 +200,10 @@ class GPSSubscriberPublisher(Node):
         I_term = self.Ki * self.integral
         
         # Derivative term (D)
-        # D_term = self.Kd * (distToLine - self.previous_error)
+        D_term = self.Kd_line * (distToLine - self.previous_error)
         
         # PID output
-        pid_output = P_term # + I_term  # + D_term
+        pid_output = P_term + D_term
         
         # Update the previous error
         self.previous_error = distToLine
