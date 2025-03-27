@@ -77,6 +77,9 @@ class KalmanFilter(Node):
         self.new_gps_data = False
         self.encoder_data_updated = False  # Reset flag
 
+        self.stateBeforeRot = np.array([[0], [0], [0]])
+        self.stateAfterRot = np.array([[0], [0], [0]])
+
         self.running = True
         self.lock = threading.Lock()
 
@@ -88,9 +91,6 @@ class KalmanFilter(Node):
         self.publisher_thread = threading.Thread(target=self.run_publishing_loop)
         self.processor_thread.start()
         self.publisher_thread.start()
-
-        self.stateBeforeRot = np.array([[0], [0], [0]])
-        self.stateAfterRot = np.array([[0], [0], [0]])
 
         # is rotation matrix calculated?
         self.rotation_calculated = False
@@ -129,7 +129,7 @@ class KalmanFilter(Node):
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
             
-            time.sleep(self.dt/2)
+            # time.sleep(self.dt/2)
 
     def run_publishing_loop(self):
         """Publishes Kalman-filtered data at a constant rate."""
@@ -153,11 +153,11 @@ class KalmanFilter(Node):
                 # Debugging Log
                 self.get_logger().info(
                     f'[GPS]: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)} '
-                    f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} After {round(self.stateAfterRot[0, 0], 2)}, {round(self.stateAfterRot[1, 0], 2)}, {round(self.stateAfterRot[2, 0], 2)}'
+                    f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} before {round(self.stateBeforeRot[0, 0], 2)}, {round(self.stateBeforeRot[1, 0], 2)}, {round(self.stateBeforeRot[2, 0], 2)} After {round(self.stateAfterRot[0, 0], 2)}, {round(self.stateAfterRot[1, 0], 2)}, {round(self.stateAfterRot[2, 0], 2)}'
                     f'[KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
                 )
 
-            time.sleep(self.dt)  # Publish at `dt` interval
+            # time.sleep(self.dt)  # Publish at `dt` interval
                 
     def update_kalman_with_DR(self):
         """Call every time serial data comes in."""
