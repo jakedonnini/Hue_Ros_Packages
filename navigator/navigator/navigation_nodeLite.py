@@ -24,10 +24,8 @@ class GPSSubscriberPublisher(Node):
 
         self.waypointBuffer = []
         self.currentTWayPoint = None
-        self.pantingToggle = 0
-        self.shouldBePainting = False
+        self.shouldBePainting = 0 # 0 for off, 1 for on
         self.isPainting = 0
-        self.sentToggle = False
         self.prevWaypoint = 0, 0
         self.prevWaypointHolder = 0, 0 # used to avoid timing isuses when prev = current
         self.largeTurn = False # use small threshold for large turns
@@ -129,7 +127,6 @@ class GPSSubscriberPublisher(Node):
         """Process waypoints and update encoder position as new data is available."""
         while self.running:
             # Check for waypoints to process
-            # self.get_logger().info(f"check way point {self.currentTWayPoint is None}, {len(self.waypointBuffer) > 0}")
             if self.currentTWayPoint is None and len(self.waypointBuffer) > 0:
                 with self.lock:
                     # set the pervious waypint when it is reached
@@ -137,12 +134,9 @@ class GPSSubscriberPublisher(Node):
                     x, y, t = self.waypointBuffer.pop(0)
                     self.currentTWayPoint = (x, y)
                     # keep track of spraying state
-                    if t == 1:
-                        # toggle every time t is 1
-                        self.shouldBePainting = not self.shouldBePainting
-                    self.sentToggle = False
-                    self.pantingToggle = t
-            time.sleep(self.deltaT/4)
+                    # udated from toggle, now paint if waypoiny has 1, dont if waypoint has 0
+                    self.shouldBePainting = t
+            # time.sleep(self.deltaT/4) # remove the delays to make it more responsive
 
     def getPosError(self):
         """Compute the distance and angular error to the next waypoint."""
@@ -170,10 +164,6 @@ class GPSSubscriberPublisher(Node):
         distPoints = math.sqrt(math.pow(waypointX - self.prevWaypoint[0], 2) + math.pow(waypointY - self.prevWaypoint[1], 2))
         distToLine = ((waypointX-self.prevWaypoint[0])*(self.prevWaypoint[1]-self.currentY)-(self.prevWaypoint[0]-self.currentX)*(waypointY-self.prevWaypoint[1]))/distPoints
 
-        # self.get_logger().info(
-        #     f'Theat error: {thetaError} dist2go {dist2Go} desiredQ {desiredQ} CQ {self.currentTheta}'
-        # )
-
         return dist2Go, thetaError, distToLine
 
     def constrain(self, val, min_val, max_val):
@@ -186,8 +176,6 @@ class GPSSubscriberPublisher(Node):
         if self.usingGPS == 0:
             thetaError = thetaError * -self.dir
 
-        # KQ = 20*2  # turn speed
-        # pwmDel = KQ * thetaError
         pwmAvg = 20 # normally 60
 
         # PID calculations
@@ -281,17 +269,22 @@ class GPSSubscriberPublisher(Node):
         # when speed is reached the next block of code should turn sprayer back on
         notUpToSpeed = avgSpeed <= ((pwmAvg+39) * 0.25) and self.shouldBePainting
         
-        # only send the toggle comands once
+        # only send the toggle comands once and make sure that its off when it should be off
         paintingIncorrect = int(self.shouldBePainting) != self.isPainting
 
-        if paintingIncorrect or notUpToSpeed:
+        # if should be painting and not up to speed then turn off
+        if notUpToSpeed:
+            pwm_msg.toggle = 0
+        elif self.shouldBePainting:
+            # if we are painting and we are up to speed then turn on
             pwm_msg.toggle = 1
         else:
+            # if we are not painting then keep it off
             pwm_msg.toggle = 0
 
         # if no way points make sure the sprayer is off
         if self.isPainting and self.currentTWayPoint is None and not self.shouldBePainting:
-            pwm_msg.toggle = 1
+            pwm_msg.toggle = 0
             self.pwm_publisher.publish(pwm_msg)
 
         # if wheel still spinning send off again
