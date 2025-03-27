@@ -129,7 +129,7 @@ class KalmanFilter(Node):
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
             
-            # time.sleep(self.dt/2)
+            time.sleep(self.dt/4)
 
     def run_publishing_loop(self):
         """Publishes Kalman-filtered data at a constant rate."""
@@ -157,7 +157,7 @@ class KalmanFilter(Node):
                     f'[KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
                 )
 
-            # time.sleep(self.dt)  # Publish at `dt` interval
+            time.sleep(self.dt/2)  # Publish at `dt` interval
                 
     def update_kalman_with_DR(self):
         """Call every time serial data comes in."""
