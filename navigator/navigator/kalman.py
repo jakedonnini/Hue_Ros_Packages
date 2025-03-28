@@ -129,7 +129,7 @@ class KalmanFilter(Node):
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
             
-            time.sleep(self.dt/4)
+            time.sleep(self.dt/2)
 
     def run_publishing_loop(self):
         """Publishes Kalman-filtered data at a constant rate."""
