@@ -54,7 +54,7 @@ class GPSSubscriberPublisher(Node):
         self.previous_error = 0
 
         # self.usingGPS = UseGPS
-        self.usingGPS = 0 # 1 for GPS, 0 for DR
+        self.usingGPS = 1 # 1 for GPS, 0 for DR
 
         self.currentX = 0
         self.currentY = 0
