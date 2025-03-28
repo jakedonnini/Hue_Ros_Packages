@@ -11,9 +11,10 @@ from std_msgs.msg import Int8
 from custom_msg.msg import Coordinates
 from custom_msg.msg import GpsData
 import matplotlib as matplotlib
+import numpy as np
 import matplotlib.pyplot as plt
 
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 
 
 customtkinter.set_default_color_theme("blue")
@@ -32,6 +33,8 @@ class GPSPlotterNode(Node):
         self.y_data = []
         self.angle_data = []
 
+        plt.ion()
+
         self.fig, self.ax = plt.subplots()
         self.sc = self.ax.scatter([], [], c='red', label="Robot Position")
         self.ax.set_xlim(-10, 10)
@@ -44,6 +47,7 @@ class GPSPlotterNode(Node):
         self.timer = self.create_timer(0.5, self.update_plot)
 
     def gps_callback(self, msg):
+        print("CALLBACK INITIATED")
         self.x_data.append(msg.x)
         self.y_data.append(msg.y)
         self.angle_data.append(msg.angle)
@@ -326,7 +330,7 @@ class RobotPainterGUI(customtkinter.CTk):
         self.mainloop()
 
     def ros_spin(self):
-        rclpy.spin_once(self.node, timeout_sec=0.1)
+        rclpy.spin_once(self.live_plotter, timeout_sec=0.1)
         self.after(100, self.ros_spin)  
 
     def on_closing(self):
@@ -337,6 +341,9 @@ def main(args=None):
     rclpy.init(args=args)
     app = RobotPainterGUI()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
+    app.after(100, app.ros_spin)
+    plt.show()
+
     app.start()
 
 if __name__ == "__main__":
