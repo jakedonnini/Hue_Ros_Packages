@@ -225,16 +225,18 @@ def s6_generate_output(simplified_paths, output_file):
   for i in range(len(simplified_paths)):
     if simplified_paths[i][-1] != simplified_paths[i][0]:
       simplified_paths[i].append(simplified_paths[i][0])
-  painting_toggle = 1
+  #painting_toggle = 1
   all_waypoints = []
   for i, path in enumerate(simplified_paths):
     for j, coord in enumerate(path):
       x, y = coord
       if j == len(path) - 1:
-        painting_toggle = 1
-      all_waypoints.append((x, y, painting_toggle))
-      painting_toggle = 0
-    painting_toggle = 1
+        #painting_toggle = 1
+        all_waypoints.append((x, y, 0))
+      else:
+        all_waypoints.append((x, y, 1))
+      #painting_toggle = 0
+    #painting_toggle = 1
 
   with open(output_file, "w") as file:
     for waypoint in all_waypoints:
@@ -352,88 +354,3 @@ def s7_animate_output(paths, animation_output_filename):
   # Show the animation
   plt.show()
 
-"""# **Initialize Image Path and Other Variables**"""
-
-# uploaded_image_path = 'penn_logo_sharp.png'
-# k = 3
-# border_size = 2
-# min_points_per_edge = 50
-# max_dist_betw_points = 5
-# min_section_size = 10
-# waypoints_output_filename = 'image_waypoints.txt'
-# animation_output_filename = 'image_animation.gif'
-
-"""# **Step 0: Read In and Preprocess Image**
-###### **s0_prepare_img**
-
-###### The s0_prepare_img function reads the uploaded .jpg, .png or other compatible file as an RGB image with shape (height, width, 3), where 3 represents the red, green and blue color channels. The A border of width 'border_size = 2' is added to the image, and is returned by the function.
-"""
-
-# img_rgb = s0_prepare_img(uploaded_image_path, border_size=border_size, display=False)
-
-"""# **Step 1: Reduce RGBs To Main Colors**
-
-###### **s1_reduce_img_rgbs**
-
-###### The s1_reduce_img_rgbs function takes an RGB image as input and uses k-means clustering to establish k RGB clusters within which each pixel belongs. The centers of these clusters, which can be interpreted as the average colors, are deemed as 'selected' rgbs. For each pixel within the image, the closest center to the given pixel's original color is assigned in its place. This ultimately yields a full RGB image reduced to only k colors.
-"""
-
-# img_reduced_rgb = s1_reduce_img_rgbs(img_rgb, k=k, display=False)
-
-# pre_reduction_unique = len(set(list(map(tuple, img_rgb.reshape(-1, 3)))))
-# post_reduction_unique = len(set(list(map(tuple, img_reduced_rgb.reshape(-1, 3)))))
-# print('Number of Unique RGB Triples (Colors) Before Reduction: ', pre_reduction_unique)
-# print('Number of Unique RGB Triples (Colors) After Reduction: ', post_reduction_unique)
-# print('Reduction %: ', round((1 - (post_reduction_unique / pre_reduction_unique)) * 100, 4))
-
-"""# **Step 2: Detect and Isolate Image Edges**
-###### **s2_generate_edges**
-
-###### The s2_generate_edges function takes an RGB image as input, and iterates through every pixel within the image. For each pixel, the function identifies and tracks the RGBs present within the 2x2 kernel beginning at the pixel itself. If more than one RGB is represented within this four-pixel set, the pixel is deemed an 'edge' and is assigned a value of 255 in the ouput binary image. If the pixel's corresponding 2x2 kernel is monochromatic, it is not considered an edge and assigned a value of 0. Note that the effectiveness of this function is dependent on having already reduced the image's original RGB set. Providing this function with a raw image may lead to all pixel assignments as 'edges' due to subtle variability in RGB values.
-"""
-
-# img_edges = s2_generate_edges(img_reduced_rgb, display=False)
-
-"""# **Step 3: Group Adjacent Edge Pixels**
-###### **s3_group_edges**
-
-###### The s3_group_edges function takes the binary edges image and separate the pixels into independent edges using cv2.connectedComponents. The function iterates through the identified 'connected components' and establishes it as a valid 'edge' if it contains more than edge_threshold = 50 pixels. Each edge is represented as an array of y and x coordinate tuples. These edges are combined in a list and returned by the function.
-"""
-
-# grouped_edges = s3_group_edges(img_edges, edge_threshold=min_points_per_edge)
-
-"""# **Step 4: Order Edges**
-###### **s4_order_edges**
-
-###### The s4_order_edges command takes unordered edges as a list of arrays (edges) of tuples (pixels in the edges) and outputs the same edges with pixels ordered in a manner desirable for our robot movement. Ideally, the lines can be drawn in a continuous fashion for as long as possible before moving to a separate edge.
-
-###### The algorithm begins by arbitrarily selecting a starting pixel. It then iteratively adds its closest pixel to the list of pixels and updates its current pixel until there are no longer untraversed pixels within a set distance. At this stage, the algorithm reverts to the original starting pixel and runs the same algorithm, adding pixels to the start of the pixel list instead, once again until there are no longer untraversed pixels within the distance range. This list of pixels is added to the full waypoints list and a new starting position is selected.
-
-###### This ensures that complex multi-color image edges are able to processed, including edges that have multiple line intersections.
-"""
-
-# ordered_edges = s4_order_edges(grouped_edges, dist_thresh=max_dist_betw_points, section_size_thresh=min_section_size)
-
-# """## **4.1:  Ordering Edges with Complicated Input**"""
-# sys.setrecursionlimit(20000)
-# mw2_path = 'minnesota_wild.png'
-# mw2_k = 5
-# mw2_border_size = 2
-# mw2_min_points_per_edge = 50
-# mw2_max_dist_betw_points = 5
-# mw2_min_section_size = 10
-# mw2_img_rgb = s0_prepare_img(mw2_path, border_size=mw2_border_size, display=False)
-# mw2_img_reduced_rgb = s1_reduce_img_rgbs(mw2_img_rgb, k=mw2_k, display=False)
-# mw2_img_edges = s2_generate_edges(mw2_img_reduced_rgb, display=False)
-# mw2_grouped_edges = s3_group_edges(mw2_img_edges, edge_threshold=mw2_min_points_per_edge)
-# mw2_ordered_edges = s4_order_edges(mw2_grouped_edges, dist_thresh=mw2_max_dist_betw_points, section_size_thresh=mw2_min_section_size)
-
-"""# **Step 5: Simplify Edge Pixels to Waypoints**
-###### **s5_simplify_path**
-
-###### The s5_simplify_path function uses the Ramer-Douglas-Peucker algorithm to reduce the number of points in a curve/edge while prserving its overall shape, therefore creating a list of waypoints that can sufficiently represent the image eduges while being distant from one another to allow robot following. The algorithm takes as input the first and last points of the edge. It then calculates the shortest distance between other points and the line between the first and last points for all points. It takes the point with the greatest distance, compares it to the predetermined epsilon thresold value, and keeps it if the distance exceeds it. The curve is the split into two segments, between the first point and the new point, and between the new point and the final point. The algorithm is run for the two new line segments and all subsequently generated line segments until all new possible points are within the epsilon threshold distance away from the curve.
-"""
-
-# simplified_paths = s5_simplify_path(ordered_edges, epsilon=1.4)
-
-# s6_generate_output(simplified_paths, waypoints_output_filename)

@@ -246,13 +246,16 @@ class RobotPainterGUI(customtkinter.CTk):
         waypoints_output_filename = 'image_waypoints.txt'
         img_rgb = img_processing.s0_prepare_img(uploaded_image_path, border_size=border_size, display=False)
         img_reduced_rgb = img_processing.s1_reduce_img_rgbs(img_rgb, k=k, display=False)
+        print("Image preprocessing completed")
 
         self.set_status("Status: Generating waypoints...")
 
         img_edges = img_processing.s2_generate_edges(img_reduced_rgb, display=False)
         grouped_edges = img_processing.s3_group_edges(img_edges, edge_threshold=min_points_per_edge)
+        print("Edge processing completed")
         ordered_edges = img_processing.s4_order_edges(grouped_edges, dist_thresh=max_dist_betw_points, section_size_thresh=min_section_size)
         simplified_paths = img_processing.s5_simplify_path(ordered_edges, epsilon=1.4)
+        print("Path processing completed")
         img_processing.s6_generate_output(simplified_paths, waypoints_output_filename)
 
 
