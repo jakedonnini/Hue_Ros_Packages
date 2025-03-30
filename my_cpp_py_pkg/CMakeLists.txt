@@ -8,6 +8,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(custom_msg REQUIRED)
+find_package(serial REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -19,6 +21,8 @@ include_directories(include)
 #create cpp exec
 add_executable(cpp_exe src/cpp_node.cpp)
 ament_target_dependencies(cpp_exe rclcpp)
+ament_target_dependencies(cpp_exe custom_msg)
+ament_target_dependencies(cpp_exe serial)
 
 # install cpp execs
 install(TARGETS
