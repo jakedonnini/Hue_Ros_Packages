@@ -40,8 +40,8 @@ class GPSSubscriberPublisher(Node):
         self.dir = 1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
-        self.Kp = 0.45   # Proportional constant
-        self.Kd_line = 0.2 # Derivative constant for line following
+        self.Kp = 0.2   # Proportional constant
+        self.Kd_line = 0.01 # Derivative constant for line following
         self.Ki = 0.2  # Integral constant
         self.Kd = 10.0  # Derivative constant for 0 point turn
 
