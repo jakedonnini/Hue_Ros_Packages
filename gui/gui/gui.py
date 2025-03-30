@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 import geocoder
 from . import image_processing as img_processing
 import rclpy
+import math
 from rclpy.node import Node
 from std_msgs.msg import Int8
 from custom_msg.msg import Coordinates
@@ -16,6 +17,7 @@ import matplotlib.pyplot as plt
 
 # matplotlib.use('Agg')
 
+import threading
 
 customtkinter.set_default_color_theme("blue")
 
@@ -103,7 +105,7 @@ class RobotPainterGUI(customtkinter.CTk):
         self.frame_right = customtkinter.CTkFrame(master=self, corner_radius=0)
         self.frame_right.grid(row=0, column=1, pady=0, padx=0, sticky="nsew")
 
-        self.load_coords_btn = customtkinter.CTkButton(master=self.frame_left, text="Load Coordinates", command=self.load_cartesian_coordinates)
+        self.load_coords_btn = customtkinter.CTkButton(master=self.frame_left, text="Load Coordinates", command=self.load_waypoints)
         self.load_coords_btn.grid(row=0, column=0, padx=20, pady=(10, 10))
 
         self.process_image_btn = customtkinter.CTkButton(master=self.frame_left, text="Process Image", command=self.select_and_process_image)
@@ -145,13 +147,16 @@ class RobotPainterGUI(customtkinter.CTk):
         self.move_robot_btn = customtkinter.CTkButton(
             master=self.frame_left, text="Simulate Robot", command=self.simulate_robot_movement
         )
-        self.move_robot_btn.grid(row=8, column=0, padx=20, pady=(10, 20))
+        self.move_robot_btn.grid(row=9, column=0, padx=20, pady=(10, 20))
 
         self.process_image_btn = customtkinter.CTkButton(master=self.frame_left, text="Process Image", command=self.select_and_process_image)
         self.process_image_btn.grid(row=2, column=0, padx=20, pady=(10, 10))
         
-        self.send_gps_msg_btn = customtkinter.CTkButton(master=self.frame_left, text="Publish Waypoints", command=self.publish_gps_data)
-        self.send_gps_msg_btn.grid(row=9, column=0, padx=20, pady=(10, 10))
+        self.send_gps_msg_btn = customtkinter.CTkButton(master=self.frame_left, text="Publish Waypoints from File", command=self.publish_gps_data)
+        self.send_gps_msg_btn.grid(row=10, column=0, padx=20, pady=(10, 10))
+
+        self.send_gps_msg_btn2 = customtkinter.CTkButton(master=self.frame_left, text="Publish Current Waypoints", command=self.publish_gps_data_current)
+        self.send_gps_msg_btn2.grid(row=11, column=0, padx=20, pady=(10, 10))
 
         self.center_map_on_current_location()
         
@@ -162,6 +167,11 @@ class RobotPainterGUI(customtkinter.CTk):
 
         self.status_bar = customtkinter.CTkLabel(self, text="Status: Ready", height=24, anchor="w", fg_color="gray", text_color="white")
         self.status_bar.grid(row=2, column=0, columnspan=2, sticky="we")
+
+        self.rotation_slider = customtkinter.CTkSlider(
+            master=self.frame_left, from_=-180, to=180, command=self.rotate_waypoints)
+        self.rotation_slider.grid(row=8, column=0, padx=20, pady=(10, 10))
+        self.rotation_slider.set(0)
 
 
     def set_status(self, message):
@@ -181,6 +191,46 @@ class RobotPainterGUI(customtkinter.CTk):
             marker_color_circle="red",
             marker_color_outside="black",
         )
+
+
+    def rotate_waypoints(self, angle):
+        """Rotates cartesian_points and path_coordinates by the given angle."""
+
+        self.map_widget.delete_all_marker()
+        self.map_widget.delete_all_path()
+        angle_rad = math.radians(float(angle))  # Convert degrees to radians
+
+        if not self.cartesian_points:
+            return
+
+        center_x = sum(x for x, y, z in self.cartesian_points) / len(self.cartesian_points)
+        center_y = sum(y for x, y, z in self.cartesian_points) / len(self.cartesian_points)
+
+        rotated_cartesian = []
+        for x, y, z in self.cartesian_points:
+            x_shifted, y_shifted = x - center_x, y - center_y
+            x_rotated = x_shifted * math.cos(angle_rad) - y_shifted * math.sin(angle_rad)
+            y_rotated = x_shifted * math.sin(angle_rad) + y_shifted * math.cos(angle_rad)
+            rotated_cartesian.append((x_rotated + center_x, y_rotated + center_y, z))
+
+        # try:
+        #     with open('image_waypoints.txt', "w") as file:
+        #         for x, y, flag in rotated_cartesian:
+        #             file.write(f"{x}, {y}, {flag}\n")
+        #     print(f"Updated waypoints saved")
+        # except IOError as e:
+        #     print(f"Error writing to file: {e}")
+
+        self.cartesian_points = rotated_cartesian
+
+        self.path_coordinates = []
+        start_lat, start_lon = self.start_location
+        for x, y, z in self.cartesian_points:
+            lat = start_lat - (y * 0.0000015)
+            lon = start_lon + (x * 0.0000015)
+            self.path_coordinates.append((lat, lon))
+
+        self.plot_coordinates_on_map()
 
 
     def process_image(self, uploaded_image_path):
@@ -223,22 +273,15 @@ class RobotPainterGUI(customtkinter.CTk):
             self.map_widget.set_position(*self.start_location)
             self.map_widget.set_zoom(15)
 
-    def load_cartesian_coordinates(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("CSV files", "*.csv")])
-        if file_path:
-            self.cartesian_points.clear()
-            with open(file_path, "r") as file:
-                for line in file:
-                    x, y = map(float, line.strip().split(" "))
-                    self.cartesian_points.append((x, y))
-            self.plot_coordinates_on_map()
-
     def load_coordinates_triple(self,file_path):
         self.cartesian_points.clear()
+        self.map_widget.delete_all_marker()
+        self.map_widget.delete_all_path()
+
         with open(file_path, "r") as file:
             for line in file:
                 x, y, z = map(float, line.strip().split(", "))
-                self.cartesian_points.append((x, y))
+                self.cartesian_points.append((x, y, z))
         self.plot_coordinates_on_map()
 
     def simulate_robot_movement(self):
@@ -271,7 +314,7 @@ class RobotPainterGUI(customtkinter.CTk):
             start_lat, start_lon = self.start_location
         polyline_points = [] 
 
-        for x, y in self.cartesian_points:
+        for x, y, z in self.cartesian_points:
             lat = start_lat - (y * 0.0000015) 
             lon = start_lon + (x * 0.0000015)  
             self.path_coordinates.append((lat, lon))
@@ -308,6 +351,11 @@ class RobotPainterGUI(customtkinter.CTk):
             self.load_coordinates_triple("image_waypoints.txt")
             self.set_status("Status: Image processing complete")
 
+    def load_waypoints(self):
+        """Open a file dialog to select and load a waypoints file"""
+        self.load_coordinates_triple("image_waypoints.txt")
+        self.set_status("Status: Waypoints loaded")
+
     def publish_gps_data(self):
         coords = []
         file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("CSV files", "*.csv")])
@@ -326,6 +374,18 @@ class RobotPainterGUI(customtkinter.CTk):
                 self.node.publish_gps_data(x, y, toggle)
                 rclpy.spin_once(self.node, timeout_sec=0.1) 
 
+    def publish_gps_data_current(self):
+    
+        for x, y, toggle in self.cartesian_points:
+            print(x,y,toggle)
+            msg = Coordinates()
+            msg.x = float(x)
+            msg.y = float(y)
+            msg.toggle = int(toggle)
+            self.node.publish_gps_data(x, y, toggle)
+            rclpy.spin_once(self.node, timeout_sec=0.1) 
+
+
     def start(self):
         self.mainloop()
 
@@ -336,6 +396,10 @@ class RobotPainterGUI(customtkinter.CTk):
     def on_closing(self):
         rclpy.shutdown()
         self.destroy()
+        global running
+        running = False 
+        
+
 
 def main(args=None):
     rclpy.init(args=args)
