@@ -40,8 +40,8 @@ class GPSSubscriberPublisher(Node):
         self.dir = 1 # set to -1 to invert the forward direction
         
         # Initialize PID constants
-        self.Kp = 0.2   # Proportional constant
-        self.Kd_line = 0.01 # Derivative constant for line following
+        self.Kp = 0.5   # Proportional constant
+        self.Kd_line = 0.1 # Derivative constant for line following
         self.Ki = 0.1  # Integral constant
         self.Kd = 10.0  # Derivative constant for 0 point turn
 
@@ -146,7 +146,7 @@ class GPSSubscriberPublisher(Node):
         waypointX, waypointY = self.currentTWayPoint
 
         dist2Go = math.sqrt(math.pow(self.currentX - waypointX, 2) + math.pow(self.currentY - waypointY, 2))
-        if dist2Go < 5:  # threshold saying we hit the point (was 1)
+        if dist2Go < 10:  # threshold saying we hit the point (was 1)
             self.get_logger().info(f'\n\n\n\n --------------------------------------\n Hit ({waypointX}, {waypointY}) waypoint \n --------------------------------------\n\n\n\n')
             self.prevWaypointHolder = waypointX, waypointY
             self.largeTurn = False
