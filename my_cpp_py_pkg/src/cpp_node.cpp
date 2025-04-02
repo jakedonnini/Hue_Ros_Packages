@@ -88,7 +88,6 @@ private:
         // Get the list of available ports
         if (sp_list_ports(&ports) != SP_OK) {
             std::cerr << "Failed to list serial ports." << std::endl;
-            return 1;
         }
 
         // Iterate through the ports and print their names
@@ -99,8 +98,6 @@ private:
 
         // Free the port list
         sp_free_port_list(ports);
-        
-        return 0;
     }
 
     void read_encoder_values() {
