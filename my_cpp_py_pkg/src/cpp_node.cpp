@@ -87,13 +87,13 @@ private:
     
         // Get the list of available ports
         if (sp_list_ports(&ports) != SP_OK) {
-            std::cerr << "Failed to list serial ports." << std::endl;
+            RCLCPP_ERROR(this->get_logger(), "Failed to list serial ports.");
         }
 
         // Iterate through the ports and print their names
-        std::cout << "Available Serial Ports:" << std::endl;
+        RCLCPP_ERROR(this->get_logger(), "Abail ser ports: ");
         for (int i = 0; ports[i] != nullptr; i++) {
-            std::cout << " - " << sp_get_port_name(ports[i]) << std::endl;
+            RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", sp_get_port_name(ports[i]));
         }
 
         // Free the port list
