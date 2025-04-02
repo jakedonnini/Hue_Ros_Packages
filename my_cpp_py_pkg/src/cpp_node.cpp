@@ -12,7 +12,7 @@ public:
         encoder_pub_ = this->create_publisher<custom_msg::msg::TwoInt>("encoder", 5);
         pwm_sub_ = this->create_subscription<custom_msg::msg::TwoInt>(
             "PWM", 5, std::bind(&ArduinoSerialNode::pwm_callback, this, std::placeholders::_1));
-        
+        idk()
         if (open_serial("/dev/ttyRobot1", 460800)) {
             read_thread_ = std::thread(&ArduinoSerialNode::read_encoder_values, this);
         } else {
@@ -80,6 +80,27 @@ private:
             sp_close(port_);
             sp_free_port(port_);
         }
+    }
+
+    void idk() {
+        struct sp_port **ports;
+    
+        // Get the list of available ports
+        if (sp_list_ports(&ports) != SP_OK) {
+            std::cerr << "Failed to list serial ports." << std::endl;
+            return 1;
+        }
+
+        // Iterate through the ports and print their names
+        std::cout << "Available Serial Ports:" << std::endl;
+        for (int i = 0; ports[i] != nullptr; i++) {
+            std::cout << " - " << sp_get_port_name(ports[i]) << std::endl;
+        }
+
+        // Free the port list
+        sp_free_port_list(ports);
+        
+        return 0;
     }
 
     void read_encoder_values() {
