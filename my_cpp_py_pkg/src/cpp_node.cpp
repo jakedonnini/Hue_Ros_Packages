@@ -53,6 +53,8 @@ private:
                 RCLCPP_INFO(this->get_logger(), "Detected port: %s", port_name);
             }
             sp_free_port_list(ports);
+        } else {
+            RCLCPP_INFO(this->get_logger(), "ERORR LISTING PORTS");
         }
         if (sp_get_port_by_name(device.c_str(), &port_) != SP_OK) {
             RCLCPP_ERROR(this->get_logger(), "Failed to find serial port: %s", device.c_str());
