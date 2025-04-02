@@ -13,7 +13,7 @@ public:
         pwm_sub_ = this->create_subscription<custom_msg::msg::TwoInt>(
             "PWM", 5, std::bind(&ArduinoSerialNode::pwm_callback, this, std::placeholders::_1));
         idk();
-        if (open_serial("/dev/ttyRobot1", 460800)) {
+        if (open_serial("/dev/ttyACM1", 460800)) {
             read_thread_ = std::thread(&ArduinoSerialNode::read_encoder_values, this);
         } else {
             RCLCPP_ERROR(this->get_logger(), "Failed to open serial port");
