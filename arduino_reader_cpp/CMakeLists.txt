@@ -19,7 +19,7 @@ pkg_check_modules(LIBSERIALPORT REQUIRED libserialport)
 include_directories(include)
 
 #create cpp exec
-add_executable(ard_read_exe src/cpp_node.cpp)
+add_executable(ard_read_exe src/arduino_serial_node.cpp)
 ament_target_dependencies(ard_read_exe rclcpp)
 ament_target_dependencies(ard_read_exe custom_msg)
 
