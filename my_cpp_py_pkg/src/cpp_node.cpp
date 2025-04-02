@@ -12,7 +12,7 @@ public:
         encoder_pub_ = this->create_publisher<custom_msg::msg::TwoInt>("encoder", 5);
         pwm_sub_ = this->create_subscription<custom_msg::msg::TwoInt>(
             "PWM", 5, std::bind(&ArduinoSerialNode::pwm_callback, this, std::placeholders::_1));
-        idk()
+        idk();
         if (open_serial("/dev/ttyRobot1", 460800)) {
             read_thread_ = std::thread(&ArduinoSerialNode::read_encoder_values, this);
         } else {
