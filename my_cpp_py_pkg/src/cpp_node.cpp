@@ -46,6 +46,14 @@ private:
         // sp_set_stopbits(port_, 1);
         // sp_set_flowcontrol(port_, SP_FLOWCONTROL_NONE);
         // return true;
+        struct sp_port **ports;
+        if (sp_list_ports(&ports) == SP_OK) {
+            for (int i = 0; ports[i] != NULL; i++) {
+                char *port_name = sp_get_port_name(ports[i]);
+                RCLCPP_INFO(this->get_logger(), "Detected port: %s", port_name);
+            }
+            sp_free_port_list(ports);
+        }
         if (sp_get_port_by_name(device.c_str(), &port_) != SP_OK) {
             RCLCPP_ERROR(this->get_logger(), "Failed to find serial port: %s", device.c_str());
             return false;
