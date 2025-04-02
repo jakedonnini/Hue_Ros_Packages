@@ -37,10 +37,27 @@ private:
     struct sp_port *port_ = nullptr;
 
     bool open_serial(const std::string &device, int baudrate) {
-        if (sp_get_port_by_name(device.c_str(), &port_) != SP_OK || sp_open(port_, SP_MODE_READ_WRITE) != SP_OK) {
+        // if (sp_get_port_by_name(device.c_str(), &port_) != SP_OK || sp_open(port_, SP_MODE_READ_WRITE) != SP_OK) {
+        //     return false;
+        // }
+        // sp_set_baudrate(port_, baudrate);
+        // sp_set_bits(port_, 8);
+        // sp_set_parity(port_, SP_PARITY_NONE);
+        // sp_set_stopbits(port_, 1);
+        // sp_set_flowcontrol(port_, SP_FLOWCONTROL_NONE);
+        // return true;
+        if (sp_get_port_by_name(device.c_str(), &port_) != SP_OK) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to find serial port: %s", device.c_str());
             return false;
         }
-        sp_set_baudrate(port_, baudrate);
+        if (sp_open(port_, SP_MODE_READ_WRITE) != SP_OK) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", device.c_str());
+            return false;
+        }
+        if (sp_set_baudrate(port_, baudrate) != SP_OK) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set baud rate");
+            return false;
+        }
         sp_set_bits(port_, 8);
         sp_set_parity(port_, SP_PARITY_NONE);
         sp_set_stopbits(port_, 1);
