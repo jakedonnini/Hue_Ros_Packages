@@ -14,7 +14,7 @@ public:
             "PWM", 5, std::bind(&ArduinoSerialNode::pwm_callback, this, std::placeholders::_1));
 
         // symlink in and resolve to port incase it changes
-        std::string port_symlink = "/dev/ttyRobot1";
+        const char *port_symlink = "/dev/ttyRobot1";
         char real_path[50];
         ssize_t len = readlink(port_symlink, real_path, sizeof(real_path) - 1);
         if (len != -1) {
