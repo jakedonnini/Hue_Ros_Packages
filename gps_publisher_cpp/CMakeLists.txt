@@ -28,7 +28,7 @@ ament_target_dependencies(gps_pub1
 target_include_directories(gps_pub1 PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
 target_link_libraries(gps_pub1 ${LIBSERIALPORT_LIBRARIES})
 
-add_executable(gps_pub2 src/gps1_node.cpp)
+add_executable(gps_pub2 src/gps2_node.cpp)
 ament_target_dependencies(gps_pub2
   rclcpp
   std_msgs
