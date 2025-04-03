@@ -12,10 +12,15 @@ public:
         encoder_pub_ = this->create_publisher<custom_msg::msg::TwoInt>("encoder", 5);
         pwm_sub_ = this->create_subscription<custom_msg::msg::TwoInt>(
             "PWM", 5, std::bind(&ArduinoSerialNode::pwm_callback, this, std::placeholders::_1));
-        idk();
 
-        std::string port_symlink = "/dev/ttyRobot1";  // Example symlink
-        std::string resolved_port = resolve_symlink(port_symlink);
+        // symlink in and resolve to port incase it changes
+        std::string port_symlink = "/dev/ttyRobot1";
+        char real_path[50];
+        ssize_t len = readlink(port_symlink, real_path, sizeof(real_path) - 1);
+        if (len != -1) {
+            real_path[len] = '\0';  // Null-terminate
+            port_symlink = real_path;  // Use resolved path
+        }
 
         if (open_serial(resolved_port, 460800)) {
             read_thread_ = std::thread(&ArduinoSerialNode::read_encoder_values, this);
@@ -41,16 +46,16 @@ private:
     struct sp_port *port_ = nullptr;
 
     bool open_serial(const std::string &device, int baudrate) {
-        struct sp_port **ports;
-        if (sp_list_ports(&ports) == SP_OK) {
-            for (int i = 0; ports[i] != NULL; i++) {
-                char *port_name = sp_get_port_name(ports[i]);
-                RCLCPP_INFO(this->get_logger(), "Detected port: %s", port_name);
-            }
-            sp_free_port_list(ports);
-        } else {
-            RCLCPP_INFO(this->get_logger(), "ERORR LISTING PORTS");
-        }
+        // struct sp_port **ports;
+        // if (sp_list_ports(&ports) == SP_OK) {
+        //     for (int i = 0; ports[i] != NULL; i++) {
+        //         char *port_name = sp_get_port_name(ports[i]);
+        //         RCLCPP_INFO(this->get_logger(), "Detected port: %s", port_name);
+        //     }
+        //     sp_free_port_list(ports);
+        // } else {
+        //     RCLCPP_INFO(this->get_logger(), "ERORR LISTING PORTS");
+        // }
         if (sp_get_port_by_name(device.c_str(), &port_) != SP_OK) {
             RCLCPP_ERROR(this->get_logger(), "Failed to find serial port: %s", device.c_str());
             return false;
@@ -75,24 +80,6 @@ private:
             sp_close(port_);
             sp_free_port(port_);
         }
-    }
-
-    void idk() {
-        struct sp_port **ports;
-    
-        // Get the list of available ports
-        if (sp_list_ports(&ports) != SP_OK) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to list serial ports.");
-        }
-
-        // Iterate through the ports and print their names
-        RCLCPP_ERROR(this->get_logger(), "Abail ser ports: ");
-        for (int i = 0; ports[i] != nullptr; i++) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to open serial port: %s", sp_get_port_name(ports[i]));
-        }
-
-        // Free the port list
-        sp_free_port_list(ports);
     }
 
     void read_encoder_values() {
@@ -121,18 +108,6 @@ private:
         std::lock_guard<std::mutex> lock(serial_mutex_);
         std::string data = std::to_string(msg->l) + " " + std::to_string(msg->r) + " " + std::to_string(msg->toggle) + "\n";
         sp_blocking_write(port_, data.c_str(), data.length(), 100);
-    }
-
-    std::string resolve_symlink(const std::string &symlink_path) {
-        char real_path[50];
-
-        ssize_t len = readlink(symlink_path.c_str(), real_path, sizeof(real_path) - 1);
-        if (len != -1) {
-            real_path[len] = '\0';  // Null-terminate the string
-            return std::string(real_path);
-        } else {
-            return symlink_path;  // If not a symlink, return original path
-        }
     }
 };
 
