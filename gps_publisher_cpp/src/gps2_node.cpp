@@ -10,7 +10,7 @@
 class GPSPublisher2 : public rclcpp::Node {
 public:
     GPSPublisher2() : Node("gps_publisher"), running_(true) {
-        coords_publisher_ = this->create_publisher<custom_msg::msg::Coordinates>("gps1", 10);
+        coords_publisher_ = this->create_publisher<custom_msg::msg::Coordinates>("gps2", 10);
         
         // symlink in and resolve to port incase it changes
         const char *port_symlink = "/dev/ttyRobot3";
