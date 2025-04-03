@@ -51,7 +51,7 @@ ament_target_dependencies(gps_fus
 target_include_directories(gps_fus PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
 target_link_libraries(gps_fus ${LIBSERIALPORT_LIBRARIES})
 
-install(TARGETS gps_pub1 gps_pub2 gps_pub3
+install(TARGETS gps_pub1 gps_pub2 gps_fus
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
