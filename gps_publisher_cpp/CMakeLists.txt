@@ -94,8 +94,6 @@ ament_target_dependencies(gps_pub1
 target_include_directories(gps_pub1 PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
 target_link_libraries(gps_pub1 ${LIBSERIALPORT_LIBRARIES})
 
-target_include_directories(gps_fus PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
-target_link_libraries(gps_fus ${LIBSERIALPORT_LIBRARIES})
 
 install(
   TARGETS gps_pub1
