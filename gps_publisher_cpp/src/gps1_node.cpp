@@ -7,9 +7,9 @@
 #include <string>
 #include <sstream>
 
-class GPSPublisher : public rclcpp::Node {
+class GPSPublisher1 : public rclcpp::Node {
 public:
-    GPSPublisher() : Node("gps_publisher"), running_(true) {
+    GPSPublisher1() : Node("gps_publisher"), running_(true) {
         coords_publisher_ = this->create_publisher<custom_msg::msg::Coordinates>("gps1", 10);
         
         // symlink in and resolve to port incase it changes
@@ -37,13 +37,13 @@ public:
         }
         
         if (open_serial(final_path, 9600)) {
-            read_thread_ = std::thread(&GPSPublisher::read_gps_data, this);
+            read_thread_ = std::thread(&GPSPublisher1::read_gps_data, this);
         } else {
             RCLCPP_ERROR(this->get_logger(), "Failed to open serial port");
         }
     }
 
-    ~GPSPublisher() {
+    ~GPSPublisher1() {
         running_ = false;
         if (read_thread_.joinable()) {
             read_thread_.join();
@@ -133,7 +133,7 @@ private:
 
 int main(int argc, char **argv) {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<GPSPublisher>();
+    auto node = std::make_shared<GPSPublisher1>();
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
