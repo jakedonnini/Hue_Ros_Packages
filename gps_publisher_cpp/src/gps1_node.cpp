@@ -24,6 +24,17 @@ public:
         } else {
             final_path = port_symlink;  // Use original path if not a symlink
         }
+
+        struct sp_port **ports;
+        if (sp_list_ports(&ports) == SP_OK) {
+            for (int i = 0; ports[i] != NULL; i++) {
+                char *port_name = sp_get_port_name(ports[i]);
+                RCLCPP_INFO(this->get_logger(), "Detected port: %s", port_name);
+            }
+            sp_free_port_list(ports);
+        } else {
+            RCLCPP_INFO(this->get_logger(), "ERORR LISTING PORTS");
+        }
         
         if (open_serial(final_path, 9600)) {
             read_thread_ = std::thread(&GPSPublisher::read_gps_data, this);
