@@ -21,7 +21,7 @@ public:
 
         if (len != -1) {
             real_path[len] = '\0';  // Null-terminate
-            final_path = "/dev/" + std::string(real_path);  // Ensure /dev/ prefix
+            final_path = "/dev/" + std::string(real_path);
         } else {
             final_path = port_symlink;  // Use original path if not a symlink
         }
