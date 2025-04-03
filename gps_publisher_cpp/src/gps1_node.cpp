@@ -92,6 +92,7 @@ private:
             std::lock_guard<std::mutex> lock(serial_mutex_);
             int bytes_read = sp_nonblocking_read(port_, buffer, sizeof(buffer) - 1);
             if (bytes_read > 0) {
+                RCLCPP_INFO(this->get_logger(), "Raw data: %s", buffer);
                 buffer[bytes_read] = '\0';
                 process_nmea_data(std::string(buffer));
             }
