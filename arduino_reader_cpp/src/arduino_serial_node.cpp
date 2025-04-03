@@ -124,7 +124,7 @@ private:
     }
 
     std::string resolve_symlink(const std::string &symlink_path) {
-        char real_path[10000];
+        char real_path[50];
 
         ssize_t len = readlink(symlink_path.c_str(), real_path, sizeof(real_path) - 1);
         if (len != -1) {
