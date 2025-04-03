@@ -17,9 +17,13 @@ public:
         const char *port_symlink = "/dev/ttyRobot1";
         char real_path[50];
         ssize_t len = readlink(port_symlink, real_path, sizeof(real_path) - 1);
+        std::string final_path;
+
         if (len != -1) {
             real_path[len] = '\0';  // Null-terminate
-            port_symlink = "/dev/" + std::string(real_path);  // Use resolved path
+            final_path = "/dev/" + std::string(real_path);  // Ensure /dev/ prefix
+        } else {
+            final_path = port_symlink;  // Use original path if not a symlink
         }
 
         if (open_serial(port_symlink, 460800)) {
