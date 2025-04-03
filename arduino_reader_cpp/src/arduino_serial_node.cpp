@@ -19,7 +19,7 @@ public:
         ssize_t len = readlink(port_symlink, real_path, sizeof(real_path) - 1);
         if (len != -1) {
             real_path[len] = '\0';  // Null-terminate
-            port_symlink = real_path;  // Use resolved path
+            port_symlink = "/dev/" + std::string(real_path);  // Use resolved path
         }
 
         if (open_serial(port_symlink, 460800)) {
