@@ -94,7 +94,7 @@ public:
             if (bytes_read > 0) {
                 buffer[bytes_read] = '\0';
                 std::string nmea_sentence(buffer);
-                RCLCPP_INFO(this->get_logger(), "Raw data: %s", buffer);
+                // RCLCPP_INFO(this->get_logger(), "Raw data: %s", buffer);
                 if (nmea_sentence.rfind("$G", 0) == 0) { // Only process GPS messages
                     process_nmea_data(nmea_sentence);
                 }
