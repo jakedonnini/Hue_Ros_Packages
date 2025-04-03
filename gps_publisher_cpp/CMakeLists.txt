@@ -18,18 +18,27 @@ find_package(custom_msg REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBSERIALPORT REQUIRED libserialport)
 
-add_executable(gps_publisher src/gps1_node.cpp)
-ament_target_dependencies(gps_publisher
+add_executable(gps_pub1 src/gps1_node.cpp)
+ament_target_dependencies(gps_pub1
   rclcpp
   std_msgs
   custom_msg
 )
 
-target_include_directories(gps_publisher PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
-target_link_libraries(gps_publisher ${LIBSERIALPORT_LIBRARIES})
+target_include_directories(gps_pub1 PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
+target_link_libraries(gps_pub1 ${LIBSERIALPORT_LIBRARIES})
 
-install(TARGETS gps_publisher
+add_executable(gps_pub2src/gps1_node.cpp)
+ament_target_dependencies(gps_pub2
+  rclcpp
+  std_msgs
+  custom_msg
+)
+
+target_include_directories(gps_pub2 PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
+target_link_libraries(gps_pub2 ${LIBSERIALPORT_LIBRARIES})
+
+install(TARGETS gps_pub1 gps_pub2
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
-
