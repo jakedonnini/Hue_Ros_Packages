@@ -13,7 +13,11 @@ public:
         pwm_sub_ = this->create_subscription<custom_msg::msg::TwoInt>(
             "PWM", 5, std::bind(&ArduinoSerialNode::pwm_callback, this, std::placeholders::_1));
         idk();
-        if (open_serial("/dev/ttyACM1", 460800)) {
+
+        std::string port_symlink = "/dev/ttyRobot1";  // Example symlink
+        std::string resolved_port = resolve_symlink(port_symlink);
+
+        if (open_serial(resolved_port, 460800)) {
             read_thread_ = std::thread(&ArduinoSerialNode::read_encoder_values, this);
         } else {
             RCLCPP_ERROR(this->get_logger(), "Failed to open serial port");
@@ -37,15 +41,6 @@ private:
     struct sp_port *port_ = nullptr;
 
     bool open_serial(const std::string &device, int baudrate) {
-        // if (sp_get_port_by_name(device.c_str(), &port_) != SP_OK || sp_open(port_, SP_MODE_READ_WRITE) != SP_OK) {
-        //     return false;
-        // }
-        // sp_set_baudrate(port_, baudrate);
-        // sp_set_bits(port_, 8);
-        // sp_set_parity(port_, SP_PARITY_NONE);
-        // sp_set_stopbits(port_, 1);
-        // sp_set_flowcontrol(port_, SP_FLOWCONTROL_NONE);
-        // return true;
         struct sp_port **ports;
         if (sp_list_ports(&ports) == SP_OK) {
             for (int i = 0; ports[i] != NULL; i++) {
@@ -126,6 +121,18 @@ private:
         std::lock_guard<std::mutex> lock(serial_mutex_);
         std::string data = std::to_string(msg->l) + " " + std::to_string(msg->r) + " " + std::to_string(msg->toggle) + "\n";
         sp_blocking_write(port_, data.c_str(), data.length(), 100);
+    }
+
+    std::string resolve_symlink(const std::string &symlink_path) {
+        char real_path[10000];
+
+        ssize_t len = readlink(symlink_path.c_str(), real_path, sizeof(real_path) - 1);
+        if (len != -1) {
+            real_path[len] = '\0';  // Null-terminate the string
+            return std::string(real_path);
+        } else {
+            return symlink_path;  // If not a symlink, return original path
+        }
     }
 };
 
