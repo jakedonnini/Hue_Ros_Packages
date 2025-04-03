@@ -26,7 +26,7 @@ public:
             final_path = port_symlink;  // Use original path if not a symlink
         }
 
-        if (open_serial(port_symlink, 460800)) {
+        if (open_serial(final_path, 460800)) {
             read_thread_ = std::thread(&ArduinoSerialNode::read_encoder_values, this);
         } else {
             RCLCPP_ERROR(this->get_logger(), "Failed to open serial port");
