@@ -13,10 +13,20 @@ public:
         coords_publisher_ = this->create_publisher<custom_msg::msg::Coordinates>("gps", 10);
         heading_publisher_ = this->create_publisher<std_msgs::msg::Float64>("gps/heading", 10);
         
-        std::string port_symlink = "/dev/ttyRobot3";  // Example symlink
-        std::string resolved_port = resolve_symlink(port_symlink);
+        // symlink in and resolve to port incase it changes
+        const char *port_symlink = "/dev/ttyRobot3";
+        char real_path[50];
+        ssize_t len = readlink(port_symlink, real_path, sizeof(real_path) - 1);
+        std::string final_path;
+
+        if (len != -1) {
+            real_path[len] = '\0';  // Null-terminate
+            final_path = "/dev/" + std::string(real_path);
+        } else {
+            final_path = port_symlink;  // Use original path if not a symlink
+        }
         
-        if (open_serial(resolved_port, 9600)) {
+        if (open_serial(final_path, 9600)) {
             read_thread_ = std::thread(&GPSPublisher::read_gps_data, this);
         } else {
             RCLCPP_ERROR(this->get_logger(), "Failed to open serial port");
