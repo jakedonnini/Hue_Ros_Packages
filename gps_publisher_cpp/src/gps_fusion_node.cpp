@@ -20,8 +20,8 @@ public:
         gps_sub1_.subscribe(this, "gps1");
         gps_sub2_.subscribe(this, "gps2");
 
-        sync_.reset(new Sync(MySyncPolicy(10), gps_sub1_, gps_sub2_));
-        sync_->registerCallback(std::bind(&GPSFusionNode::gps_callback, this, _1, _2));
+        // sync_.reset(new Sync(MySyncPolicy(10), gps_sub1_, gps_sub2_));
+        // sync_->registerCallback(std::bind(&GPSFusionNode::gps_callback, this, _1, _2));
 
         gps_fusion_pub_ = this->create_publisher<custom_msg::msg::GpsData>("gps/data", 10);
         gps1_cm_pub_ = this->create_publisher<custom_msg::msg::Coordinates>("gps1_cm", 10);
@@ -86,12 +86,12 @@ private:
         gps2_cm_pub_->publish(gps_coord2);
     }
 
-    typedef message_filters::sync_policies::ApproximateTime<
-        custom_msg::msg::Coordinates,
-        custom_msg::msg::Coordinates> MySyncPolicy;
+    // typedef message_filters::sync_policies::ApproximateTime<
+    //     custom_msg::msg::Coordinates,
+    //     custom_msg::msg::Coordinates> MySyncPolicy;
 
-    typedef message_filters::Synchronizer<MySyncPolicy> Sync;
-    std::shared_ptr<Sync> sync_;
+    // typedef message_filters::Synchronizer<MySyncPolicy> Sync;
+    // std::shared_ptr<Sync> sync_;
 
     message_filters::Subscriber<custom_msg::msg::Coordinates> gps_sub1_;
     message_filters::Subscriber<custom_msg::msg::Coordinates> gps_sub2_;
