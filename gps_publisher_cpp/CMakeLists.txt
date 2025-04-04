@@ -39,21 +39,21 @@ ament_target_dependencies(gps_pub2
 target_include_directories(gps_pub2 PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
 target_link_libraries(gps_pub2 ${LIBSERIALPORT_LIBRARIES})
 
-# add_executable(gps_fus src/gps_fusion_node.cpp)
-# ament_target_dependencies(gps_fus
-#   rclcpp
-#   std_msgs
-#   custom_msg
-#   Eigen3
-#   message_filters
-# )
+add_executable(gps_fus src/gps_fusion_node.cpp)
+ament_target_dependencies(gps_fus
+  rclcpp
+  std_msgs
+  custom_msg
+  Eigen3
+  message_filters
+)
 
 # target_include_directories(gps_fus PRIVATE ${LIBSERIALPORT_INCLUDE_DIRS})
 # target_link_libraries(gps_fus ${LIBSERIALPORT_LIBRARIES})
 
 install(
-#   TARGETS gps_pub1 gps_pub2 gps_fus
-  TARGETS gps_pub1 gps_pub2
+   TARGETS gps_pub1 gps_pub2 gps_fus
+#  TARGETS gps_pub1 gps_pub2
   EXPORT export_${PROJECT_NAME}
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
