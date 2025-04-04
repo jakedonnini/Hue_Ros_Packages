@@ -11,7 +11,7 @@ setup(
         ['resource/' + package_name]),
     ('share/' + package_name, ['package.xml']),
     ('share/' + package_name + "/launch",
-        ['launch/gps_launch.py', 'launch/teleop_launch.py', 'launch/navigation_launch.py'])
+        ['launch/gps_launch.py', 'launch/teleop_launch.py', 'launch/navigation_launch.py', 'launch/gps_launch_cpp.py'])
     ],
     install_requires=['setuptools'],
     zip_safe=True,
