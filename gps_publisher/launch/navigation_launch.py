@@ -34,8 +34,8 @@ def generate_launch_description():
             output='log'
         ),
         Node(
-            package='navigator',
-            executable='kalman',
+            package='calm_man_cpp',
+            executable='kalman_node',
             name='kalman_filter',
             output='screen'
         ),
