@@ -19,7 +19,7 @@ include_directories(
 )
 
 # Executable
-add_executable(kalman_node src/kalman_node.cpp)
+add_executable(kalman_node src/calm_man_node.cpp)
 
 # Link libraries
 ament_target_dependencies(kalman_node
