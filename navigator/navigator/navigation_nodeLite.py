@@ -14,13 +14,13 @@ class GPSSubscriberPublisher(Node):
         """This node is ment to be used with the new decentralized system"""
 
         self.waypoint_subscription = self.create_subscription(
-            Coordinates, 'coordinates', self.waypoint_callback, 5)
+            Coordinates, 'coordinates', self.waypoint_callback, 10)
         self.Kalman = self.create_subscription(
-            GpsData, 'kalman/data', self.kalman, 5)
+            GpsData, 'kalman/data', self.kalman, 2)
         self.DR_subscription = self.create_subscription(
-            GpsData, 'deadReckoning/pose', self.deadReck_callback, 5)
+            GpsData, 'deadReckoning/pose', self.deadReck_callback, 2)
         self.DR_subscription_vel = self.create_subscription(
-            Coordinates, 'deadReckoning/vel', self.deadReck_callback_t, 5)
+            Coordinates, 'deadReckoning/vel', self.deadReck_callback_t, 2)
 
         self.waypointBuffer = []
         self.currentTWayPoint = None
@@ -41,7 +41,7 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 0.5   # Proportional constant
-        self.Kd_line = 0.9 # Derivative constant for line following
+        self.Kd_line = 1.1 # Derivative constant for line following
         self.Ki = 0.1  # Integral constant
         self.Kd = 7.0  # Derivative constant for 0 point turn
 
