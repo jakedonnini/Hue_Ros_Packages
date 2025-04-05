@@ -34,9 +34,15 @@ def generate_launch_description():
             name='dead_reckoning',
             output='log'
         ),
+        # Node(
+        #     package='calm_man_cpp',
+        #     executable='kalman_node',
+        #     name='kalman_filter',
+        #     output='screen'
+        # ),
         Node(
-            package='calm_man_cpp',
-            executable='kalman_node',
+            package='navigator',
+            executable='kalman',
             name='kalman_filter',
             output='screen'
         ),
