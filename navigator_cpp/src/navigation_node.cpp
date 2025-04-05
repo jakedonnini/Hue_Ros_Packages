@@ -143,22 +143,6 @@ private:
     isPainting_ = msg->toggle;
   }
 
-  // PID controller for direction control
-  float calculate_steering_pid(float target_angle, float current_angle) {
-    float error = normalize_angle(target_angle - current_angle);
-    integral_ += error * deltaT_;
-    
-    // Apply integral limits
-    if (integral_ > integral_max_) integral_ = integral_max_;
-    if (integral_ < integral_min_) integral_ = integral_min_;
-    
-    float derivative = (error - previous_error_) / deltaT_;
-    previous_error_ = error;
-    
-    float output = Kp_ * error + Ki_ * integral_ + Kd_ * derivative;
-    return output;
-  }
-
   // Calculate distance between two points
   float calculate_distance(float x1, float y1, float x2, float y2) {
     return std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
@@ -207,11 +191,21 @@ private:
           // Calculate angle to target
           float target_angle = calculate_angle_to_target(currentX_, currentY_, target_x, target_y);
           
-          // Use PID controller to calculate steering
-          float steering = calculate_steering_pid(target_angle, currentTheta_);
-          
           // Calculate motor speeds
-          int base_speed = 150; // Adjust as needed
+          int base_speed = 20; // Adjust as needed
+
+          float error = normalize_angle(target_angle - currentTheta_);
+          integral_ += error * deltaT_;
+          
+          // Apply integral limits
+          if (integral_ > integral_max_) integral_ = integral_max_;
+          if (integral_ < integral_min_) integral_ = integral_min_;
+          
+          float derivative = (error - previous_error_) / deltaT_;
+          previous_error_ = error;
+          
+          float output = Kp_ * error + Ki_ * integral_ + Kd_ * derivative;
+
           int pwmr = base_speed - static_cast<int>(steering);
           int pwml = base_speed + static_cast<int>(steering);
           
@@ -232,10 +226,10 @@ private:
           pwm_pub_->publish(pwm_msg);
           
           // Check if we've reached the waypoint
-          if (distance < 0.2) { // Threshold distance
+          if (distance < 5) { // Threshold distance
             prev_waypoint_holder_ = *current_target_;
             current_target_ = std::nullopt;
-            RCLCPP_INFO(this->get_logger(), "Reached waypoint, looking for next target");
+            RCLCPP_INFO(this->get_logger(), "\n\n\n\n --------------------------------------\n Hit waypoint \n --------------------------------------\n\n\n\n");
           }
         }
       }
