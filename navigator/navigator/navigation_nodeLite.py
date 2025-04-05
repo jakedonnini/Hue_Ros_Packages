@@ -43,7 +43,7 @@ class GPSSubscriberPublisher(Node):
         self.Kp = 0.5   # Proportional constant
         self.Kd_line = 0.7 # Derivative constant for line following
         self.Ki = 0.1  # Integral constant
-        self.Kd = 8.0  # Derivative constant for 0 point turn
+        self.Kd = 5.0  # Derivative constant for 0 point turn
 
         self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
@@ -215,6 +215,7 @@ class GPSSubscriberPublisher(Node):
             # pwmDel = 0 # prevents rounded corners
         else:
             self.largeTurn = False
+            self.Ki = 0.0 # stop the integrator
             
         
         if len(self.waypointBuffer) == 0 and self.currentTWayPoint is None: # don't move if arnt any waypoints
