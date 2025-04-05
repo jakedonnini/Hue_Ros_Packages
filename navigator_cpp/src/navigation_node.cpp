@@ -227,8 +227,8 @@ private:
           
           // Publish PWM command
           auto pwm_msg = custom_msg::msg::TwoInt();
-          pwm_msg.a = pwmr * dir_;
-          pwm_msg.b = pwml * dir_;
+          pwm_msg.r = pwmr * dir_;
+          pwm_msg.l = pwml * dir_;
           pwm_pub_->publish(pwm_msg);
           
           // Check if we've reached the waypoint

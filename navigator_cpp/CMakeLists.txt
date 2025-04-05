@@ -13,7 +13,7 @@ find_package(std_msgs REQUIRED)
 find_package(Threads REQUIRED)
 
 # Create the executable
-add_executable(gps_navigation_node src/gps_navigation_node.cpp)
+add_executable(gps_navigation_node src/navigation_node.cpp)
 target_include_directories(gps_navigation_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -29,13 +29,6 @@ target_link_libraries(gps_navigation_node
 # Install the executable
 install(TARGETS gps_navigation_node
   DESTINATION lib/${PROJECT_NAME})
-
-# Install launch files if you have any
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}/
-  PATTERN "*.py"
-)
 
 # Export information to downstream packages
 ament_package()
