@@ -17,7 +17,7 @@ public:
                       x_mid_zero_(0.0), y_mid_zero_(0.0),
                       origin_set_(false), zero_mid_set_(false) {
 
-        gps_sub1_.subscribe(this, "gps1");
+        gps_sub1_.subscribe(this, "gps");
         gps_sub2_.subscribe(this, "gps2");
 
         // sync_.reset(new Sync(MySyncPolicy(10), gps_sub1_, gps_sub2_));

@@ -4,17 +4,29 @@ from launch_ros.actions import Node
 def generate_launch_description():
     return LaunchDescription([
         Node(
-            package='gps_publisher_cpp',
-            executable='gps_pub1',
-            name='gps1_publisher',
+            package='gps_publisher',
+            executable='gps_node',
+            name='gps_publisher',
             output='screen'
         ),
         Node(
-            package='gps_publisher_cpp',
-            executable='gps_pub2',
+            package='gps_publisher',
+            executable='gps2_node',
             name='gps2_publisher',
             output='screen'
         ),
+        # Node(
+        #     package='gps_publisher_cpp',
+        #     executable='gps_pub1',
+        #     name='gps1_publisher',
+        #     output='screen'
+        # ),
+        # Node(
+        #     package='gps_publisher_cpp',
+        #     executable='gps_pub2',
+        #     name='gps2_publisher',
+        #     output='screen'
+        # ),
         Node(
             package='gps_publisher_cpp',
             executable='gps_fus',
