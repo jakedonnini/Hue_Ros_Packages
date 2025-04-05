@@ -41,7 +41,7 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 0.5   # Proportional constant
-        self.Kd_line = 0.75 # Derivative constant for line following
+        self.Kd_line = 0.9 # Derivative constant for line following
         self.Ki = 0.1  # Integral constant
         self.Kd = 7.0  # Derivative constant for 0 point turn
 
