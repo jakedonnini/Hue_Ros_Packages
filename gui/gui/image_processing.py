@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import splprep, splev, CubicSpline
 from sklearn.cluster import KMeans
 import random
+from scipy.ndimage import median_filter
+from PIL import Image
+import math
 from matplotlib.animation import FuncAnimation
 import matplotlib.animation as animation
 import matplotlib.transforms as transforms
@@ -14,6 +17,9 @@ import sys
 import os
 from matplotlib.widgets import Button
 from matplotlib.image import imread
+from skimage import measure, morphology, color
+from skimage.segmentation import find_boundaries
+from skimage.util import img_as_ubyte
 sys.setrecursionlimit(20000)
 
 # Input: Image path
@@ -21,6 +27,7 @@ sys.setrecursionlimit(20000)
 
 def s0_prepare_img(img_path, border_size = 2, display = False):
     img = cv2.imread(img_path)
+    #img = cv2.flip(img, 1)
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     # Obtain image background color (assumed top-left pixel)
@@ -43,41 +50,221 @@ def s0_prepare_img(img_path, border_size = 2, display = False):
 
     return img_with_border
 
-# Input: RGB image of shape (h, w, 3)
-# Output: RGB image of shape (h, w, 3)
+# helper functions for s1_reduce_img_rgb
 
-def s1_reduce_img_rgbs(img_rgb, k = 4, display = False):
+def reduce_img_with_primary_colors(img_rgb, primary_rgbs, display=False, apply_median_filter=True, filter_size=3):
+    """
+    Reduces the colors of an RGB image to the specified primary RGB colors and optionally applies median filtering to reduce noise.
+
+    Parameters:
+    - img_rgb (numpy.ndarray): Input RGB image of shape (h, w, 3).
+    - primary_rgbs (list or numpy.ndarray): List or array of primary RGB colors.
+                                              Shape should be (k, 3), where k is the number of colors.
+    - display (bool): If True, displays the primary colors and the reduced image.
+    - apply_median_filter (bool): If True, applies median filtering to the reduced image to reduce noise.
+    - filter_size (int): Size of the median filter window (must be an odd integer).
+
+    Returns:
+    - numpy.ndarray: Reduced RGB image of shape (h, w, 3).
+    """
+    # Ensure primary_rgbs is a numpy array of integers
+    primary_rgbs = np.array(primary_rgbs, dtype=int)
+    k = primary_rgbs.shape[0]
+
     # Reshape input image for RGB processing
     img_height, img_width, _ = img_rgb.shape
-    pixels = img_rgb.reshape(img_height * img_width, 3)
+    pixels = img_rgb.reshape(-1, 3)
 
-    # Obtain center RGB values of k clusters using k-means
-    kmeans = KMeans(n_clusters = k, random_state = 0)
-    kmeans.fit(pixels)
-    selected_rgbs = np.round(kmeans.cluster_centers_).astype(int)
+    # Compute the Euclidean distance between each pixel and each primary RGB color
+    # Using broadcasting for efficient computation
+    distances = np.sqrt(np.mean((pixels[:, np.newaxis, :] - primary_rgbs[np.newaxis, :, :]) ** 2, axis=2))
 
-    # Initialize output image
-    img_reduced_rgb = np.zeros_like(img_rgb)
+    # Find the index of the closest primary RGB color for each pixel
+    closest_color_indices = np.argmin(distances, axis=1)
 
-    # Iterate through all image pixels and assign new output image pixel RGBs as the most similar K-means center
-    for y in range(img_height):
-        for x in range(img_width):
-            rgb_errors = np.zeros((k))
-            pixel_rgb = img_rgb[y, x, :]
-            # Compute the error between the image pixel RGB and each k-means cluster center
-            for i in range((k)):
-                rgb_errors[i] = np.sqrt(np.mean((selected_rgbs[i] - pixel_rgb) ** 2))
-            # Select RGB with lowest error and assign to the correpsonding output image pixel
-            rgb_index = np.argmin(rgb_errors)
-            img_reduced_rgb[y, x] = selected_rgbs[rgb_index]
+    # Assign the closest primary RGB color to each pixel
+    img_reduced_pixels = primary_rgbs[closest_color_indices]
 
-    if display == True:
-        plt.imshow([selected_rgbs])
+    # Reshape back to the original image shape
+    img_reduced_rgb = img_reduced_pixels.reshape(img_height, img_width, 3)
+
+    if apply_median_filter:
+        # Apply median filter to each channel separately
+        img_reduced_rgb_filtered = np.zeros_like(img_reduced_rgb)
+        for channel in range(3):
+            img_reduced_rgb_filtered[:, :, channel] = median_filter(img_reduced_rgb[:, :, channel], size=filter_size)
+        img_reduced_rgb = img_reduced_rgb_filtered
+
+    if display:
+        # Display the primary colors
+        plt.figure(figsize=(8, 2))
+        plt.imshow([primary_rgbs / 255.0])  # Normalize RGB values for display
+        plt.axis('off')
+        plt.title('Primary Colors')
         plt.show()
-        plt.imshow(img_reduced_rgb)
+
+        # Display the reduced image
+        plt.figure(figsize=(8, 8))
+        plt.imshow(img_reduced_rgb.astype(np.uint8))
+        plt.axis('off')
+        plt.title('Image with Reduced Colors (Post-Processed)')
         plt.show()
 
     return img_reduced_rgb
+
+def map_rgb_to_indices(img_rgb, primary_rgbs):
+    """
+    Maps each pixel's RGB value to its corresponding index in the primary_rgbs list.
+
+    Parameters:
+    - img_rgb (numpy.ndarray): RGB image of shape (h, w, 3).
+    - primary_rgbs (list or numpy.ndarray): List or array of primary RGB colors.
+                                           Shape should be (k, 3), where k is the number of colors.
+
+    Returns:
+    - numpy.ndarray: 2D array of shape (h, w) with color indices.
+    """
+    primary_rgbs = np.array(primary_rgbs, dtype=int)
+    h, w, _ = img_rgb.shape
+    img_indices = np.full((h, w), -1, dtype=int)  # Initialize with -1 for unmatched colors
+
+    # Iterate over each primary color and assign index
+    for idx, color_val in enumerate(primary_rgbs):
+        matches = np.all(img_rgb == color_val, axis=2)
+        img_indices[matches] = idx
+
+    # Verify that all pixels have been matched
+    if np.any(img_indices == -1):
+        unmatched = np.sum(img_indices == -1)
+        raise ValueError(f"There are {unmatched} pixels that do not match any primary colors.")
+
+    return img_indices
+
+def map_indices_to_rgb(img_indices, primary_rgbs):
+    """
+    Maps color indices back to their corresponding RGB values.
+
+    Parameters:
+    - img_indices (numpy.ndarray): 2D array of shape (h, w) with color indices.
+    - primary_rgbs (list or numpy.ndarray): List or array of primary RGB colors.
+                                           Shape should be (k, 3), where k is the number of colors.
+
+    Returns:
+    - numpy.ndarray: RGB image of shape (h, w, 3).
+    """
+    primary_rgbs = np.array(primary_rgbs, dtype=int)
+    img_rgb = primary_rgbs[img_indices]
+    return img_rgb
+
+def get_neighbor_colors(img_indices, y, x, h, w):
+    """
+    Retrieves the color indices of the 8-connected neighbors of a pixel.
+
+    Parameters:
+    - img_indices (numpy.ndarray): 2D array of color indices.
+    - y (int): Y-coordinate of the pixel.
+    - x (int): X-coordinate of the pixel.
+    - h (int): Height of the image.
+    - w (int): Width of the image.
+
+    Returns:
+    - list: List of neighboring color indices.
+    """
+    neighbors = []
+    for dy in [-1, 0, 1]:
+        for dx in [-1, 0, 1]:
+            if dy == 0 and dx == 0:
+                continue  # Skip the center pixel
+            ny, nx = y + dy, x + dx
+            if 0 <= ny < h and 0 <= nx < w:
+                neighbors.append(img_indices[ny, nx])
+    return neighbors
+
+def connected_component_analysis(img_reduced_rgb, primary_rgbs, min_size=50, display=False):
+    """
+    Post-processes a color-reduced RGB image to fix noise-induced color misassignments
+    using Connected Component Analysis (CCA).
+
+    This function identifies small connected regions of each primary color and reassigns
+    them to the most common neighboring color, effectively removing isolated noise pixels.
+
+    Parameters:
+    - img_reduced_rgb (numpy.ndarray): Reduced RGB image of shape (h, w, 3).
+    - primary_rgbs (list or numpy.ndarray): List or array of primary RGB colors.
+                                           Shape should be (k, 3), where k is the number of colors.
+    - min_size (int): Minimum size (in pixels) for a connected component to be retained.
+                      Components smaller than this will be considered noise and removed.
+    - display (bool): If True, displays the original and post-processed images.
+
+    Returns:
+    - numpy.ndarray: Post-processed RGB image of shape (h, w, 3).
+    """
+    # Step 1: Map RGB values to color indices
+    img_indices = map_rgb_to_indices(img_reduced_rgb, primary_rgbs)
+    h, w = img_indices.shape
+
+    # Step 2: Initialize a copy for post-processing
+    img_processed_indices = img_indices.copy()
+
+    # Step 3: Perform CCA for each primary color
+    for color_idx, color_val in enumerate(primary_rgbs):
+        # Create a binary mask for the current color
+        binary_mask = (img_indices == color_idx).astype(np.uint8)
+
+        # Label connected components
+        labeled_mask = measure.label(binary_mask, connectivity=2)  # 8-connectivity
+
+        # Obtain properties of labeled regions
+        props = measure.regionprops(labeled_mask)
+
+        for prop in props:
+            if prop.area < min_size:
+                # This is a small region; reassign its pixels
+                for coord in prop.coords:
+                    y, x = coord
+                    # Get neighboring color indices
+                    neighbors = get_neighbor_colors(img_indices, y, x, h, w)
+                    # Exclude the current color
+                    neighbors = [n for n in neighbors if n != color_idx]
+                    if neighbors:
+                        # Assign the most common neighboring color
+                        most_common = np.bincount(neighbors).argmax()
+                        img_processed_indices[y, x] = most_common
+                    else:
+                        # If no neighbors are found (unlikely), keep the original color
+                        pass
+
+    # Step 4: Handle any pixels that might not match primary colors after reassignment
+    # (This is a safety check; ideally, all pixels should match)
+    if np.any(img_processed_indices == -1):
+        unmatched = np.sum(img_processed_indices == -1)
+        raise ValueError(f"There are {unmatched} pixels that do not match any primary colors after processing.")
+
+    # Step 5: Map indices back to RGB
+    img_post_processed_rgb = map_indices_to_rgb(img_processed_indices, primary_rgbs)
+
+    if display:
+        # Display the original and post-processed images side by side
+        plt.figure(figsize=(12, 6))
+
+        plt.subplot(1, 2, 1)
+        plt.imshow(img_reduced_rgb.astype(np.uint8))
+        plt.title('Original Reduced Image')
+        plt.axis('off')
+
+        plt.subplot(1, 2, 2)
+        plt.imshow(img_post_processed_rgb.astype(np.uint8))
+        plt.title(f'Post-Processed Image (min_size={min_size})')
+        plt.axis('off')
+
+        plt.show()
+
+    return img_post_processed_rgb
+
+def s1_reduce_img_rgbs(img_rgb, primary_rgbs, display=False, apply_median_filter=True, filter_size=3, min_size=50):
+    img_reduced_rgb = reduce_img_with_primary_colors(img_rgb, primary_rgbs, display=display, apply_median_filter=apply_median_filter, filter_size=filter_size)
+    img_post_processed_rgb = connected_component_analysis(img_reduced_rgb, primary_rgbs, min_size=min_size, display=False)
+    return img_post_processed_rgb
 
 # Input: RGB image
 # Output: Binary image of shape (h, w, 1)
@@ -131,81 +318,141 @@ def s3_group_edges(img_edges, edge_threshold = 50):
             edges.append(np.array(list(edge_points_set)))
     return edges
 
-# Helper function: Identify the closest pixel to a given current pixel
-def closest_point(curr, points):
-    if len(points) == 0:
-        raise ValueError('Invalid number of remaining points')
-    min_dist = float('inf')
-    min_point = None
-    # Iterate through all remaining pixels
-    for i, point in enumerate(points):
-        # Calculate the distance between the current point and the remaining pixels
-        dist = np.linalg.norm(np.array(curr) - np.array(point))
-        # Update pixel if it has the shortest distance among traversed pixels
-        if dist < min_dist:
-            min_dist = dist
-            min_point = point
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.ndimage import median_filter
+from PIL import Image
+
+# Optimized Helper function: Identify the closest pixel to a given current pixel using vectorized operations
+def closest_point_optim(curr, points_arr):
+    """
+    Find the closest point to 'curr' in 'points_arr' using vectorized distance computation.
+
+    Parameters:
+    - curr (tuple): Current point coordinates (y, x).
+    - points_arr (numpy.ndarray): Array of points with shape (N, 2).
+
+    Returns:
+    - min_dist (float): Minimum Euclidean distance.
+    - min_point (tuple): Coordinates of the closest point.
+    """
+    # Calculate differences
+    diffs = points_arr - curr  # Shape: (N, 2)
+    # Compute squared Euclidean distances
+    dists = np.sqrt(np.sum(diffs ** 2, axis=1))  # Shape: (N,)
+    # Find the index of the minimum distance
+    min_idx = np.argmin(dists)
+    min_dist = dists[min_idx]
+    min_point = tuple(points_arr[min_idx])
     return min_dist, min_point
 
-def helper(curr, remaining, all_sections, ordered_section, mode, dist_thresh,
-           section_size_thresh):
-    # Return if there are no longer any remaining pixels
-    if len(remaining) == 0:
-        all_sections.append(ordered_section)
-        return
+# Optimized Helper function: Iterative version to replace the recursive 'helper'
+def helper_iterative_optim(curr, remaining_arr, all_sections, ordered_section, mode, dist_thresh, section_size_thresh):
+    """
+    Iteratively process points to form ordered sections based on distance thresholds.
 
-    # Obtain the closest remaining pixel to the current pixel
-    min_dist, min_point = closest_point(curr, remaining)
-    # The closest pixel is within the predetermined distance threhold
-    if min_dist < dist_thresh:
-        # Add pixel to end of ordered section when in forward mode
-        if mode == 'forward':
-            ordered_section.append(min_point)
-        # Add pixel to start of ordered section when in backward mode
+    Parameters:
+    - curr (tuple): Current point coordinates (y, x).
+    - remaining_arr (numpy.ndarray): Array of remaining points with shape (N, 2).
+    - all_sections (list): List to store all ordered sections.
+    - ordered_section (list): Current ordered section.
+    - mode (str): Current mode ('forward' or 'backward').
+    - dist_thresh (float): Distance threshold to determine section continuation.
+    - section_size_thresh (int): Minimum size threshold for a section to be retained.
+
+    Returns:
+    - None: Updates 'all_sections' and 'ordered_section' in place.
+    """
+    while True:
+        if remaining_arr.size == 0:
+            all_sections.append(ordered_section.copy())
+            break
+
+        # Find the closest point to the current point
+        min_dist, min_point = closest_point_optim(np.array(curr), remaining_arr)
+
+        if min_dist < dist_thresh:
+            # Add point to the ordered_section based on the current mode
+            if mode == 'forward':
+                ordered_section.append(min_point)
+            else:
+                ordered_section.insert(0, min_point)
+
+            # Remove the closest point from remaining_arr
+            # Find the index of the min_point
+            indices = np.where((remaining_arr == min_point).all(axis=1))[0]
+            if len(indices) == 0:
+                raise ValueError("Point to remove not found in remaining points.")
+            remaining_arr = np.delete(remaining_arr, indices[0], axis=0)
+
+            # Update current point
+            curr = min_point
         else:
-            ordered_section.insert(0, min_point)
-        # Update remaining pixels and current pixel
-        remaining.remove(min_point)
-        curr = min_point
-        # Call the function again
-        helper(curr, remaining, all_sections, ordered_section, mode, dist_thresh,
-               section_size_thresh)
-    # The closest pixel is beyond the predetermined distance threshold
-    else:
-        # If in forward mode, update to backward mode, update current pixel and call the function again
-        if mode == 'forward':
-            mode = 'backward'
-            curr = ordered_section[0]
-            helper(curr, remaining, all_sections, ordered_section, mode, dist_thresh,
-                   section_size_thresh)
-        # If in backward mode and section is above minimum length, it is appended to the sections list and a new current pixel is identified
-        elif mode == 'backward':
-            if len(ordered_section) > section_size_thresh:
-              all_sections.append(ordered_section)
-            ordered_section = []
-            curr = remaining.pop()
-            ordered_section.append(curr)
-            mode = 'forward'
-            helper(curr, remaining, all_sections, ordered_section, mode, dist_thresh,
-                   section_size_thresh)
+            if mode == 'forward':
+                mode = 'backward'
+                if len(ordered_section) == 0:
+                    break  # No points to process
+                curr = ordered_section[0]
+            elif mode == 'backward':
+                if len(ordered_section) > section_size_thresh:
+                    all_sections.append(ordered_section.copy())
+                ordered_section = []
+                if remaining_arr.size == 0:
+                    break
+                # Select the last point as the new current point
+                curr = tuple(remaining_arr[-1])
+                ordered_section.append(curr)
+                remaining_arr = remaining_arr[:-1]
+                mode = 'forward'
 
-# Input: List of arrays of tuples, int, int
-# Output: List of arrays of tuples (List length: number of edges; array length: number of pixels in given edge; tuples: pixel y and x coordinates)
+    return remaining_arr, all_sections, ordered_section
+
+# Optimized Main Function: Order edges
 def s4_order_edges(edges, dist_thresh, section_size_thresh):
+    """
+    Orders edges by grouping connected pixels into sections based on distance thresholds.
+
+    Parameters:
+    - edges (list): List of arrays/lists containing pixel coordinates as (y, x) tuples.
+    - dist_thresh (float): Distance threshold to determine if points are part of the same section.
+    - section_size_thresh (int): Minimum number of pixels required for a section to be retained.
+
+    Returns:
+    - ordered_edges (list): List containing ordered sections for each edge.
+    """
     ordered_edges = []
-    for edge in edges:
-        edge = list(map(tuple, edge))
-        ordered_edge = []
+    for edge_idx, edge in enumerate(edges):
+        # Convert edge to a NumPy array of shape (N, 2)
+        edge_arr = np.array(edge, dtype=int)
+        if edge_arr.size == 0:
+            ordered_edges.append([])
+            continue
+
+        # Initialize ordered_section and all_sections
         ordered_section = []
-        remaining = set(edge)
-        curr = remaining.pop()
-        ordered_section.append(curr)
-        mode = 'forward'
         all_sections = []
 
-        helper(curr, remaining, all_sections, ordered_section, mode, dist_thresh,
-               section_size_thresh)
+        # Initialize remaining points as a NumPy array
+        remaining_arr = edge_arr.copy()
 
+        # Select the first point as the starting point
+        curr = tuple(remaining_arr[0])
+        ordered_section.append(curr)
+        remaining_arr = remaining_arr[1:]
+
+        # Initialize mode
+        mode = 'forward'
+
+        # Call the iterative helper
+        remaining_arr, all_sections, ordered_section = helper_iterative_optim(
+            curr, remaining_arr, all_sections, ordered_section, mode, dist_thresh, section_size_thresh
+        )
+
+        # Append any remaining ordered_section
+        if len(ordered_section) > section_size_thresh:
+            all_sections.append(ordered_section.copy())
+
+        # Append to ordered_edges
         ordered_edges.append(all_sections)
 
     return ordered_edges
@@ -220,8 +467,83 @@ def s5_simplify_path(ordered_edges, epsilon):
         simplified_paths.append(simplified_edge)
     return simplified_paths
 
+def s6_helper_bounding_box(paths):
+  copied_paths = copy.deepcopy(paths)
+  min_x_vals = []
+  min_y_vals = []
+  for path in copied_paths:
+    min_x_vals.append(np.min([x for x,y in path]))
+    min_y_vals.append(np.min([y for x,y in path]))
+  min_x = np.min(min_x_vals)
+  min_y = np.min(min_y_vals)
+
+  for path in copied_paths:
+    for i in range(len(path)):
+      path[i] = [int(path[i][0] - min_x), int(path[i][1] - min_y)]
+    if path[-1] == path[0]:
+      path.pop()
+  return copied_paths
+
+def convert_point(point):
+  """Convert a point (which may be a tuple of np.int64s) to a list of two ints."""
+  return [int(point[0]), int(point[1])]
+
+def s6_helper_euclidean_distance(p, q):
+  """Compute Euclidean distance between two points p and q."""
+  return math.sqrt((p[0] - q[0])**2 + (p[1] - q[1])**2)
+
+def s6_helper_rotate_path(path, idx):
+  """
+  Rotate the path so that the element at index `idx` becomes the first element.
+  Then, append that element at the end to 'close the loop'.
+  """
+  rotated = path[idx:] + path[:idx]
+  rotated.append(rotated[0])
+  return rotated
+
+def s6_optimize_waypoint_traversal(paths):
+    """
+    Given a list of disjoint paths (each path is a list of [x, y] waypoints),
+    repeatedly choose the path that contains the waypoint closest to the current location,
+    rotate that path so that the chosen waypoint is at both the start and end,
+    update the current location, and remove the chosen path from further consideration.
+    """
+    bounded_paths = s6_helper_bounding_box(paths)
+    current_location = [0, 0]
+    ordered_paths = []
+    remaining_paths = copy.deepcopy(bounded_paths)  # work on a copy so the original isn't modified
+
+    while remaining_paths:
+      best_distance = float('inf')
+      best_path = None
+      best_waypoint_idx = None
+      best_path_index = None
+
+      # Loop over each remaining path to find the closest waypoint
+      for i, path in enumerate(remaining_paths):
+        for j, waypoint in enumerate(path):
+          wp = convert_point(waypoint)
+          dist = s6_helper_euclidean_distance(current_location, waypoint)
+          if dist < best_distance:
+              best_distance = dist
+              best_path = path
+              best_waypoint_idx = j
+              best_path_index = i
+
+      # Rotate the chosen path so that the closest waypoint is first (and also last)
+      new_path = s6_helper_rotate_path(best_path, best_waypoint_idx)
+      ordered_paths.append(new_path)
+
+      # Update the current location to the chosen waypoint
+      current_location = new_path[0]
+
+      # Remove the chosen path from the remaining paths
+      del remaining_paths[best_path_index]
+
+    return ordered_paths
+
 # Input: List of arrays of tuples, string (output file path)
-def s6_generate_output(simplified_paths, output_file):
+def s7_generate_output(simplified_paths, output_file):
   for i in range(len(simplified_paths)):
     if simplified_paths[i][-1] != simplified_paths[i][0]:
       simplified_paths[i].append(simplified_paths[i][0])

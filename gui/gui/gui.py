@@ -234,7 +234,9 @@ class RobotPainterGUI(customtkinter.CTk):
 
 
     def process_image(self, uploaded_image_path):
-        k = 3
+        primary_rgbs = [(153, 0, 0), (1, 31, 91), (255, 255, 255)] # penn P
+        waypoint_theta = 0
+        k = len(primary_rgbs)
         border_size = 2
         min_points_per_edge = 50
         max_dist_betw_points = 5
@@ -245,18 +247,20 @@ class RobotPainterGUI(customtkinter.CTk):
 
         waypoints_output_filename = 'image_waypoints.txt'
         img_rgb = img_processing.s0_prepare_img(uploaded_image_path, border_size=border_size, display=False)
-        img_reduced_rgb = img_processing.s1_reduce_img_rgbs(img_rgb, k=k, display=False)
+        img_reduced_rgb = img_processing.s1_reduce_img_rgbs(img_rgb, primary_rgbs, display=False)
         print("Image preprocessing completed")
 
         self.set_status("Status: Generating waypoints...")
 
         img_edges = img_processing.s2_generate_edges(img_reduced_rgb, display=False)
+        img_edges = img_edges.astype(np.uint8)
         grouped_edges = img_processing.s3_group_edges(img_edges, edge_threshold=min_points_per_edge)
         print("Edge processing completed")
         ordered_edges = img_processing.s4_order_edges(grouped_edges, dist_thresh=max_dist_betw_points, section_size_thresh=min_section_size)
         simplified_paths = img_processing.s5_simplify_path(ordered_edges, epsilon=1.4)
+        final_paths = img_processing.s6_optimize_waypoint_traversal(simplified_paths)
         print("Path processing completed")
-        img_processing.s6_generate_output(simplified_paths, waypoints_output_filename)
+        img_processing.s7_generate_output(final_paths, waypoints_output_filename)
 
 
     def center_map_on_current_location(self):

@@ -7,3 +7,4 @@ scikit-learn
 rdp
 customtkinter
 tkintermapview
+scikit-image
