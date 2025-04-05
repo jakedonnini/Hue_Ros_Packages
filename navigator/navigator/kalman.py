@@ -74,6 +74,9 @@ class KalmanFilter(Node):
         self.gps_y = 0
         self.gps_Theta = 0
 
+        self.stateBeforeRot = np.array([[0], [0], [0]])
+        self.stateAfterRot = np.array([[0], [0], [0]])
+
         self.new_gps_data = False
         self.encoder_data_updated = False  # Reset flag
 
@@ -88,9 +91,6 @@ class KalmanFilter(Node):
         self.publisher_thread = threading.Thread(target=self.run_publishing_loop)
         self.processor_thread.start()
         self.publisher_thread.start()
-
-        self.stateBeforeRot = np.array([[0], [0], [0]])
-        self.stateAfterRot = np.array([[0], [0], [0]])
 
         # is rotation matrix calculated?
         self.rotation_calculated = False
