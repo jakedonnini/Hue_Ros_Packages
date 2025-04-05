@@ -360,6 +360,8 @@ class RobotPainterGUI(customtkinter.CTk):
         self.set_status("Status: Waypoints loaded")
 
     def publish_gps_data(self):
+
+
         coords = []
         file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("CSV files", "*.csv")])
         if file_path:
@@ -367,6 +369,23 @@ class RobotPainterGUI(customtkinter.CTk):
                 for line in file:
                     x, y, z = map(float, line.strip().split(", "))
                     coords.append((x, y, z))
+
+            x_vals = [x for x, y, _ in coords]
+            y_vals = [y for x, y, _ in coords]
+
+            if x_vals and y_vals:  # Ensure there are points to plot
+                x_min, x_max = min(x_vals), max(x_vals)
+                y_min, y_max = min(y_vals), max(y_vals)
+                
+                padding_x = (x_max - x_min) * 0.1 if x_max > x_min else 1
+                padding_y = (y_max - y_min) * 0.1 if y_max > y_min else 1
+                
+                self.live_plotter.ax.set_xlim(x_min - padding_x, x_max + padding_x)
+                self.live_plotter.ax.set_ylim(y_min - padding_y, y_max + padding_y)
+
+            self.live_plotter.ax.plot(x_vals, y_vals, 'bo', label="Loaded Waypoints")  
+            self.live_plotter.ax.legend()
+
         
             for x, y, toggle in coords:
                 print(x,y,toggle)
@@ -376,6 +395,7 @@ class RobotPainterGUI(customtkinter.CTk):
                 msg.toggle = int(toggle)
                 self.node.publish_gps_data(x, y, toggle)
                 rclpy.spin_once(self.node, timeout_sec=0.1) 
+
 
     def publish_gps_data_current(self):
     
