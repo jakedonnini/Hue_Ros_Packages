@@ -71,7 +71,7 @@ def generate_launch_description():
         # )
         Node(
             package='navigator_cpp',
-            executable='NavLite',
+            executable='gps_navigation_node',
             name='navigation_node_cpp',
             output='screen'
         )
