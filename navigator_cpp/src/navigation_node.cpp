@@ -293,14 +293,14 @@ private:
           pwm_pub_->publish(pwm_msg);
         } 
 
-        if (self.pwmr != pwmr_old_ || self.pwml != pwml_old_) {
+        if (pwmr != pwmr_old_ || pwml != pwml_old_ || paintingIncorrect) {
           // Publish the PWM command
           pwm_pub_->publish(pwm_msg);
           pwmr_old_ = pwmr;
           pwml_old_ = pwml;
         }
 
-        RCLCPP_INFO(this->get_logger(), "PWM: r: %d, l: %d, Waypoints: %d, %d Current Pos: %d, %d TE: %f", pwm_msg.r, pwm_msg.l, static_cast<int>(target_x), static_cast<int>(target_y), static_cast<int>(currentX_), static_cast<int>(currentY_), thetaError);
+        RCLCPP_INFO(this->get_logger(), "PWM: r: %d, l: %d, Waypoints: %d, %d Current Pos: %d, %d TE: %f", pwmr, pwml, static_cast<int>(target_x), static_cast<int>(target_y), static_cast<int>(currentX_), static_cast<int>(currentY_), thetaError);
         
         
       }
