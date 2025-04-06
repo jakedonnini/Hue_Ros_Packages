@@ -15,8 +15,12 @@ class GPSSubscriberPublisher(Node):
 
         self.waypoint_subscription = self.create_subscription(
             Coordinates, 'coordinates', self.waypoint_callback, 10)
+        
+        # TRYING DEPTH 1 JUST TO SEE !!!
+        # self.Kalman = self.create_subscription(
+        #     GpsData, 'kalman/data', self.kalman, 2)
         self.Kalman = self.create_subscription(
-            GpsData, 'kalman/data', self.kalman, 2)
+            GpsData, 'kalman/data', self.kalman, 1)
         # self.DR_subscription = self.create_subscription(
         #     GpsData, 'deadReckoning/pose', self.deadReck_callback, 2)
         self.DR_subscription_vel = self.create_subscription(
