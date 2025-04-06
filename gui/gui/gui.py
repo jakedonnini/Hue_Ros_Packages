@@ -183,6 +183,11 @@ class RobotPainterGUI(customtkinter.CTk):
         self.scale_slider.set(1.0)
         self.scale_slider.grid(row=9, column=0, padx=20, pady=(10, 10))
 
+        self.publish_selected_point_btn = customtkinter.CTkButton(
+            master=self.frame_left, text="Move to Start", command=self.publish_selected_point_relative_to_robot
+        )
+        self.publish_selected_point_btn.grid(row=13, column=0, padx=20, pady=(10, 10))
+
 
     def set_status(self, message):
         self.status_bar.configure(text=message)
@@ -444,7 +449,48 @@ class RobotPainterGUI(customtkinter.CTk):
                 msg.y = float(y)
                 msg.toggle = int(toggle)
                 self.node.publish_gps_data(x, y, toggle)
-                rclpy.spin_once(self.node, timeout_sec=0.1) 
+                rclpy.spin_once(self.node, timeout_sec=0.1)
+
+
+    def publish_selected_point_relative_to_robot(self):
+        lat = self.lat_entry.get()
+        lon = self.lon_entry.get()
+
+        if not lat or not lon:
+            print("Latitude or Longitude is missing!")
+            return
+
+        try:
+            selected_lat = float(lat)
+            selected_lon = float(lon)
+        except ValueError:
+            print("Invalid Latitude or Longitude format!")
+            return
+
+        def one_time_callback(msg):
+            robot_lat = msg.x
+            robot_lon = msg.y
+
+            R = 6_371_000 * 100  
+
+            d_lat = math.radians(selected_lat - robot_lat)
+            d_lon = math.radians(selected_lon - robot_lon)
+            lat_rad = math.radians(robot_lat)
+
+            dx = R * d_lon * math.cos(lat_rad)
+            dy = R * d_lat
+
+            self.node.publish_gps_data(dx, dy, 1)
+            self.gps_temp_sub.destroy()
+            print(f"Published relative position: dx = {dx:.2f} cm, dy = {dy:.2f} cm")
+
+        self.gps_temp_sub = self.node.create_subscription(
+            GpsData,
+            '/gps/data',
+            one_time_callback,
+            10
+        )
+ 
 
 
     def publish_gps_data_current(self):
