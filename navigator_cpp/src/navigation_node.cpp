@@ -32,9 +32,9 @@ public:
     pwm_pub_ = this->create_publisher<custom_msg::msg::TwoInt>("PWM", 5);
 
     // PID and state initialization
-    Kp_ = 0.2;
-    Ki_ = 0.1;
-    Kd_ = 10.0;
+    Kp_ = 0.5;
+    Ki_ = 0.15;
+    Kd_ = 15.0;
     Kd_line_ = 0.05;
     integral_ = 0.0;
     previous_error_ = 0.0;
