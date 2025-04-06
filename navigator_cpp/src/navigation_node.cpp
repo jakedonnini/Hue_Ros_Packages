@@ -32,10 +32,10 @@ public:
     pwm_pub_ = this->create_publisher<custom_msg::msg::TwoInt>("PWM", 5);
 
     // PID and state initialization
-    Kp_ = 0.5;
+    Kp_ = 0.2;
     Ki_ = 0.1;
     Kd_ = 7.0;
-    Kd_line_ = 1.1;
+    Kd_line_ = 0.05;
     integral_ = 0.0;
     previous_error_ = 0.0;
 
@@ -245,8 +245,8 @@ private:
           pwmDelTheta = 0;
         }
 
-        // slow down close to point
-        float constrainedDist = constrain(distance/40, 0, 20); // at 40cm away we start to slow down (twice the overshoot)
+        // slow down close to point but not to 0
+        float constrainedDist = constrain(distance/10, 0.1, 1); // at 40cm away we start to slow down (twice the overshoot)
         float speed = pwmAvg * constrainedDist;
 
         int pwmr = static_cast<int>(speed + pwmDel + pwmDelTheta);
@@ -308,8 +308,7 @@ private:
           pwml_old_ = pwml;
         }
 
-        RCLCPP_INFO(this->get_logger(), "PWM: r: %d, l: %d, Waypoints: %d, %d Current Pos: %d, %d TE: %f", pwmr, pwml, static_cast<int>(target_x), static_cast<int>(target_y), static_cast<int>(currentX_), static_cast<int>(currentY_), thetaError);
-        
+        RCLCPP_INFO(this->get_logger(), "PWM: r: %d, l: %d, Waypoints: %d, %d Current Pos: %d, %d TE: %f D: %f", pwmr, pwml, static_cast<int>(target_x), static_cast<int>(target_y), static_cast<int>(currentX_), static_cast<int>(currentY_), thetaError, distance);        
         
       }
       
