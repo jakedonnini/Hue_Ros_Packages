@@ -190,7 +190,7 @@ private:
         float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y);
 
         // Check if we've reached the waypoint
-        if (distance < 5) { // Threshold distance
+        if (current_target_ != std::nullopt && distance < 5) { // Threshold distance
           prev_waypoint_holder_ = *current_target_;
           current_target_ = std::nullopt;
           RCLCPP_INFO(this->get_logger(), "\n\n\n\n --------------------------------------\n Hit waypoint (%f, %f) \n --------------------------------------\n\n\n\n", target_x, target_y);
@@ -233,7 +233,7 @@ private:
           integral_ = 0;
         }
 
-        if (waypoint_buffer_.empty() && !current_target_) {
+        if (waypoint_buffer_.empty() && current_target_ != std::nullopt) {
           pwmAvg = 0;
           pwmDel = 0;
           pwmDelTheta = 0;
