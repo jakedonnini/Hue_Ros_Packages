@@ -332,7 +332,7 @@ class GPSSubscriberPublisher(Node):
     def stop_threads(self):
         """Stop the threads gracefully."""
         self.running = False
-        # self.publisher_thread.join()
+        self.publisher_thread.join()
         self.processor_thread.join()
 
 def main(args=None):
