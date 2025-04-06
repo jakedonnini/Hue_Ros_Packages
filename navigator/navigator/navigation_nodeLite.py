@@ -17,8 +17,8 @@ class GPSSubscriberPublisher(Node):
             Coordinates, 'coordinates', self.waypoint_callback, 10)
         self.Kalman = self.create_subscription(
             GpsData, 'kalman/data', self.kalman, 2)
-        self.DR_subscription = self.create_subscription(
-            GpsData, 'deadReckoning/pose', self.deadReck_callback, 2)
+        # self.DR_subscription = self.create_subscription(
+        #     GpsData, 'deadReckoning/pose', self.deadReck_callback, 2)
         self.DR_subscription_vel = self.create_subscription(
             Coordinates, 'deadReckoning/vel', self.deadReck_callback_t, 2)
 
@@ -91,37 +91,38 @@ class GPSSubscriberPublisher(Node):
         with self.lock:
             self.waypointBuffer.append((msg.x, msg.y, msg.toggle))
 
-    def deadReck_callback(self, msg):
-        with self.lock:
-            self.DR_x = msg.x
-            self.DR_y = msg.y
-            self.DR_angle = msg.angle
-            if self.usingGPS == 0:
-                self.currentX = self.DR_x
-                self.currentY = self.DR_y
-                self.currentTheta = self.DR_angle
-                self.pos_data_updated = True
+    # def deadReck_callback(self, msg):
+    #     with self.lock:
+    #         self.DR_x = msg.x
+    #         self.DR_y = msg.y
+    #         self.DR_angle = msg.angle
+    #         if self.usingGPS == 0:
+    #             self.currentX = self.DR_x
+    #             self.currentY = self.DR_y
+    #             self.currentTheta = self.DR_angle
+    #             self.pos_data_updated = True
 
-        if self.usingGPS == 0:
-            self.adjust_pwm_values()
+    #     if self.usingGPS == 0:
+    #         self.adjust_pwm_values()
 
     def kalman(self, msg):
-        with self.lock:
-            self.kalman_x = msg.x
-            self.kalman_y = msg.y
-            self.kalman_angle = msg.angle
-            if self.usingGPS == 1:
-                self.currentX = self.kalman_x
-                self.currentY = self.kalman_y
-                self.currentTheta = self.kalman_angle
-                self.pos_data_updated = True
+        # with self.lock:
+        self.kalman_x = msg.x
+        self.kalman_y = msg.y
+        self.kalman_angle = msg.angle
+        if self.usingGPS == 1:
+            self.currentX = self.kalman_x
+            self.currentY = self.kalman_y
+            self.currentTheta = self.kalman_angle
+            self.pos_data_updated = True
 
         if self.usingGPS == 1:
             self.adjust_pwm_values() # adjuest pwm values imediately
 
     def deadReck_callback_t(self, msg):
-        with self.lock:
-            self.isPainting = msg.toggle
+        # with self.lock:
+            # self.isPainting = msg.toggle
+        self.isPainting = msg.toggle
 
     def run_processing_loop(self):
         """Process waypoints and update encoder position as new data is available."""
