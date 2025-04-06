@@ -318,7 +318,7 @@ class GPSSubscriberPublisher(Node):
         # self.pwm_publish = True
 
         #UNCOMMENT THIS OUT LATER
-        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or paintingIncorrect:
+        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or paintingIncorrect or sureOff:
             self.pwm_publisher.publish(pwm_msg)
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value

@@ -297,7 +297,9 @@ private:
           pwm_pub_->publish(pwm_msg);
         } 
 
-        if (pwmr != pwmr_old_ || pwml != pwml_old_ || paintingIncorrect) {
+        bool sureOff = (pwml == 0 && pwmr == 0);
+
+        if (pwmr != pwmr_old_ || pwml != pwml_old_ || paintingIncorrect || sureOff) {
           // Publish the PWM command
           pwm_pub_->publish(pwm_msg);
           pwmr_old_ = pwmr;
