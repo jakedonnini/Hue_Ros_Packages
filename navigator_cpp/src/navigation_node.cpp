@@ -35,7 +35,7 @@ public:
     Kp_ = 0.5;
     Ki_ = 0.2;
     Kd_ = 20.0;
-    Kd_line_ = 0.0;
+    Kd_line_ = 0.01;
     integral_ = 0.0;
     previous_error_ = 0.0;
 
@@ -201,11 +201,11 @@ private:
         // distance to line
         float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y, last_target_x, last_target_y);
 
-        RCLCPP_INFO_STREAM(this->get_logger(), 
-          "target null: " << (current_target_ == std::nullopt) 
-          << ", bufferEmpty: " << !waypoint_buffer_.empty()
-          << ", distance: " << distance
-          << ", line_distance: " << line_distance);
+        // RCLCPP_INFO_STREAM(this->get_logger(), 
+        //   "target null: " << (current_target_ == std::nullopt) 
+        //   << ", bufferEmpty: " << !waypoint_buffer_.empty()
+        //   << ", distance: " << distance
+        //   << ", line_distance: " << line_distance);
 
         // Calculate motor speeds
         int pwmAvg = 20; // Adjust as needed
@@ -253,13 +253,13 @@ private:
         }
 
         // slow down close to point but not to 0
-        // float constrainedDist = constrain(distance/10, 0.1, 1); // at 40cm away we start to slow down (twice the overshoot)
-        // float speed = pwmAvg*constrainedDist;
+        float constrainedDist = constrain(distance/20, 0.2, 1); // at 40cm away we start to slow down (twice the overshoot)
+        float speed = pwmAvg*constrainedDist;
 
-        RCLCPP_INFO(this->get_logger(), "PWM: AVG: %d, Del: %f, DelT: %f, I: %f", pwmAvg, pwmDel, pwmDelTheta, I_term);        
+        // RCLCPP_INFO(this->get_logger(), "PWM: AVG: %d, Del: %f, DelT: %f, I: %f", pwmAvg, pwmDel, pwmDelTheta, I_term);        
 
-        int pwmr = static_cast<int>(pwmAvg + pwmDel + pwmDelTheta);
-        int pwml = static_cast<int>(pwmAvg - pwmDel - pwmDelTheta);
+        int pwmr = static_cast<int>(speed + pwmDel + pwmDelTheta);
+        int pwml = static_cast<int>(speed - pwmDel - pwmDelTheta);
         
         // Limit PWM values
         pwmr = std::max(-100, std::min(100, pwmr));
