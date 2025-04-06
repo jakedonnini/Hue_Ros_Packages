@@ -106,15 +106,15 @@ class GPSSubscriberPublisher(Node):
     #         self.adjust_pwm_values()
 
     def kalman(self, msg):
-        with self.lock:
-            self.kalman_x = msg.x
-            self.kalman_y = msg.y
-            self.kalman_angle = msg.angle
-            if self.usingGPS == 1:
-                self.currentX = self.kalman_x
-                self.currentY = self.kalman_y
-                self.currentTheta = self.kalman_angle
-                self.pos_data_updated = True
+        # with self.lock:
+        self.kalman_x = msg.x
+        self.kalman_y = msg.y
+        self.kalman_angle = msg.angle
+        if self.usingGPS == 1:
+            self.currentX = self.kalman_x
+            self.currentY = self.kalman_y
+            self.currentTheta = self.kalman_angle
+            self.pos_data_updated = True
 
         if self.usingGPS == 1:
             self.adjust_pwm_values() # adjuest pwm values imediately
