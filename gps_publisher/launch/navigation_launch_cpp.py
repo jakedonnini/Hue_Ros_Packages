@@ -63,10 +63,16 @@ def generate_launch_description():
             name='kalman_filter',
             output='screen'
         ),
+        # Node(
+        #     package='navigator',
+        #     executable='NavLite',
+        #     name='navigation_node',
+        #     output='screen'
+        # )
         Node(
-            package='navigator',
+            package='navigator_cpp',
             executable='NavLite',
-            name='navigation_node',
+            name='navigation_node_cpp',
             output='screen'
         )
     ])
