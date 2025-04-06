@@ -158,7 +158,7 @@ private:
 
   // Process waypoints and navigate
   void run_processing_loop() {
-    rclcpp::Rate rate(1.0 / deltaT_);
+    rclcpp::Rate rate(1.0 / deltaT_); // maybe make this every time we get kalman data
     
     while (rclcpp::ok() && running_) {
       {
@@ -172,8 +172,8 @@ private:
           current_target_ = std::make_pair(x, y);
           shouldBePainting_ = t;
           
-          RCLCPP_INFO(this->get_logger(), "New target: x=%.2f, y=%.2f, paint=%d", 
-                      x, y, shouldBePainting_);
+          // RCLCPP_INFO(this->get_logger(), "New target: x=%.2f, y=%.2f, paint=%d", 
+          //             x, y, shouldBePainting_);
         }
         
         // If we have a target, navigate to it
@@ -188,6 +188,13 @@ private:
         
         // distance to line
         float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y);
+
+        // Check if we've reached the waypoint
+        if (distance < 5) { // Threshold distance
+          prev_waypoint_holder_ = *current_target_;
+          current_target_ = std::nullopt;
+          RCLCPP_INFO(this->get_logger(), "\n\n\n\n --------------------------------------\n Hit waypoint (%f, %f) \n --------------------------------------\n\n\n\n", target_x, target_y);
+        }
 
         // Calculate motor speeds
         int pwmAvg = 20; // Adjust as needed
@@ -258,24 +265,44 @@ private:
           pwml -= 39;
         }
         
-        // Apply PWM smoothing
-        pwmr = 0.8 * pwmr + 0.2 * pwmr_old_;
-        pwml = 0.8 * pwml + 0.2 * pwml_old_;
-        pwmr_old_ = pwmr;
-        pwml_old_ = pwml;
-        
         // Publish PWM command
         auto pwm_msg = custom_msg::msg::TwoInt();
         pwm_msg.r = pwmr * dir_;
         pwm_msg.l = pwml * dir_;
-        pwm_pub_->publish(pwm_msg);
-        
-        // Check if we've reached the waypoint
-        if (distance < 5) { // Threshold distance
-          prev_waypoint_holder_ = *current_target_;
-          current_target_ = std::nullopt;
-          RCLCPP_INFO(this->get_logger(), "\n\n\n\n --------------------------------------\n Hit waypoint \n --------------------------------------\n\n\n\n");
+
+        int avgSpeed = (pwmr + pwml) / 2;
+
+        // Check if we are not up to speed (than 1/4 of nominal speed then stop painting)
+        bool notUpToSpeed = avgSpeed <= ((pwmAvg+39) * 0.25) && shouldBePainting_ == 1;
+
+        bool paintingIncorrect = isPainting_ != shouldBePainting_;
+
+        if (notUpToSpeed){
+          pwm_msg.toggle = 0;
+        }  else if (shouldBePainting_ == 1) {
+          // if we are painting and we are up to speed then turn on
+          pwm_msg.toggle = 1;
+        } else {
+          // if we are not painting then turn off
+          pwm_msg.toggle = 0;
         }
+
+        if (isPainting_ && !current_target_ && shouldBePainting_ == 0) {
+          // if we are painting and we are not moving then turn off
+          pwm_msg.toggle = 0;
+          pwm_pub_->publish(pwm_msg);
+        } 
+
+        if (self.pwmr != pwmr_old_ || self.pwml != pwml_old_) {
+          // Publish the PWM command
+          pwm_pub_->publish(pwm_msg);
+          pwmr_old_ = pwmr;
+          pwml_old_ = pwml;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "PWM: r: %d, l: %d, Waypoints: %d, %d Current Pos: %d, %d TE: %f", pwm_msg.r, pwm_msg.l, static_cast<int>(target_x), static_cast<int>(target_y), static_cast<int>(currentX_), static_cast<int>(currentY_), thetaError);
+        
+        
       }
       
       rate.sleep();
