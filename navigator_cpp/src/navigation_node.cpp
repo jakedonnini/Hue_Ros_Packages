@@ -247,7 +247,7 @@ private:
 
         // slow down close to point but not to 0
         float constrainedDist = constrain(distance/10, 0.1, 1); // at 40cm away we start to slow down (twice the overshoot)
-        float speed = pwmAvg * constrainedDist;
+        float speed = pwmAvg;
 
         int pwmr = static_cast<int>(speed + pwmDel + pwmDelTheta);
         int pwml = static_cast<int>(speed - pwmDel - pwmDelTheta);
