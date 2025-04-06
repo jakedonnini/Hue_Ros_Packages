@@ -124,7 +124,7 @@ class GPSSubscriberPublisher(Node):
             self.pos_data_updated = True
 
         if self.usingGPS == 1:
-            self.pwm_publish
+            self.pwm_publish = True
             # self.adjust_pwm_values() # adjuest pwm values imediately
 
     def deadReck_callback_t(self, msg):
