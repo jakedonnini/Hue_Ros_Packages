@@ -154,9 +154,14 @@ class KalmanFilter(Node):
                 self.rotation_publisher.publish(rot_msg)
 
                 # Debugging Log
+                # self.get_logger().info(
+                #     f'[GPS]: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)} '
+                #     f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} before {round(self.stateBeforeRot[0, 0], 2)}, {round(self.stateBeforeRot[1, 0], 2)}, {round(self.stateBeforeRot[2, 0], 2)} After {round(self.stateAfterRot[0, 0], 2)}, {round(self.stateAfterRot[1, 0], 2)}, {round(self.stateAfterRot[2, 0], 2)}'
+                #     f'[KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
+                # )
                 self.get_logger().info(
                     f'[GPS]: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)} '
-                    f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} before {round(self.stateBeforeRot[0, 0], 2)}, {round(self.stateBeforeRot[1, 0], 2)}, {round(self.stateBeforeRot[2, 0], 2)} After {round(self.stateAfterRot[0, 0], 2)}, {round(self.stateAfterRot[1, 0], 2)}, {round(self.stateAfterRot[2, 0], 2)}'
+                    f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} '
                     f'[KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
                 )
 
@@ -202,19 +207,13 @@ class KalmanFilter(Node):
 
         state = self.B @ u
         self.stateBeforeRot = state
-        # self.get_logger().info(f"State before rot: {state}")
 
         state = Rot_Extended @ state
         self.stateAfterRot = state
 
-        # self.get_logger().info(f"State after rot: {state}")
-
         # rotate the state
         self.x = self.F @ self.x + state
         self.P = self.F @ self.P @ self.F.T + self.Q
-
-        # self.get_logger().info(f"x: {self.x}")
-        # self.get_logger().info(f"P: {self.P}")
 
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
@@ -247,11 +246,7 @@ class KalmanFilter(Node):
         K = self.P @ self.H.T @ np.linalg.inv(S) # Kalman gain
         self.x = self.x + K @ y
         self.P = (np.eye(3) - K @ self.H) @ self.P
-        # self.get_logger().info(f"z: {z}")
-        # self.get_logger().info(f"y: {y}")
-        # self.get_logger().info(f"S: {S}")
-        # self.get_logger().info(f"K: {K}")
-
+    
     def stop_threads(self):
         """Stop the threads gracefully."""
         self.running = False

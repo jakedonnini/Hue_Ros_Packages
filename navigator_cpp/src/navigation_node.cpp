@@ -317,7 +317,7 @@ private:
           pwml_old_ = pwml;
         }
 
-        RCLCPP_INFO(this->get_logger(), "PWM: r: %d, l: %d, Waypoints: %d, %d Current Pos: %d, %d TE: %f D: %f", pwmr, pwml, static_cast<int>(target_x), static_cast<int>(target_y), static_cast<int>(currentX_), static_cast<int>(currentY_), thetaError, distance);        
+        RCLCPP_INFO(this->get_logger(), "PWM: r: %d, l: %d, Waypoints: %d, %d Current Pos: %d, %d TE: %f D: %f IP: %d SP: %d", pwmr, pwml, static_cast<int>(target_x), static_cast<int>(target_y), static_cast<int>(currentX_), static_cast<int>(currentY_), thetaError, distance, isPainting_, shouldBePainting_);        
         
       }
       
