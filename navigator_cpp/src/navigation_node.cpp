@@ -134,9 +134,10 @@ private:
   }
 
   // Calculate distance between perpendicular point and line
-  float calculate_distance_to_line(float x1, float y1, float x2, float y2) {
-    float distPoints = calculate_distance(x1, y1, x2, y2);
-    float distToLine = ((x2 - x1) * (y1 - y2) - (x1 - x2) * (y1 - y2)) / distPoints;
+  float calculate_distance_to_line(float x1, float y1, float x2, float y2, float x3, float y3) {
+    // currentX_, currentY_, target_x, target_y, last_target_x, last_target_y
+    float distPoints = calculate_distance(x2, y2, x3, y3);
+    float distToLine = ((x2 - x3) * (y3 - y1) - (x3 - x1) * (y2 - y3)) / distPoints;
     return distToLine;
   }
 
@@ -184,12 +185,6 @@ private:
         // Calculate distance to target
         float distance = calculate_distance(currentX_, currentY_, target_x, target_y);
         
-        // Calculate angle to target
-        float target_angle = calculate_angle_to_target(currentX_, currentY_, target_x, target_y);
-        
-        // distance to line
-        float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y);
-
         RCLCPP_INFO_STREAM(this->get_logger(), 
           "target null: " << (current_target_ == std::nullopt) 
           << ", bufferEmpty: " << !waypoint_buffer_.empty()
@@ -202,6 +197,15 @@ private:
           current_target_ = std::nullopt;
           RCLCPP_INFO(this->get_logger(), "\n\n\n\n --------------------------------------\n Hit waypoint (%f, %f) \n --------------------------------------\n\n\n\n", target_x, target_y);
         }
+
+        // Calculate angle to target
+        float target_angle = calculate_angle_to_target(currentX_, currentY_, target_x, target_y);
+
+        float last_target_x = prev_waypoint_holder_->first;
+        float last_target_y = prev_waypoint_holder_->second;
+
+        // distance to line
+        float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y, last_target_x, last_target_y);
 
         // Calculate motor speeds
         int pwmAvg = 20; // Adjust as needed
