@@ -147,16 +147,16 @@ class RobotPainterGUI(customtkinter.CTk):
         self.move_robot_btn = customtkinter.CTkButton(
             master=self.frame_left, text="Simulate Robot", command=self.simulate_robot_movement
         )
-        self.move_robot_btn.grid(row=9, column=0, padx=20, pady=(10, 20))
+        self.move_robot_btn.grid(row=19, column=0, padx=20, pady=(10, 20))
 
         self.process_image_btn = customtkinter.CTkButton(master=self.frame_left, text="Process Image", command=self.select_and_process_image)
         self.process_image_btn.grid(row=2, column=0, padx=20, pady=(10, 10))
         
         self.send_gps_msg_btn = customtkinter.CTkButton(master=self.frame_left, text="Publish Waypoints from File", command=self.publish_gps_data)
-        self.send_gps_msg_btn.grid(row=10, column=0, padx=20, pady=(10, 10))
+        self.send_gps_msg_btn.grid(row=11, column=0, padx=20, pady=(10, 10))
 
         self.send_gps_msg_btn2 = customtkinter.CTkButton(master=self.frame_left, text="Publish Current Waypoints", command=self.publish_gps_data_current)
-        self.send_gps_msg_btn2.grid(row=11, column=0, padx=20, pady=(10, 10))
+        self.send_gps_msg_btn2.grid(row=12, column=0, padx=20, pady=(10, 10))
 
         self.center_map_on_current_location()
         
@@ -172,6 +172,16 @@ class RobotPainterGUI(customtkinter.CTk):
             master=self.frame_left, from_=-180, to=180, command=self.rotate_waypoints)
         self.rotation_slider.grid(row=8, column=0, padx=20, pady=(10, 10))
         self.rotation_slider.set(0)
+
+        self.scale_slider = customtkinter.CTkSlider(
+            master=self.frame_left,
+            from_=0.1,
+            to=3.0,
+            number_of_steps=29,
+            command=self.update_scale
+        )
+        self.scale_slider.set(1.0)
+        self.scale_slider.grid(row=9, column=0, padx=20, pady=(10, 10))
 
 
     def set_status(self, message):
@@ -191,6 +201,40 @@ class RobotPainterGUI(customtkinter.CTk):
             marker_color_circle="red",
             marker_color_outside="black",
         )
+
+    def update_scale(self, scale_factor):
+        """Scales cartesian_points and path_coordinates around their center by the given factor."""
+
+        self.map_widget.delete_all_marker()
+        self.map_widget.delete_all_path()
+
+        if not self.cartesian_points:
+            return
+
+        center_x = sum(x for x, y, z in self.cartesian_points) / len(self.cartesian_points)
+        center_y = sum(y for x, y, z in self.cartesian_points) / len(self.cartesian_points)
+
+        scaled_cartesian = []
+        for x, y, z in self.original_cartesian_points:
+            x_shifted = x - center_x
+            y_shifted = y - center_y
+
+            x_scaled = x_shifted * scale_factor
+            y_scaled = y_shifted * scale_factor
+
+            scaled_cartesian.append((x_scaled + center_x, y_scaled + center_y, z))
+
+        self.cartesian_points = scaled_cartesian
+
+        # Recalculate path_coordinates from scaled cartesian_points
+        self.path_coordinates = []
+        start_lat, start_lon = self.start_location
+        for x, y, z in self.cartesian_points:
+            lat = start_lat - (y * 0.0000015)
+            lon = start_lon + (x * 0.0000015)
+            self.path_coordinates.append((lat, lon))
+
+        self.plot_coordinates_on_map()
 
 
     def rotate_waypoints(self, angle):
@@ -289,6 +333,8 @@ class RobotPainterGUI(customtkinter.CTk):
             for line in file:
                 x, y, z = map(float, line.strip().split(", "))
                 self.cartesian_points.append((x, y, z))
+
+        self.original_cartesian_points = list(self.cartesian_points)  # Save this once
         self.plot_coordinates_on_map()
 
     def simulate_robot_movement(self):
