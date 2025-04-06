@@ -165,9 +165,6 @@ private:
         std::lock_guard<std::mutex> lock(mutex_);
         
         // Get new waypoint if needed
-        // RCLCPP_INFO_STREAM(this->get_logger(), 
-        //   "target null: " << (current_target_ == std::nullopt) 
-        //   << ", bufferEmpty: " << !waypoint_buffer_.empty());
 
         if (current_target_ == std::nullopt && !waypoint_buffer_.empty()) {
           prev_waypoint_ = prev_waypoint_holder_;
@@ -192,6 +189,11 @@ private:
         
         // distance to line
         float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y);
+
+        RCLCPP_INFO_STREAM(this->get_logger(), 
+          "target null: " << (current_target_ == std::nullopt) 
+          << ", bufferEmpty: " << !waypoint_buffer_.empty()
+          << ", distance: " << distance);
 
         // Check if we've reached the waypoint
         if (current_target_ != std::nullopt && distance < 5) { // Threshold distance
