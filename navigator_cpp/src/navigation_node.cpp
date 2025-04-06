@@ -165,15 +165,19 @@ private:
         std::lock_guard<std::mutex> lock(mutex_);
         
         // Get new waypoint if needed
-        if (!current_target_ && !waypoint_buffer_.empty()) {
+        RCLCPP_INFO_STREAM(this->get_logger(), 
+          "target null: " << (current_target_ == std::nullopt) 
+          << ", bufferEmpty: " << !waypoint_buffer_.empty());
+
+        if (current_target_ == std::nullopt && !waypoint_buffer_.empty()) {
           prev_waypoint_ = prev_waypoint_holder_;
           auto [x, y, t] = waypoint_buffer_.front();
           waypoint_buffer_.erase(waypoint_buffer_.begin());
           current_target_ = std::make_pair(x, y);
           shouldBePainting_ = t;
           
-          // RCLCPP_INFO(this->get_logger(), "New target: x=%.2f, y=%.2f, paint=%d", 
-          //             x, y, shouldBePainting_);
+          RCLCPP_INFO(this->get_logger(), "New target: x=%.2f, y=%.2f, paint=%d", 
+                      x, y, shouldBePainting_);
         }
         
         // If we have a target, navigate to it
