@@ -80,14 +80,17 @@ class GPSSubscriberPublisher(Node):
         self.pos_data_updated = False
 
         # Threading for concurrent execution
+        self.pwm_publish = False
+        self.pwm_msg = TwoInt()
+        self.paintingIncorrect = False
         self.running = True
         self.lock = threading.Lock()
 
         # Start threads for publishing and processing
-        # self.publisher_thread = threading.Thread(target=self.run_publish_loop)
+        self.publisher_thread = threading.Thread(target=self.run_publishing_loop)
         self.processor_thread = threading.Thread(target=self.run_processing_loop)
 
-        # self.publisher_thread.start()
+        self.publisher_thread.start()
         self.processor_thread.start()
         
 
@@ -142,6 +145,16 @@ class GPSSubscriberPublisher(Node):
                     # udated from toggle, now paint if waypoiny has 1, dont if waypoint has 0
                     self.shouldBePainting = t
             # time.sleep(self.deltaT/4) # remove the delays to make it more responsive
+
+
+    def run_publishing_loop(self):
+        while self.running:
+            if self.pwm_publish:
+                with self.lock:
+                    if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or self.paintingIncorrect:
+                        self.pwm_publisher.publish(self.pwm_msg)
+                        self.pwmr_value_old = self.pwmr_value
+                        self.pwml_value_old = self.pwml_value
 
     def getPosError(self):
         """Compute the distance and angular error to the next waypoint."""
@@ -264,9 +277,9 @@ class GPSSubscriberPublisher(Node):
         #     f'PID: Theta error: {round(thetaError, 2)} PID: {round(pid_output, 2)} P: {round(P_term, 2)} I: {round(I_term, 2)} D: {round(D_term, 2)} PWM_del {round(pwmDel, 2)}'
         # )
 
-        pwm_msg = TwoInt()
-        pwm_msg.r = int(self.pwmr_value)*self.dir # change direction 
-        pwm_msg.l = int(self.pwml_value)*self.dir
+        # pwm_msg = TwoInt()
+        self.pwm_msg.r = int(self.pwmr_value)*self.dir # change direction 
+        self.pwm_msg.l = int(self.pwml_value)*self.dir
 
         # if speed is below a threshold then we should stop painting to avoid pooling
         avgSpeed = (self.pwmr_value + self.pwml_value) / 2
@@ -276,22 +289,22 @@ class GPSSubscriberPublisher(Node):
         notUpToSpeed = avgSpeed <= ((pwmAvg+39) * 0.25) and self.shouldBePainting
         
         # only send the toggle comands once and make sure that its off when it should be off
-        paintingIncorrect = int(self.shouldBePainting) != self.isPainting
+        self.paintingIncorrect = int(self.shouldBePainting) != self.isPainting
 
         # if should be painting and not up to speed then turn off
         if notUpToSpeed:
-            pwm_msg.toggle = 0
+            self.pwm_msg.toggle = 0
         elif self.shouldBePainting:
             # if we are painting and we are up to speed then turn on
-            pwm_msg.toggle = 1
+            self.pwm_msg.toggle = 1
         else:
             # if we are not painting then keep it off
-            pwm_msg.toggle = 0
+            self.pwm_msg.toggle = 0
 
         # if no way points make sure the sprayer is off
         if self.isPainting and self.currentTWayPoint is None and not self.shouldBePainting:
-            pwm_msg.toggle = 0
-            self.pwm_publisher.publish(pwm_msg)
+            self.destickAccumpwm_msg.toggle = 0
+            self.pwm_publisher.publish(self.pwm_msg)
 
         # if wheel still spinning send off again
         sureOff = (self.pwml_value == 0 and self.pwmr_value == 0) # TODO: FIND A WAY TO DO THIS and (self.encoder_left != 0 or self.encoder_right != 0)
@@ -304,6 +317,8 @@ class GPSSubscriberPublisher(Node):
         #     self.pwm_publisher.publish(pwm_msg)
         #     self.pwmr_value_old = self.pwmr_value
         #     self.pwml_value_old = self.pwml_value
+
+        self.pwm_publish = True
 
         self.get_logger().info(
             f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, {int(avgSpeed)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} TE: {round(thetaError, 2)} D {round(dist, 2)}, DL {round(distToLine, 2)}, IP: {self.isPainting} SP: {self.shouldBePainting}'
