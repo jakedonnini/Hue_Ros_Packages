@@ -25,9 +25,6 @@ public:
     kalman_sub_ = this->create_subscription<custom_msg::msg::GpsData>(
       "kalman/data", 2, std::bind(&GPSNavigationNode::kalman_callback, this, std::placeholders::_1));
     
-    dr_sub_ = this->create_subscription<custom_msg::msg::GpsData>(
-      "deadReckoning/pose", 2, std::bind(&GPSNavigationNode::dr_callback, this, std::placeholders::_1));
-    
     dr_vel_sub_ = this->create_subscription<custom_msg::msg::Coordinates>(
       "deadReckoning/vel", 2, std::bind(&GPSNavigationNode::dr_vel_callback, this, std::placeholders::_1));
     
@@ -41,6 +38,8 @@ public:
     Kd_line_ = 1.1;
     integral_ = 0.0;
     previous_error_ = 0.0;
+
+    largeTurn = false;
 
     deltaT_ = 0.05;
     dir_ = 1;
@@ -74,7 +73,6 @@ private:
 
   // Position tracking
   float currentX_ = 0.0f, currentY_ = 0.0f, currentTheta_ = 0.0f;
-  float DR_x_ = 0.0f, DR_y_ = 0.0f, DR_theta_ = 0.0f;
   float kalman_x_ = 0.0f, kalman_y_ = 0.0f, kalman_theta_ = 0.0f;
 
   // Painting state
@@ -88,6 +86,7 @@ private:
   float integral_min_, integral_max_;
   int dir_;
   bool usingGPS_;
+  bool largeTurn;
 
   // PWM tracking
   float pwmr_old_, pwml_old_;
@@ -100,7 +99,6 @@ private:
   // ROS subscriptions and publishers
   rclcpp::Subscription<custom_msg::msg::Coordinates>::SharedPtr waypoint_sub_;
   rclcpp::Subscription<custom_msg::msg::GpsData>::SharedPtr kalman_sub_;
-  rclcpp::Subscription<custom_msg::msg::GpsData>::SharedPtr dr_sub_;
   rclcpp::Subscription<custom_msg::msg::Coordinates>::SharedPtr dr_vel_sub_;
   rclcpp::Publisher<custom_msg::msg::TwoInt>::SharedPtr pwm_pub_;
 
@@ -110,19 +108,6 @@ private:
     waypoint_buffer_.emplace_back(msg->x, msg->y, msg->toggle);
     RCLCPP_INFO(this->get_logger(), "Received waypoint: x=%.2f, y=%.2f, toggle=%d", 
                 msg->x, msg->y, msg->toggle);
-  }
-
-  void dr_callback(const custom_msg::msg::GpsData::SharedPtr msg) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    DR_x_ = msg->x;
-    DR_y_ = msg->y;
-    DR_theta_ = msg->angle;
-    
-    if (!usingGPS_) {
-      currentX_ = DR_x_;
-      currentY_ = DR_y_;
-      currentTheta_ = DR_theta_;
-    }
   }
 
   void kalman_callback(const custom_msg::msg::GpsData::SharedPtr msg) {
@@ -148,6 +133,13 @@ private:
     return std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
   }
 
+  // Calculate distance between perpendicular point and line
+  float calculate_distance_to_line(float x1, float y1, float x2, float y2) {
+    float distPoints = calculate_distance(x1, y1, x2, y2);
+    float distToLine = std::abs((x2 - x1) * (y1 - y2) - (x1 - x2) * (y1 - y2)) / distPoints;
+    return distToLine;
+  }
+
   // Calculate angle to target
   float calculate_angle_to_target(float x1, float y1, float x2, float y2) {
     return std::atan2(y2 - y1, x2 - x1);
@@ -158,6 +150,10 @@ private:
     while (angle > M_PI) angle -= 2.0f * M_PI;
     while (angle <= -M_PI) angle += 2.0f * M_PI;
     return angle;
+  }
+
+  float constrain(float value, float min, float max) {
+    return std::max(min, std::min(max, value));
   }
 
   // Process waypoints and navigate
@@ -181,56 +177,104 @@ private:
         }
         
         // If we have a target, navigate to it
-        if (current_target_) {
-          float target_x = current_target_->first;
-          float target_y = current_target_->second;
-          
-          // Calculate distance to target
-          float distance = calculate_distance(currentX_, currentY_, target_x, target_y);
-          
-          // Calculate angle to target
-          float target_angle = calculate_angle_to_target(currentX_, currentY_, target_x, target_y);
-          
-          // Calculate motor speeds
-          int base_speed = 20; // Adjust as needed
+        float target_x = current_target_->first;
+        float target_y = current_target_->second;
+        
+        // Calculate distance to target
+        float distance = calculate_distance(currentX_, currentY_, target_x, target_y);
+        
+        // Calculate angle to target
+        float target_angle = calculate_angle_to_target(currentX_, currentY_, target_x, target_y);
+        
+        // distance to line
+        float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y);
 
-          float error = normalize_angle(target_angle - currentTheta_);
-          integral_ += error * deltaT_;
-          
-          // Apply integral limits
-          if (integral_ > integral_max_) integral_ = integral_max_;
-          if (integral_ < integral_min_) integral_ = integral_min_;
-          
-          float derivative = (error - previous_error_) / deltaT_;
-          previous_error_ = error;
-          
-          float output = Kp_ * error + Ki_ * integral_ + Kd_ * derivative;
+        // Calculate motor speeds
+        int pwmAvg = 20; // Adjust as needed
 
-          int pwmr = base_speed - static_cast<int>(steering);
-          int pwml = base_speed + static_cast<int>(steering);
-          
-          // Limit PWM values
-          pwmr = std::max(-255, std::min(255, pwmr));
-          pwml = std::max(-255, std::min(255, pwml));
-          
-          // Apply PWM smoothing
-          pwmr = 0.8 * pwmr + 0.2 * pwmr_old_;
-          pwml = 0.8 * pwml + 0.2 * pwml_old_;
-          pwmr_old_ = pwmr;
-          pwml_old_ = pwml;
-          
-          // Publish PWM command
-          auto pwm_msg = custom_msg::msg::TwoInt();
-          pwm_msg.r = pwmr * dir_;
-          pwm_msg.l = pwml * dir_;
-          pwm_pub_->publish(pwm_msg);
-          
-          // Check if we've reached the waypoint
-          if (distance < 5) { // Threshold distance
-            prev_waypoint_holder_ = *current_target_;
-            current_target_ = std::nullopt;
-            RCLCPP_INFO(this->get_logger(), "\n\n\n\n --------------------------------------\n Hit waypoint \n --------------------------------------\n\n\n\n");
-          }
+        float P_term = Kp_ * line_distance;
+
+        float thetaError = normalize_angle(target_angle - currentTheta_);
+        integral_ += thetaError * deltaT_;
+        // Apply integral limits
+        if (integral_ > integral_max_) integral_ = integral_max_;
+        if (integral_ < integral_min_) integral_ = integral_min_;
+        float I_term = Ki_ * integral_;
+        
+        float D_term = Kd_line_ * (line_distance - previous_error_) / deltaT_;
+        previous_error_ = line_distance;
+        
+        // PD for line centering
+        float pwmDel = P_term + D_term;
+
+        // PI for the angle
+        float pwmDelTheta = Kd_ * thetaError + I_term;
+        pwmDel = constrain(pwmDel, -20, 20);
+
+        // If the angle is within this threshold then move forward or turn
+        float largeTurnThreshold = ((M_PI / 180) / 2) * 45; // 45 deg converted to rad, /2 for abs value
+        float fineThreshold = ((M_PI / 180) / 2) * 5; // 5 deg converted to rad, /2 for abs value
+
+        if (std::abs(thetaError) > largeTurnThreshold) { // greater than 45 deg
+          largeTurn = true; // we have found a big turn
+        } 
+        
+        if (largeTurn && (std::abs(thetaError) > fineThreshold)) {
+          pwmAvg = 0;
+        } else {
+          largeTurn = false;
+          integral_ = 0;
+        }
+
+        if (waypoint_buffer_.empty() && !current_target_) {
+          pwmAvg = 0;
+          pwmDel = 0;
+          pwmDelTheta = 0;
+        }
+
+        // slow down close to point
+        float constrainedDist = constrain(distance/40, 0, 20); // at 40cm away we start to slow down (twice the overshoot)
+        float speed = pwmAvg * constrainedDist;
+
+        int pwmr = static_cast<int>(speed + pwmDel + pwmDelTheta);
+        int pwml = static_cast<int>(speed - pwmDel - pwmDelTheta);
+        
+        // Limit PWM values
+        pwmr = std::max(-100, std::min(100, pwmr));
+        pwml = std::max(-100, std::min(100, pwml));
+
+        // remove dead band
+        if (pwmr > 0) {
+          pwmr += 39;
+        } 
+        if (pwmr < 0) {
+          pwmr -= 39;
+        }
+
+        if (pwml > 0) {
+          pwml += 39;
+        } 
+        if (pwml < 0) {
+          pwml -= 39;
+        }
+        
+        // Apply PWM smoothing
+        pwmr = 0.8 * pwmr + 0.2 * pwmr_old_;
+        pwml = 0.8 * pwml + 0.2 * pwml_old_;
+        pwmr_old_ = pwmr;
+        pwml_old_ = pwml;
+        
+        // Publish PWM command
+        auto pwm_msg = custom_msg::msg::TwoInt();
+        pwm_msg.r = pwmr * dir_;
+        pwm_msg.l = pwml * dir_;
+        pwm_pub_->publish(pwm_msg);
+        
+        // Check if we've reached the waypoint
+        if (distance < 5) { // Threshold distance
+          prev_waypoint_holder_ = *current_target_;
+          current_target_ = std::nullopt;
+          RCLCPP_INFO(this->get_logger(), "\n\n\n\n --------------------------------------\n Hit waypoint \n --------------------------------------\n\n\n\n");
         }
       }
       

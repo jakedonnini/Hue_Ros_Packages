@@ -41,7 +41,7 @@ class GPSSubscriberPublisher(Node):
         
         # Initialize PID constants
         self.Kp = 0.5   # Proportional constant
-        self.Kd_line = 1.1 # Derivative constant for line following
+        self.Kd_line = 0.7 # Derivative constant for line following
         self.Ki = 0.1  # Integral constant
         self.Kd = 7.0  # Derivative constant for 0 point turn
 
@@ -188,7 +188,7 @@ class GPSSubscriberPublisher(Node):
         I_term = self.Ki * self.integral
         
         # Derivative term (D)
-        D_term = self.Kd_line * (distToLine - self.previous_error)
+        D_term = self.Kd_line * ((distToLine - self.previous_error) / self.deltaT) # do we need to devide by deltaT?
         
         # PID output
         pid_output = P_term + D_term
@@ -293,7 +293,7 @@ class GPSSubscriberPublisher(Node):
 
         # Publish the PWM values
         # only send if new values
-        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or sureOff or paintingIncorrect:
+        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or paintingIncorrect:
             self.pwm_publisher.publish(pwm_msg)
             self.pwmr_value_old = self.pwmr_value
             self.pwml_value_old = self.pwml_value
