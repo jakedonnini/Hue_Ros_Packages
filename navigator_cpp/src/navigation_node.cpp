@@ -68,8 +68,8 @@ private:
   // Waypoint and position tracking
   std::vector<std::tuple<float, float, int>> waypoint_buffer_;
   std::optional<std::pair<float, float>> current_target_;
-  std::pair<float, float> prev_waypoint_ = {0.0f, 0.0f};
-  std::pair<float, float> prev_waypoint_holder_ = {0.0f, 0.0f};
+  std::optional<std::pair<float, float>> prev_waypoint_;
+  std::optional<std::pair<float, float>> prev_waypoint_holder_;
 
   // Position tracking
   float currentX_ = 0.0f, currentY_ = 0.0f, currentTheta_ = 0.0f;
@@ -184,12 +184,6 @@ private:
         
         // Calculate distance to target
         float distance = calculate_distance(currentX_, currentY_, target_x, target_y);
-        
-        RCLCPP_INFO_STREAM(this->get_logger(), 
-          "target null: " << (current_target_ == std::nullopt) 
-          << ", bufferEmpty: " << !waypoint_buffer_.empty()
-          << ", distance: " << distance
-          << ", line_distance: " << line_distance);
 
         // Check if we've reached the waypoint
         if (current_target_ != std::nullopt && distance < 5) { // Threshold distance
@@ -201,11 +195,17 @@ private:
         // Calculate angle to target
         float target_angle = calculate_angle_to_target(currentX_, currentY_, target_x, target_y);
 
-        float last_target_x = prev_waypoint_holder_->first;
-        float last_target_y = prev_waypoint_holder_->second;
+        float last_target_x = prev_waypoint_->first;
+        float last_target_y = prev_waypoint_->second;
 
         // distance to line
         float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y, last_target_x, last_target_y);
+
+        RCLCPP_INFO_STREAM(this->get_logger(), 
+          "target null: " << (current_target_ == std::nullopt) 
+          << ", bufferEmpty: " << !waypoint_buffer_.empty()
+          << ", distance: " << distance
+          << ", line_distance: " << line_distance);
 
         // Calculate motor speeds
         int pwmAvg = 20; // Adjust as needed
