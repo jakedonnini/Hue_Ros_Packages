@@ -165,9 +165,9 @@ private:
         std::lock_guard<std::mutex> lock(mutex_);
         
         // Get new waypoint if needed
-        RCLCPP_INFO_STREAM(this->get_logger(), 
-          "target null: " << (current_target_ == std::nullopt) 
-          << ", bufferEmpty: " << !waypoint_buffer_.empty());
+        // RCLCPP_INFO_STREAM(this->get_logger(), 
+        //   "target null: " << (current_target_ == std::nullopt) 
+        //   << ", bufferEmpty: " << !waypoint_buffer_.empty());
 
         if (current_target_ == std::nullopt && !waypoint_buffer_.empty()) {
           prev_waypoint_ = prev_waypoint_holder_;
@@ -237,7 +237,7 @@ private:
           integral_ = 0;
         }
 
-        if (waypoint_buffer_.empty() && current_target_ != std::nullopt) {
+        if (waypoint_buffer_.empty() && current_target_ == std::nullopt) {
           pwmAvg = 0;
           pwmDel = 0;
           pwmDelTheta = 0;
