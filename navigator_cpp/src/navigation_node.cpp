@@ -136,7 +136,7 @@ private:
   // Calculate distance between perpendicular point and line
   float calculate_distance_to_line(float x1, float y1, float x2, float y2) {
     float distPoints = calculate_distance(x1, y1, x2, y2);
-    float distToLine = std::abs((x2 - x1) * (y1 - y2) - (x1 - x2) * (y1 - y2)) / distPoints;
+    float distToLine = ((x2 - x1) * (y1 - y2) - (x1 - x2) * (y1 - y2)) / distPoints;
     return distToLine;
   }
 
@@ -188,7 +188,6 @@ private:
         float target_angle = calculate_angle_to_target(currentX_, currentY_, target_x, target_y);
         
         // distance to line
-        // invert
         float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y);
 
         RCLCPP_INFO_STREAM(this->get_logger(), 
