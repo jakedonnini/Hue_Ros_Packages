@@ -298,10 +298,12 @@ class GPSSubscriberPublisher(Node):
 
         # Publish the PWM values
         # only send if new values
-        if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or paintingIncorrect:
-            self.pwm_publisher.publish(pwm_msg)
-            self.pwmr_value_old = self.pwmr_value
-            self.pwml_value_old = self.pwml_value
+
+        #UNCOMMENT THIS OUT LATER
+        # if (self.pwmr_value_old != self.pwmr_value) or (self.pwml_value_old != self.pwml_value) or paintingIncorrect:
+        #     self.pwm_publisher.publish(pwm_msg)
+        #     self.pwmr_value_old = self.pwmr_value
+        #     self.pwml_value_old = self.pwml_value
 
         self.get_logger().info(
             f'PWM: {int(self.pwmr_value)}, {int(self.pwml_value)}, {int(avgSpeed)}, Waypoint: {self.currentTWayPoint}, Current Pos: {round(self.currentX, 2)}, {round(self.currentY, 2)} TE: {round(thetaError, 2)} D {round(dist, 2)}, DL {round(distToLine, 2)}, IP: {self.isPainting} SP: {self.shouldBePainting}'
