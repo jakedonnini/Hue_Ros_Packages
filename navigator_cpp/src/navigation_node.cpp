@@ -32,7 +32,7 @@ public:
     pwm_pub_ = this->create_publisher<custom_msg::msg::TwoInt>("PWM", 5);
 
     // PID and state initialization
-    Kp_ = -0.5;
+    Kp_ = 0.5;
     Ki_ = 0.15;
     Kd_ = 15.0;
     Kd_line_ = 0.1;
@@ -188,7 +188,8 @@ private:
         float target_angle = calculate_angle_to_target(currentX_, currentY_, target_x, target_y);
         
         // distance to line
-        float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y);
+        // invert
+        float line_distance = -1.0 * calculate_distance_to_line(currentX_, currentY_, target_x, target_y);
 
         RCLCPP_INFO_STREAM(this->get_logger(), 
           "target null: " << (current_target_ == std::nullopt) 
@@ -235,6 +236,8 @@ private:
         
         if (largeTurn && (std::abs(thetaError) > fineThreshold)) {
           pwmAvg = 0;
+          // don't worry about line at 0 point
+          pwmDel = 0;
         } else {
           largeTurn = false;
           integral_ = 0;
