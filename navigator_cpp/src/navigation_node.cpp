@@ -32,10 +32,10 @@ public:
     pwm_pub_ = this->create_publisher<custom_msg::msg::TwoInt>("PWM", 5);
 
     // PID and state initialization
-    Kp_ = 0.5;
+    Kp_ = -0.5;
     Ki_ = 0.15;
     Kd_ = 15.0;
-    Kd_line_ = 0.05;
+    Kd_line_ = 0.1;
     integral_ = 0.0;
     previous_error_ = 0.0;
 
@@ -193,7 +193,8 @@ private:
         RCLCPP_INFO_STREAM(this->get_logger(), 
           "target null: " << (current_target_ == std::nullopt) 
           << ", bufferEmpty: " << !waypoint_buffer_.empty()
-          << ", distance: " << distance);
+          << ", distance: " << distance
+          << ", line_distance: " << line_distance);
 
         // Check if we've reached the waypoint
         if (current_target_ != std::nullopt && distance < 5) { // Threshold distance
