@@ -34,7 +34,7 @@ public:
     // PID and state initialization
     Kp_ = 0.2;
     Ki_ = 0.1;
-    Kd_ = 7.0;
+    Kd_ = 10.0;
     Kd_line_ = 0.05;
     integral_ = 0.0;
     previous_error_ = 0.0;
@@ -246,7 +246,7 @@ private:
         }
 
         // slow down close to point but not to 0
-        float constrainedDist = constrain(distance/10, 0.1, 1); // at 40cm away we start to slow down (twice the overshoot)
+        // float constrainedDist = constrain(distance/10, 0.1, 1); // at 40cm away we start to slow down (twice the overshoot)
         float speed = pwmAvg;
 
         int pwmr = static_cast<int>(speed + pwmDel + pwmDelTheta);
