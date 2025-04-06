@@ -247,10 +247,12 @@ private:
 
         // slow down close to point but not to 0
         // float constrainedDist = constrain(distance/10, 0.1, 1); // at 40cm away we start to slow down (twice the overshoot)
-        float speed = pwmAvg;
+        // float speed = pwmAvg*constrainedDist;
 
-        int pwmr = static_cast<int>(speed + pwmDel + pwmDelTheta);
-        int pwml = static_cast<int>(speed - pwmDel - pwmDelTheta);
+        RCLCPP_INFO(this->get_logger(), "PWM: AVG: %f, Del: %f, DelT: %f", pwmAvg, pwmDel, pwmDelTheta);        
+
+        int pwmr = static_cast<int>(pwmAvg + pwmDel + pwmDelTheta);
+        int pwml = static_cast<int>(pwmAvg - pwmDel - pwmDelTheta);
         
         // Limit PWM values
         pwmr = std::max(-100, std::min(100, pwmr));
