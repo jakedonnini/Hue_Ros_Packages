@@ -249,7 +249,7 @@ private:
         // float constrainedDist = constrain(distance/10, 0.1, 1); // at 40cm away we start to slow down (twice the overshoot)
         // float speed = pwmAvg*constrainedDist;
 
-        RCLCPP_INFO(this->get_logger(), "PWM: AVG: %f, Del: %f, DelT: %f", pwmAvg, pwmDel, pwmDelTheta);        
+        RCLCPP_INFO(this->get_logger(), "PWM: AVG: %d, Del: %f, DelT: %f, I: %f", pwmAvg, pwmDel, pwmDelTheta, I_term);        
 
         int pwmr = static_cast<int>(pwmAvg + pwmDel + pwmDelTheta);
         int pwml = static_cast<int>(pwmAvg - pwmDel - pwmDelTheta);
