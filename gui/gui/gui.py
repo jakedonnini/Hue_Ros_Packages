@@ -14,6 +14,7 @@ from custom_msg.msg import GpsData
 import matplotlib as matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # matplotlib.use('Agg')
 
@@ -115,23 +116,6 @@ class RobotPainterGUI(customtkinter.CTk):
         self.clear_path_btn = customtkinter.CTkButton(master=self.frame_left, text="Clear Path", command=self.clear_path)
         self.clear_path_btn.grid(row=1, column=0, padx=20, pady=(10, 10))
 
-        # Tile Server Option Menu
-        self.map_label = customtkinter.CTkLabel(self.frame_left, text="Tile Server:")
-        self.map_label.grid(row=2, column=0, padx=20, pady=(10, 0))
-
-        self.map_option_menu = customtkinter.CTkOptionMenu(
-            self.frame_left, values=["OpenStreetMap", "Google normal", "Google satellite"], command=self.change_map)
-        self.map_option_menu.grid(row=3, column=0, padx=20, pady=(10, 10))
-        self.map_option_menu.set("OpenStreetMap")
-
-        self.appearance_mode_label = customtkinter.CTkLabel(self.frame_left, text="Appearance Mode:")
-        self.appearance_mode_label.grid(row=4, column=0, padx=20, pady=(10, 0))
-
-        self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(
-            self.frame_left, values=["Light", "Dark"], command=self.change_appearance_mode)
-        self.appearance_mode_optionemenu.grid(row=5, column=0, padx=20, pady=(10, 10))
-        self.appearance_mode_optionemenu.set("Dark")
-
         self.map_widget = TkinterMapView(self.frame_right, corner_radius=0)
         self.map_widget.grid(row=0, column=0, sticky="nswe", padx=0, pady=0)
         self.frame_right.grid_rowconfigure(0, weight=1)
@@ -155,7 +139,7 @@ class RobotPainterGUI(customtkinter.CTk):
         self.send_gps_msg_btn = customtkinter.CTkButton(master=self.frame_left, text="Publish Waypoints from File", command=self.publish_gps_data)
         self.send_gps_msg_btn.grid(row=11, column=0, padx=20, pady=(10, 10))
 
-        self.send_gps_msg_btn2 = customtkinter.CTkButton(master=self.frame_left, text="Publish Current Waypoints", command=self.publish_gps_data_current)
+        self.send_gps_msg_btn2 = customtkinter.CTkButton(master=self.frame_left, text="Publish Local Waypoints", command=self.publish_gps_data_current)
         self.send_gps_msg_btn2.grid(row=12, column=0, padx=20, pady=(10, 10))
 
         self.center_map_on_current_location()
@@ -243,8 +227,7 @@ class RobotPainterGUI(customtkinter.CTk):
 
 
     def rotate_waypoints(self, angle):
-        """Rotates cartesian_points and path_coordinates by the given angle."""
-
+        """Rotates cartesian_points and path_coordinates by the given angle around bottom-left corner."""
         self.map_widget.delete_all_marker()
         self.map_widget.delete_all_path()
         angle_rad = math.radians(float(angle))  # Convert degrees to radians
@@ -252,23 +235,16 @@ class RobotPainterGUI(customtkinter.CTk):
         if not self.cartesian_points:
             return
 
-        center_x = sum(x for x, y, z in self.cartesian_points) / len(self.cartesian_points)
-        center_y = sum(y for x, y, z in self.cartesian_points) / len(self.cartesian_points)
+        # Find the bottom-left corner (min x and min y)
+        min_x = self.min_x
+        min_y = self.min_y
 
         rotated_cartesian = []
         for x, y, z in self.cartesian_points:
-            x_shifted, y_shifted = x - center_x, y - center_y
+            x_shifted, y_shifted = x - min_x, y - min_y
             x_rotated = x_shifted * math.cos(angle_rad) - y_shifted * math.sin(angle_rad)
             y_rotated = x_shifted * math.sin(angle_rad) + y_shifted * math.cos(angle_rad)
-            rotated_cartesian.append((x_rotated + center_x, y_rotated + center_y, z))
-
-        # try:
-        #     with open('image_waypoints.txt', "w") as file:
-        #         for x, y, flag in rotated_cartesian:
-        #             file.write(f"{x}, {y}, {flag}\n")
-        #     print(f"Updated waypoints saved")
-        # except IOError as e:
-        #     print(f"Error writing to file: {e}")
+            rotated_cartesian.append((x_rotated + min_x, y_rotated + min_y, z))
 
         self.cartesian_points = rotated_cartesian
 
@@ -280,6 +256,7 @@ class RobotPainterGUI(customtkinter.CTk):
             self.path_coordinates.append((lat, lon))
 
         self.plot_coordinates_on_map()
+
 
 
     def process_image(self, uploaded_image_path):
@@ -340,6 +317,8 @@ class RobotPainterGUI(customtkinter.CTk):
                 self.cartesian_points.append((x, y, z))
 
         self.original_cartesian_points = list(self.cartesian_points)  # Save this once
+        self.min_x = max(x for x, y, z in self.cartesian_points)
+        self.min_y = max(y for x, y, z in self.cartesian_points)
         self.plot_coordinates_on_map()
 
     def simulate_robot_movement(self):
