@@ -76,6 +76,7 @@ private:
 
   // Position tracking
   float currentX_ = 0.0f, currentY_ = 0.0f, currentTheta_ = 0.0f;
+  float DR_x_ = 0.0f, DR_y_ = 0.0f, DR_theta_ = 0.0f;
   float kalman_x_ = 0.0f, kalman_y_ = 0.0f, kalman_theta_ = 0.0f;
 
   // Painting state
