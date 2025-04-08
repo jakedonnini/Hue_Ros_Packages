@@ -230,6 +230,11 @@ private:
         float P_term = Kp_ * line_distance;
 
         float thetaError = normalize_angle(target_angle - currentTheta_);
+        
+        if (!usingGPS_) {
+          thetaError = thetaError * -dir_;
+        }
+
         integral_ += thetaError * deltaT_;
         // Apply integral limits
         if (integral_ > integral_max_) integral_ = integral_max_;
