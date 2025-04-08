@@ -27,14 +27,17 @@ public:
     
     dr_vel_sub_ = this->create_subscription<custom_msg::msg::Coordinates>(
       "deadReckoning/vel", 2, std::bind(&GPSNavigationNode::dr_vel_callback, this, std::placeholders::_1));
+
+      dr_sub_ = this->create_subscription<custom_msg::msg::GpsData>(
+        "deadReckoning/pose", 2, std::bind(&GPSNavigationNode::dr_callback, this, std::placeholders::_1));
     
     // Create publisher
     pwm_pub_ = this->create_publisher<custom_msg::msg::TwoInt>("PWM", 5);
 
     // PID and state initialization
     Kp_ = 0.5;
-    Ki_ = 0.2;
-    Kd_ = 20.0;
+    Ki_ = 0.25;
+    Kd_ = 15.0;
     Kd_line_ = 0.01;
     integral_ = 0.0;
     previous_error_ = 0.0;
@@ -45,7 +48,7 @@ public:
     dir_ = 1;
     integral_min_ = -50;
     integral_max_ = 50;
-    usingGPS_ = true;
+    usingGPS_ = false;
 
     pwmr_old_ = 0;
     pwml_old_ = 0;
@@ -100,6 +103,7 @@ private:
   rclcpp::Subscription<custom_msg::msg::Coordinates>::SharedPtr waypoint_sub_;
   rclcpp::Subscription<custom_msg::msg::GpsData>::SharedPtr kalman_sub_;
   rclcpp::Subscription<custom_msg::msg::Coordinates>::SharedPtr dr_vel_sub_;
+  rclcpp::Subscription<custom_msg::msg::GpsData>::SharedPtr dr_sub_;
   rclcpp::Publisher<custom_msg::msg::TwoInt>::SharedPtr pwm_pub_;
 
   // Callback functions
@@ -120,6 +124,19 @@ private:
       currentX_ = kalman_x_;
       currentY_ = kalman_y_;
       currentTheta_ = kalman_theta_;
+    }
+  }
+
+  void dr_callback(const custom_msg::msg::GpsData::SharedPtr msg) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    DR_x_ = msg->x;
+    DR_y_ = msg->y;
+    DR_theta_ = msg->angle;
+    
+    if (!usingGPS_) {
+      currentX_ = DR_x_;
+      currentY_ = DR_y_;
+      currentTheta_ = DR_theta_;
     }
   }
 
@@ -165,19 +182,6 @@ private:
       {
         std::lock_guard<std::mutex> lock(mutex_);
         
-        // Get new waypoint if needed
-
-        if (current_target_ == std::nullopt && !waypoint_buffer_.empty()) {
-          prev_waypoint_ = prev_waypoint_holder_;
-          auto [x, y, t] = waypoint_buffer_.front();
-          waypoint_buffer_.erase(waypoint_buffer_.begin());
-          current_target_ = std::make_pair(x, y);
-          shouldBePainting_ = t;
-          
-          RCLCPP_INFO(this->get_logger(), "New target: x=%.2f, y=%.2f, paint=%d", 
-                      x, y, shouldBePainting_);
-        }
-        
         // If we have a target, navigate to it
         float target_x = current_target_->first;
         float target_y = current_target_->second;
@@ -190,6 +194,18 @@ private:
           prev_waypoint_holder_ = *current_target_;
           current_target_ = std::nullopt;
           RCLCPP_INFO(this->get_logger(), "\n\n\n\n --------------------------------------\n Hit waypoint (%f, %f) \n --------------------------------------\n\n\n\n", target_x, target_y);
+        }
+
+        // Get new waypoint if needed
+        if (current_target_ == std::nullopt && !waypoint_buffer_.empty()) {
+          prev_waypoint_ = prev_waypoint_holder_;
+          auto [x, y, t] = waypoint_buffer_.front();
+          waypoint_buffer_.erase(waypoint_buffer_.begin());
+          current_target_ = std::make_pair(x, y);
+          shouldBePainting_ = t;
+          
+          RCLCPP_INFO(this->get_logger(), "New target: x=%.2f, y=%.2f, paint=%d", 
+                      x, y, shouldBePainting_);
         }
 
         // Calculate angle to target
@@ -253,7 +269,7 @@ private:
         }
 
         // slow down close to point but not to 0
-        float constrainedDist = constrain(distance/20, 0.2, 1); // at 40cm away we start to slow down (twice the overshoot)
+        float constrainedDist = constrain(distance/5, 0.2, 1); // at 40cm away we start to slow down (twice the overshoot)
         float speed = pwmAvg*constrainedDist;
 
         // RCLCPP_INFO(this->get_logger(), "PWM: AVG: %d, Del: %f, DelT: %f, I: %f", pwmAvg, pwmDel, pwmDelTheta, I_term);        
