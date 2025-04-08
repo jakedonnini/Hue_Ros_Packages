@@ -20,6 +20,8 @@ from matplotlib.image import imread
 from skimage import measure, morphology, color
 from skimage.segmentation import find_boundaries
 from skimage.util import img_as_ubyte
+from shapely.geometry import Polygon, LineString
+
 sys.setrecursionlimit(20000)
 
 # Input: Image path
@@ -500,6 +502,67 @@ def s6_helper_rotate_path(path, idx):
   rotated = path[idx:] + path[:idx]
   rotated.append(rotated[0])
   return rotated
+
+def s65_generate_fill_paths(optimized_paths, dist_betw):
+  """
+  Given a closed polygon (first and last point are identical) defined by polygon_points,
+  generate a continuous zigzag path that fills the polygon using horizontal scan lines.
+
+  Parameters:
+    optimized_paths
+    dist_betw (float)
+
+  Returns:
+    list of tuple: Ordered waypoints representing the fill path.
+  """
+  fill_paths = []
+  for shape in optimized_paths:
+    shape_fill_path = []
+    poly = Polygon(shape)
+    minx, miny, maxx, maxy = poly.bounds
+
+    row = 0  # used to alternate direction for continuity
+    y = miny
+    while y <= maxy:
+        # Create an extended horizontal line at height y.
+        scan_line = LineString([(minx - 10, y), (maxx + 10, y)])
+        # Get the intersection between the polygon and the horizontal line.
+        inter = poly.intersection(scan_line)
+
+        if inter.is_empty:
+            y += dist_betw
+            continue
+
+        # Handle cases where the intersection returns one or several segments.
+        if inter.geom_type == "LineString":
+            segments = [inter]
+        elif inter.geom_type == "MultiLineString":
+            segments = list(inter.geoms)  # use .geoms to iterate over individual segments
+        else:
+            y += dist_betw
+            continue
+
+        # Sort segments by their starting x-coordinate.
+        segments = sorted(segments, key=lambda seg: seg.bounds[0])
+
+        # For this scan line, collect points from each segment.
+        row_points = []
+        for seg in segments:
+            xs, ys_seg = seg.xy
+            seg_points = list(zip(xs, ys_seg))
+            # Alternate direction every row for a continuous zigzag.
+            if row % 2 == 1:
+                seg_points.reverse()
+            row_points.extend(seg_points)
+
+        # Append the row's points to the overall path.
+        shape_fill_path.extend(row_points)
+        row += 1
+        y += dist_betw
+
+    fill_paths.append([list(t) for t in shape_fill_path])
+
+  return fill_paths
 
 def s6_optimize_waypoint_traversal(paths):
     """

@@ -8,3 +8,4 @@ rdp
 customtkinter
 tkintermapview
 scikit-image
+shapely

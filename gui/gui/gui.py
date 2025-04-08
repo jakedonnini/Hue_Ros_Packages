@@ -172,6 +172,18 @@ class RobotPainterGUI(customtkinter.CTk):
         )
         self.publish_selected_point_btn.grid(row=13, column=0, padx=20, pady=(10, 10))
 
+        self.fill_waypoints = tk.BooleanVar(value=False)  # Default: filled
+
+        self.fill_checkbox = customtkinter.CTkCheckBox(
+            master=self,
+            text="Fill Waypoints",
+            variable=self.fill_waypoints,
+            onvalue=True,
+            offvalue=False,
+            command=self.plot_coordinates_on_map  # Re-plot when toggled
+        )
+
+        self.fill_checkbox.grid(row=14, column=0, padx=20, pady=(10, 10))
 
     def set_status(self, message):
         self.status_bar.configure(text=message)
@@ -259,7 +271,7 @@ class RobotPainterGUI(customtkinter.CTk):
 
 
 
-    def process_image(self, uploaded_image_path):
+    def process_image(self, uploaded_image_path, fill = False):
         primary_rgbs = [(153, 0, 0), (1, 31, 91), (255, 255, 255)] # penn P
         waypoint_theta = 0
         k = len(primary_rgbs)
@@ -267,9 +279,9 @@ class RobotPainterGUI(customtkinter.CTk):
         min_points_per_edge = 50
         max_dist_betw_points = 5
         min_section_size = 10
+        fill_distance = 10 // 2
 
         self.set_status("Status: Processing image...")
-
 
         waypoints_output_filename = 'image_waypoints.txt'
         img_rgb = img_processing.s0_prepare_img(uploaded_image_path, border_size=border_size, display=False)
@@ -285,6 +297,11 @@ class RobotPainterGUI(customtkinter.CTk):
         ordered_edges = img_processing.s4_order_edges(grouped_edges, dist_thresh=max_dist_betw_points, section_size_thresh=min_section_size)
         simplified_paths = img_processing.s5_simplify_path(ordered_edges, epsilon=1.4)
         final_paths = img_processing.s6_optimize_waypoint_traversal(simplified_paths)
+        
+        if fill:
+          generated_fill_paths = img_processing.s65_generate_fill_paths(final_paths, dist_betw=fill_distance)
+          final_paths = final_paths + generated_fill_paths
+
         print("Path processing completed")
         img_processing.s7_generate_output(final_paths, waypoints_output_filename)
 
@@ -384,7 +401,7 @@ class RobotPainterGUI(customtkinter.CTk):
         """Open a file dialog to select an image and process it."""
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.jpeg")])
         if file_path:
-            self.process_image(file_path)
+            self.process_image(file_path, self.fill_waypoints)
             self.load_coordinates_triple("image_waypoints.txt")
             self.set_status("Status: Image processing complete")
 
