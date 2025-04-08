@@ -36,7 +36,7 @@ public:
 
     // PID and state initialization
     Kp_ = 0.5;
-    Ki_ = 0.25;
+    Ki_ = 0.3;
     Kd_ = 15.0;
     Kd_line_ = 0.01;
     integral_ = 0.0;
@@ -218,11 +218,11 @@ private:
         // distance to line
         float line_distance = calculate_distance_to_line(currentX_, currentY_, target_x, target_y, last_target_x, last_target_y);
 
-        // RCLCPP_INFO_STREAM(this->get_logger(), 
-        //   "target null: " << (current_target_ == std::nullopt) 
-        //   << ", bufferEmpty: " << !waypoint_buffer_.empty()
-        //   << ", distance: " << distance
-        //   << ", line_distance: " << line_distance);
+        RCLCPP_INFO_STREAM(this->get_logger(), 
+          "target null: " << (current_target_ == std::nullopt) 
+          << ", bufferEmpty: " << !waypoint_buffer_.empty()
+          << ", distance: " << distance
+          << ", line_distance: " << line_distance);
 
         // Calculate motor speeds
         int pwmAvg = 20; // Adjust as needed
