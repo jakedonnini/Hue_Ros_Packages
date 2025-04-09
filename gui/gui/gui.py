@@ -295,7 +295,7 @@ class RobotPainterGUI(customtkinter.CTk):
         grouped_edges = img_processing.s3_group_edges(img_edges, edge_threshold=min_points_per_edge)
         print("Edge processing completed")
         ordered_edges = img_processing.s4_order_edges(grouped_edges, dist_thresh=max_dist_betw_points, section_size_thresh=min_section_size)
-        simplified_paths = img_processing.s5_simplify_path(ordered_edges, epsilon=1.4)
+        simplified_paths = img_processing.s5_simplify_path(ordered_edges, epsilon=18)
         final_paths = img_processing.s6_optimize_waypoint_traversal(simplified_paths)
         
         if fill is True:
@@ -401,7 +401,7 @@ class RobotPainterGUI(customtkinter.CTk):
         """Open a file dialog to select an image and process it."""
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.png *.jpeg")])
         if file_path:
-            self.process_image(file_path, self.fill_waypoints)
+            self.process_image(file_path, self.fill_waypoints.get())
             self.load_coordinates_triple("image_waypoints.txt")
             self.set_status("Status: Image processing complete")
 
