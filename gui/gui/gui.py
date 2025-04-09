@@ -298,12 +298,12 @@ class RobotPainterGUI(customtkinter.CTk):
         simplified_paths = img_processing.s5_simplify_path(ordered_edges, epsilon=1.4)
         final_paths = img_processing.s6_optimize_waypoint_traversal(simplified_paths)
         
-        if fill:
+        if fill is True:
           generated_fill_paths = img_processing.s65_generate_fill_paths(final_paths, dist_betw=fill_distance)
           final_paths = final_paths + generated_fill_paths
 
         print("Path processing completed")
-        img_processing.s7_generate_output(final_paths, waypoints_output_filename)
+        img_processing.s7_generate_output_with_filling(final_paths, 0, waypoints_output_filename, fill=fill)
 
 
     def center_map_on_current_location(self):
@@ -482,7 +482,7 @@ class RobotPainterGUI(customtkinter.CTk):
 
         self.gps_temp_sub = self.node.create_subscription(
             GpsData,
-            '/gps/data',
+            'gps',
             one_time_callback,
             10
         )

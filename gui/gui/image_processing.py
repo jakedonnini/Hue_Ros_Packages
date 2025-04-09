@@ -739,3 +739,57 @@ def s7_animate_output(paths, animation_output_filename):
   # Show the animation
   plt.show()
 
+
+# Input: List of arrays of tuples, string (output file path)
+def s7_generate_output_with_filling(paths, theta, output_file, flip_y=False, flip_x=False, fill=False):
+  if fill:
+    outline_paths = paths[:len(paths) // 2]
+    fill_paths = paths[len(paths) // 2:]
+  else:
+    outline_paths = paths
+  theta = np.deg2rad(theta)
+  rotation_matrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+  if flip_y:
+    rotation_matrix[1, 1] *= -1
+  if flip_x:
+    rotation_matrix[0, 0] *= -1
+  new_paths = copy.deepcopy(outline_paths)
+  for i in range(len(new_paths)):
+    if new_paths[i][-1] != new_paths[i][0]:
+      new_paths[i].append(new_paths[i][0])
+  #painting_toggle = 1
+  all_waypoints = []
+  for i, path in enumerate(new_paths):
+    for j, coord in enumerate(path):
+      x, y = coord
+      rotated_x, rotated_y = np.dot(rotation_matrix, np.array([x, y]))
+
+      if j == 0:
+        all_waypoints.append((-rotated_x, rotated_y, 0))
+      else:
+        all_waypoints.append((-rotated_x, rotated_y, 1))
+
+      #all_waypoints.append((x, y, painting_toggle))
+      #painting_toggle = 0
+    #painting_toggle = 1
+
+  if fill:
+    all_fill_waypoints = []
+    new_fill_paths = copy.deepcopy(fill_paths)
+    for i, fill_path in enumerate(new_fill_paths):
+        for j, coord in enumerate(fill_path):
+          x, y = coord
+          rotated_x, rotated_y = np.dot(rotation_matrix, np.array([x, y]))
+          if j % 2 == 0:
+            all_fill_waypoints.append((-rotated_x, rotated_y, 0))
+          else:
+            all_fill_waypoints.append((-rotated_x, rotated_y, 1))
+
+    all_waypoints.extend(all_fill_waypoints)
+
+
+  with open(output_file, "w") as file:
+    for waypoint in all_waypoints:
+      file.write(f"{waypoint[0]}, {waypoint[1]}, {waypoint[2]}\n")
+
+  print('Generated Waypoints at ', output_file)
