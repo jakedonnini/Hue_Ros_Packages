@@ -48,7 +48,7 @@ public:
     dir_ = 1;
     integral_min_ = -50;
     integral_max_ = 50;
-    usingGPS_ = false;
+    usingGPS_ = true;
 
     pwmr_old_ = 0;
     pwml_old_ = 0;
