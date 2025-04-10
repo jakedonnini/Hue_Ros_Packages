@@ -36,8 +36,8 @@ public:
 
     // PID and state initialization
     Kp_ = 0.5;
-    Ki_ = 0.3;
-    Kd_ = 20.0;
+    Ki_ = 0.35;
+    Kd_ = 25.0;
     Kd_line_ = 0.01;
     integral_ = 0.0;
     previous_error_ = 0.0;
