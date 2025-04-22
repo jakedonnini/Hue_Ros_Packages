@@ -47,7 +47,7 @@ class GPSSubscriberPublisher(Node):
         self.Kp = 0.5   # Proportional constant
         self.Kd_line = 0.7 # Derivative constant for line following
         self.Ki = 0.25  # Integral constant
-        self.Kd = 8.0  # Derivative constant for 0 point turn
+        self.Kd = 10.0  # Derivative constant for 0 point turn
 
         self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
@@ -197,7 +197,7 @@ class GPSSubscriberPublisher(Node):
         if self.usingGPS == 0:
             thetaError = thetaError * -self.dir
 
-        pwmAvg = 20 # normally 60
+        pwmAvg = 20
 
         # PID calculations
         # Proportional term (P)
@@ -265,15 +265,16 @@ class GPSSubscriberPublisher(Node):
             self.integral -= 0.1 * (self.pwml_value - (pwmAvg - pwmDel))
 
         # remove dead zone between 39 and -39
+        deadzone = 45
         if self.pwmr_value > 0:
-            self.pwmr_value += 39
+            self.pwmr_value += deadzone
         if self.pwmr_value < 0:
-            self.pwmr_value -= 39
+            self.pwmr_value -= deadzone
 
         if self.pwml_value > 0:
-            self.pwml_value += 39
+            self.pwml_value += deadzone
         if self.pwml_value < 0:
-            self.pwml_value -= 39
+            self.pwml_value -= deadzone
             
 
         # self.get_logger().info(
