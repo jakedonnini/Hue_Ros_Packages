@@ -46,8 +46,8 @@ class GPSSubscriberPublisher(Node):
         # Initialize PID constants
         self.Kp = 0.5   # Proportional constant
         self.Kd_line = 0.7 # Derivative constant for line following
-        self.Ki = 0.1  # Integral constant
-        self.Kd = 7.0  # Derivative constant for 0 point turn
+        self.Ki = 0.25  # Integral constant
+        self.Kd = 8.0  # Derivative constant for 0 point turn
 
         self.get_logger().info(f"Kp: {self.Kp} Ki: {self.Ki} Kd: {self.Kd}")
 
