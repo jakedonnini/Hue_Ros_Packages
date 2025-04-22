@@ -36,7 +36,7 @@ public:
 
     // PID and state initialization
     Kp_ = 0.5;
-    Ki_ = 0.5;
+    Ki_ = 0.4;
     Kd_ = 25.0;
     Kd_line_ = 0.01;
     integral_ = 0.0;
@@ -253,7 +253,7 @@ private:
 
         // If the angle is within this threshold then move forward or turn
         float largeTurnThreshold = ((M_PI / 180) / 2) * 45; // 45 deg converted to rad, /2 for abs value
-        float fineThreshold = ((M_PI / 180) / 2) * 10; // 5 deg converted to rad, /2 for abs value
+        float fineThreshold = ((M_PI / 180) / 2) * 6; // 5 deg converted to rad, /2 for abs value
 
         if (std::abs(thetaError) > largeTurnThreshold) { // greater than 45 deg
           largeTurn = true; // we have found a big turn
@@ -287,7 +287,7 @@ private:
         pwmr = std::max(-100, std::min(100, pwmr));
         pwml = std::max(-100, std::min(100, pwml));
 
-        int deadzone = 45; // Adjust as needed
+        int deadzone = 39; // Adjust as needed pavement 39, grass 45
         // remove dead band
         if (pwmr > 0) {
           pwmr += deadzone;
