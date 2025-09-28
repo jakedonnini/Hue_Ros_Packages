@@ -44,7 +44,6 @@ class CoordinatesPublisher(Node):
 
             self.coord_pub.publish(coord_msg)
             self.get_logger().info(f'Published coordinates: X={coord_msg.x}, Y={coord_msg.y}, toggle: {t}')
-
             self.index += 1
             time.sleep(0.2)  # Adjust sleep time as needed
 

@@ -9,12 +9,12 @@ class ArduinoSerialNode(Node):
         super().__init__('arduino_serial_node')
 
         # Initialize serial connection
-        self.ser = serial.Serial('/dev/ttyACM0', 460800, timeout=0.01)  # Increased baud rate
+        self.ser = serial.Serial('/dev/ttyRobot1', 460800, timeout=0.01)  # Increased baud rate
         self.ser_lock = threading.Lock()  # Ensure thread-safe serial access
 
         # Publishers and Subscribers
-        self.encoder_pub = self.create_publisher(TwoInt, 'encoder', 10)
-        self.pwm_sub = self.create_subscription(TwoInt, 'PWM', self.pwm_callback, 10)
+        self.encoder_pub = self.create_publisher(TwoInt, 'encoder', 5)
+        self.pwm_sub = self.create_subscription(TwoInt, 'PWM', self.pwm_callback, 5)
 
         # Variables to store PWM values
         self.pwmr_value = 0
@@ -41,6 +41,7 @@ class ArduinoSerialNode(Node):
                         enc_msg.r = right_enc
                         enc_msg.toggle = toggleState
                         self.encoder_pub.publish(enc_msg)
+                        # self.get_logger().info(f'Publish: {left_enc}, {right_enc}, {toggleState}')
                     except ValueError:
                         self.get_logger().warn(f'Invalid data received: {data}')
             except serial.SerialException as e:
@@ -49,6 +50,7 @@ class ArduinoSerialNode(Node):
     def pwm_callback(self, msg):
         """Handles incoming PWM values and sends them to Arduino."""
         self.pwml_value, self.pwmr_value, self.isSpraying = msg.l, msg.r, msg.toggle
+        # self.get_logger().info(f'Recived: {self.pwml_value}, {self.pwmr_value}, {self.isSpraying}')
         self.send_pwm_to_arduino()
 
     def send_pwm_to_arduino(self):
