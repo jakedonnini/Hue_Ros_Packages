@@ -33,10 +33,16 @@ class KalmanFilter(Node):
         ])
 
         # Process noise covariance
-        self.Q = np.diag([0.4, 0.4, 0.3])
+        self.Q = np.diag([0.3, 0.3, 0.2])
+        # self.Q = np.diag([0.4, 0.4, 0.3])
 
         # Measurement noise covariance (GPS noise)
-        self.R = np.diag([0.11, 0.15, 0.05])
+        self.R = np.diag([0.2, 0.2, 0.2])
+        # self.R = np.diag([0.11, 0.15, 0.05])
+
+        # If Kalman is too slow to update, lower R
+        # If Kalman is too jumpy, increase R
+        # Decrease Q to allow for quicker updates from the encoders.
 
         # Observation matrix
         self.H = np.array([
@@ -46,11 +52,11 @@ class KalmanFilter(Node):
         ])
 
         self.gps_subscription = self.create_subscription(
-            GpsData, 'gps/data', self.gps_callback, 10)
+            GpsData, 'gps/data', self.gps_callback, 5)
         self.deadReck_subscription = self.create_subscription(
-            Coordinates,'deadReckoning/vel', self.deadReck_callback, 10)
+            Coordinates,'deadReckoning/vel', self.deadReck_callback, 5)
         self.DR_subscription = self.create_subscription(
-            GpsData, 'deadReckoning/pose', self.deadReck_callback_pose, 10)
+            GpsData, 'deadReckoning/pose', self.deadReck_callback_pose, 5)
 
         self.V = 0
         self.dV = 0
@@ -68,8 +74,14 @@ class KalmanFilter(Node):
         self.gps_y = 0
         self.gps_Theta = 0
 
+        self.stateBeforeRot = np.array([[0], [0], [0]])
+        self.stateAfterRot = np.array([[0], [0], [0]])
+
         self.new_gps_data = False
         self.encoder_data_updated = False  # Reset flag
+
+        self.stateBeforeRot = np.array([[0], [0], [0]])
+        self.stateAfterRot = np.array([[0], [0], [0]])
 
         self.running = True
         self.lock = threading.Lock()
@@ -120,7 +132,7 @@ class KalmanFilter(Node):
                     self.update_kalman_with_gps()
                     self.new_gps_data = False
             
-            time.sleep(self.dt/2)
+            time.sleep(self.dt/4)
 
     def run_publishing_loop(self):
         """Publishes Kalman-filtered data at a constant rate."""
@@ -142,6 +154,11 @@ class KalmanFilter(Node):
                 self.rotation_publisher.publish(rot_msg)
 
                 # Debugging Log
+                # self.get_logger().info(
+                #     f'[GPS]: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)} '
+                #     f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} before {round(self.stateBeforeRot[0, 0], 2)}, {round(self.stateBeforeRot[1, 0], 2)}, {round(self.stateBeforeRot[2, 0], 2)} After {round(self.stateAfterRot[0, 0], 2)}, {round(self.stateAfterRot[1, 0], 2)}, {round(self.stateAfterRot[2, 0], 2)}'
+                #     f'[KALMAN] X: {round(self.x[0, 0], 2)} Y: {round(self.x[1, 0], 2)} Theta: {round(self.x[2, 0], 2)}'
+                # )
                 self.get_logger().info(
                     f'[GPS]: {round(self.gps_x, 2)}, {round(self.gps_y, 2)}, {round(self.gps_Theta, 2)} '
                     f'[ENCODER] V: {round(self.V, 2)} dV: {round(self.dV, 2)} '
@@ -189,33 +206,47 @@ class KalmanFilter(Node):
         u = np.array([[self.V], [self.dV]])
 
         state = self.B @ u
-        # self.get_logger().info(f"State before rot: {state}")
+        self.stateBeforeRot = state
 
         state = Rot_Extended @ state
-
-        # self.get_logger().info(f"State after rot: {state}")
+        self.stateAfterRot = state
 
         # rotate the state
         self.x = self.F @ self.x + state
         self.P = self.F @ self.P @ self.F.T + self.Q
 
-        # self.get_logger().info(f"x: {self.x}")
-        # self.get_logger().info(f"P: {self.P}")
-
     def update_kalman_with_gps(self):
         """Correct state estimate using GPS data."""
         # Measurement update
+
+        # if between 0-2pi then dont change to qucikly
+        # dog what the hell is this
+        unwrapLow = self.x[2, 0] - 2 * np.pi - self.gps_Theta
+        unwrapHigh = self.x[2, 0] + 2 * np.pi - self.gps_Theta
+        oldAngle = self.x[2, 0] - self.gps_Theta
+        if np.abs(unwrapLow) < np.abs(unwrapHigh) and np.abs(unwrapLow) < np.abs(oldAngle):
+            self.x[2, 0] -= 2 * np.pi
+        elif np.abs(unwrapHigh) < np.abs(unwrapLow) and np.abs(unwrapHigh) < np.abs(oldAngle):
+            self.x[2, 0] += 2 * np.pi
+        else:
+            pass # our current angle is fine
+
         z = np.array([[self.gps_x], [self.gps_y], [self.gps_Theta]])
         y = z - self.H @ self.x # Measurement residual
-        S = self.H @ self.P @ self.H.T + self.R # Residual covariance
+
+        # Compute Mahalanobis distance (how much GPS disagrees)
+        # mahalanobis_dist = np.linalg.norm(y)  
+
+        # Adjust R dynamically: If GPS jumps far, increase R (reduce trust)
+        dynamic_R = self.R  # Base R
+        # if mahalanobis_dist > 1.0:  # If GPS is far from prediction
+        #     dynamic_R *= 4  # Reduce trust in GPS   
+
+        S = self.H @ self.P @ self.H.T + dynamic_R # Residual covariance
         K = self.P @ self.H.T @ np.linalg.inv(S) # Kalman gain
         self.x = self.x + K @ y
         self.P = (np.eye(3) - K @ self.H) @ self.P
-        # self.get_logger().info(f"z: {z}")
-        # self.get_logger().info(f"y: {y}")
-        # self.get_logger().info(f"S: {S}")
-        # self.get_logger().info(f"K: {K}")
-
+    
     def stop_threads(self):
         """Stop the threads gracefully."""
         self.running = False
