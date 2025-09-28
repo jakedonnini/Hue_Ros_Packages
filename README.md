@@ -1,28 +1,75 @@
 # Hue ROS Packages - Autonomous Navigation System
 
-<img width="200" height="200" alt="Hue_logo" src="https://github.com/user-attachments/assets/7e132a94-f5e5-468e-9519-a6b3a7d17b28" />
-
-![Bot_Side](https://github.com/user-attachments/assets/5ac1333a-ed70-4642-8d2c-58bef7423e53)
+<!-- Main logo and robot image side by side -->
+<table>
+  <tr>
+    <td align="center">
+      <img width="160" height="160" alt="Hue_logo" src="https://github.com/user-attachments/assets/7e132a94-f5e5-468e-9519-a6b3a7d17b28" /><br>
+      <sub><b>Project Logo</b></sub>
+    </td>
+    <td align="center">
+      <img width="200" height="160" alt="Bot_Side" src="https://github.com/user-attachments/assets/5ac1333a-ed70-4642-8d2c-58bef7423e53" /><br>
+      <sub><b>Robot Side View</b></sub>
+    </td>
+  </tr>
+</table>
 
 ## Overview
+
 This repository contains a complete ROS 2 autonomous navigation system designed for GPS-based robotic navigation. The system integrates multiple sensors, implements sensor fusion algorithms, and provides both C++ and Python implementations for high-performance autonomous navigation.
 
 ## Media Gallery
 
 ### Images
 
-<img width="1771" height="1119" alt="Screenshot iso" src="https://github.com/user-attachments/assets/622d435b-481d-4420-b322-b3eb85101c18" />
-![PXL_20250405_183655050](https://github.com/user-attachments/assets/cf8ad51c-c857-467f-a49c-ad3ab9613d60)
-<img width="1268" height="737" alt="GUI_screen_shot" src="https://github.com/user-attachments/assets/ce73dbbc-e3b3-4a57-93b8-4265bad487eb" />
-![dji_fly_20250425_115310_690_1745596812474_photo_optimized](https://github.com/user-attachments/assets/c9054d57-7426-49df-92da-7c7e9c31a595)
+<!-- Gallery table for images with captions -->
+<table>
+  <tr>
+    <td>
+      <img width="350" alt="Screenshot iso" src="https://github.com/user-attachments/assets/622d435b-481d-4420-b322-b3eb85101c18" /><br>
+      <sub><b>Simulation Screenshot</b></sub>
+    </td>
+    <td>
+      <img width="350" alt="GUI_screen_shot" src="https://github.com/user-attachments/assets/ce73dbbc-e3b3-4a57-93b8-4265bad487eb" /><br>
+      <sub><b>GUI Waypoint Selection</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img width="350" alt="Outdoor Test" src="https://github.com/user-attachments/assets/cf8ad51c-c857-467f-a49c-ad3ab9613d60" /><br>
+      <sub><b>Outdoor Test Run</b></sub>
+    </td>
+    <td>
+      <img width="350" alt="Drone Shot" src="https://github.com/user-attachments/assets/c9054d57-7426-49df-92da-7c7e9c31a595" /><br>
+      <sub><b>Drone Photo</b></sub>
+    </td>
+  </tr>
+</table>
 
 ### Videos
-[![Watch the video](https://youtu.be/IbIYlnNnJFM?si=YOSsBUXNI2kJ4ci4/0.jpg)](https://youtu.be/IbIYlnNnJFM?si=YOSsBUXNI2kJ4ci4)
-[![Watch the video](https://youtu.be/JNXMdchNOyw?si=oNPIDicQ81vm9oLj/0.jpg)](https://youtu.be/JNXMdchNOyw?si=oNPIDicQ81vm9oLj) 
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://youtu.be/IbIYlnNnJFM?si=YOSsBUXNI2kJ4ci4">
+        <img width="350" alt="Demo Video 1" src="https://img.youtube.com/vi/IbIYlnNnJFM/0.jpg" /><br>
+        <sub><b>Demo Video 1</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://youtu.be/JNXMdchNOyw?si=oNPIDicQ81vm9oLj">
+        <img width="350" alt="Demo Video 2" src="https://img.youtube.com/vi/JNXMdchNOyw/0.jpg" /><br>
+        <sub><b>Demo Video 2</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
 ## System Architecture
-<img width="772" height="350" alt="Bolck_diagram" src="https://github.com/user-attachments/assets/3aa68ec4-ab15-49be-9a6a-afa96b6e574d" />
 
+<p align="center">
+  <img width="772" height="350" alt="Bolck_diagram" src="https://github.com/user-attachments/assets/3aa68ec4-ab15-49be-9a6a-afa96b6e574d" />
+</p>
 
 ### Core Components
 
