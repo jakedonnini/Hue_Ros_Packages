@@ -14,6 +14,9 @@
   </tr>
 </table>
 
+![ground_view](https://github.com/user-attachments/assets/131dbb56-9a8b-42b3-8a0d-934ffb7c3479)
+
+
 ## Overview
 
 This repository contains a complete ROS 2 autonomous navigation system designed for GPS-based robotic navigation. The system integrates multiple sensors, implements sensor fusion algorithms, and provides both C++ and Python implementations for high-performance autonomous navigation.
