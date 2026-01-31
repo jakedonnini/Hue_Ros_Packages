@@ -164,13 +164,14 @@ This repository contains a complete ROS 2 autonomous navigation system designed 
 ## System Requirements
 
 ### Hardware
-- Arduino-compatible microcontroller with encoder interface
-- Dual GPS receivers (for improved accuracy and redundancy)
+- Teensy 4.0 microcontroller with encoder interface
+- Dual RTK GPS receivers (for improved accuracy and angular positioning)
 - Differential drive robot platform
-- Linux-based companion computer (Intel NUC)
+- Linux-based main computer (Intel NUC)
 
 ### Software Dependencies
 - ROS 2 (Humble or newer)
+  - Nodes built completely from scratch so disto indifferent
 - Python 3.8+
 - C++ compiler with C++17 support
 - Serial communication libraries
